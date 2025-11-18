@@ -86,3 +86,55 @@ export const deleteDestination = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Archive destination
+// @route   PUT /api/destinations/:id/archive
+// @access  Private/Admin
+export const archiveDestination = async (req, res, next) => {
+  try {
+    const destination = await destinationService.archiveDestination(
+      req.params.id,
+      req.user._id,
+      req.body.reason
+    );
+    res.status(200).json({
+      success: true,
+      message: 'Destination archived successfully!',
+      data: destination,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Restore archived destination
+// @route   PUT /api/destinations/:id/restore
+// @access  Private/Admin
+export const restoreDestination = async (req, res, next) => {
+  try {
+    const destination = await destinationService.restoreDestination(req.params.id);
+    res.status(200).json({
+      success: true,
+      message: 'Destination restored successfully!',
+      data: destination,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Permanently delete destination
+// @route   DELETE /api/destinations/:id/permanent
+// @access  Private/Admin
+export const permanentDeleteDestination = async (req, res, next) => {
+  try {
+    await destinationService.permanentDeleteDestination(req.params.id);
+    res.status(200).json({
+      success: true,
+      message: 'Destination permanently deleted!',
+      data: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+};

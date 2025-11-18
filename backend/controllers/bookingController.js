@@ -1,7 +1,8 @@
 // controllers/bookingController.js
 import * as bookingService from '../services/bookingService.js';
 import ApiError from '../utils/ApiError.js';
-import { logActivity } from '../services/activityService.js'; // ✅ ADD: For activity tracking
+import { logActivity } from '../services/activityService.js';
+import emailService from '../services/emailService.js';
 
 // @desc Get all bookings (Admin only)
 // @route GET /api/bookings
@@ -70,8 +71,15 @@ export const createBooking = async (req, res, next) => {
     // Call service layer to create new booking with user ID and booking data
     const booking = await bookingService.createBooking(req.user.id, req.body);
     
+    // ✅ SEND BOOKING CONFIRMATION EMAIL
+    try {
+      await emailService.sendBookingConfirmation(booking);
+    } catch (emailError) {
+      console.log('Email sending failed (non-critical):', emailError.message);
+      // Don't fail the booking creation if email fails
+    }
+
     // ✅ ADD: ACTIVITY LOGGING - Track new bookings
-    // Why here? Business critical - track revenue and user activity
     try {
       await logActivity({
         userId: req.user.id,
@@ -92,14 +100,12 @@ export const createBooking = async (req, res, next) => {
       console.log('Activity logging failed for booking creation:', activityError.message);
     }
 
-    // Return 201 Created status with success message and booking data
     res.status(201).json({
       success: true,
       message: 'Booking created successfully!',
       data: booking,
     });
   } catch (error) {
-    // Pass error to global error handler middleware
     next(error);
   }
 };
@@ -112,19 +118,44 @@ export const updateBookingStatus = async (req, res, next) => {
     // Call service layer to update booking status (admin only operation)
     const booking = await bookingService.updateBookingStatus(req.params.id, req.body.status);
     
-    // ✅ ADD: ACTIVITY LOGGING - Track status changes (Admin action)
-    // Why here? Track admin operations and booking lifecycle
+    // ✅ SEND BOOKING STATUS UPDATE EMAIL
     try {
+      await emailService.sendBookingStatusUpdate(booking, req.body.status);
+    } catch (emailError) {
+      console.log('Email sending failed (non-critical):', emailError.message);
+    }
+
+    // ✅ ADD: ACTIVITY LOGGING - Track status changes (Admin action)
+    try {
+      // Log activity for the ADMIN who performed the action
       await logActivity({
-        userId: req.user.id, // This is the ADMIN user ID
+        userId: req.user.id, // Admin user ID
         type: 'booking_status_updated',
         description: `Admin updated booking status to ${req.body.status}`,
         ipAddress: req.ip,
         userAgent: req.get('User-Agent'),
         metadata: { 
           bookingId: req.params.id,
-          oldStatus: booking.previousStatus, // If your service returns this
+          oldStatus: booking.previousStatus,
           newStatus: req.body.status,
+          adminId: req.user.id,
+          affectedUserId: booking.user._id,
+          updatedAt: new Date().toISOString()
+        }
+      });
+
+      // Also log activity for the BOOKING OWNER so it shows in their activity tab
+      await logActivity({
+        userId: booking.user._id, // Booking owner's user ID
+        type: 'booking_status_updated',
+        description: `Your booking status was updated to ${req.body.status}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        metadata: { 
+          bookingId: req.params.id,
+          oldStatus: booking.previousStatus,
+          newStatus: req.body.status,
+          updatedBy: 'admin',
           adminId: req.user.id,
           updatedAt: new Date().toISOString()
         }
@@ -133,14 +164,12 @@ export const updateBookingStatus = async (req, res, next) => {
       console.log('Activity logging failed for booking status update:', activityError.message);
     }
 
-    // Return success response with updated booking and status message
     res.status(200).json({
       success: true,
       message: `Booking status updated to ${req.body.status}`,
       data: booking,
     });
   } catch (error) {
-    // Pass error to global error handler middleware
     next(error);
   }
 };
@@ -150,11 +179,16 @@ export const updateBookingStatus = async (req, res, next) => {
 // @access Private
 export const deleteBooking = async (req, res, next) => {
   try {
-    // Call service layer to delete booking with authorization check
     const deletedBooking = await bookingService.deleteBooking(req.params.id, req.user);
     
-    // ✅ ADD: ACTIVITY LOGGING - Track booking cancellations
-    // Why here? Important for business analytics and user behavior
+    // ✅ SEND BOOKING CANCELLATION EMAIL
+    try {
+      await emailService.sendBookingCancellation(deletedBooking);
+    } catch (emailError) {
+      console.log('Email sending failed (non-critical):', emailError.message);
+      // Don't fail the deletion if email fails
+    }
+
     try {
       await logActivity({
         userId: req.user.id,
@@ -166,6 +200,8 @@ export const deleteBooking = async (req, res, next) => {
           bookingId: req.params.id,
           destination: deletedBooking.destinationName,
           originalAmount: deletedBooking.totalAmount,
+          refundAmount: deletedBooking.cancellation?.refundAmount || 0,
+          refundPercentage: deletedBooking.cancellation?.refundPercentage || 0,
           cancellationDate: new Date().toISOString()
         }
       });
@@ -173,13 +209,93 @@ export const deleteBooking = async (req, res, next) => {
       console.log('Activity logging failed for booking cancellation:', activityError.message);
     }
 
-    // Return success response with confirmation message (no data returned for DELETE)
     res.status(200).json({
       success: true,
       message: 'Booking deleted successfully!',
     });
   } catch (error) {
-    // Pass error to global error handler middleware
+    next(error);
+  }
+};
+
+// ============================================================================
+// 🎯 CANCEL BOOKING WITH REFUND (User or Admin initiated)
+// ============================================================================
+// @desc    Cancel booking with refund calculation
+// @route   PUT /api/bookings/:id/cancel
+// @access  Private
+export const cancelBooking = async (req, res, next) => {
+  try {
+    const booking = await bookingService.cancelBooking(req.params.id, req.user);
+
+    try {
+      await logActivity({
+        userId: req.user.id,
+        type: 'booking_cancelled',
+        description: `Booking cancelled with refund: ₱${booking.cancellation.refundAmount}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        metadata: {
+          bookingId: req.params.id,
+          refundAmount: booking.cancellation.refundAmount,
+          refundStatus: booking.cancellation.refundStatus,
+          cancelledBy: booking.cancellation.cancelledBy,
+          daysBeforeTour: Math.ceil((booking.bookingDate - Date.now()) / (1000 * 60 * 60 * 24))
+        }
+      });
+    } catch (activityError) {
+      console.log('Activity logging failed:', activityError.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Booking cancelled. Refund: ₱${booking.cancellation.refundAmount}`,
+      data: booking,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// ============================================================================
+// 🎯 ADMIN: PROCESS REFUND
+// ============================================================================
+// @desc    Admin processes refund for cancelled booking
+// @route   PUT /api/bookings/:id/refund
+// @access  Private/Admin
+export const processRefund = async (req, res, next) => {
+  try {
+    const { processed } = req.body;
+
+    if (typeof processed !== 'boolean') {
+      throw new ApiError(400, 'processed field must be true or false');
+    }
+
+    const booking = await bookingService.processRefund(req.params.id, processed);
+
+    try {
+      await logActivity({
+        userId: req.user.id,
+        type: 'refund_processed',
+        description: `Admin ${processed ? 'approved' : 'rejected'} refund of ₱${booking.cancellation.refundAmount}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        metadata: {
+          bookingId: req.params.id,
+          action: processed ? 'approved' : 'rejected',
+          refundAmount: booking.cancellation.refundAmount
+        }
+      });
+    } catch (activityError) {
+      console.log('Activity logging failed:', activityError.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Refund ${processed ? 'approved' : 'rejected'}`,
+      data: booking,
+    });
+  } catch (error) {
     next(error);
   }
 };

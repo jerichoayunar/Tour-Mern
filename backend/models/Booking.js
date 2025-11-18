@@ -49,6 +49,25 @@ const bookingSchema = new mongoose.Schema({
   specialRequests: {
     type: String,
     default: ''
+  },
+  // ============================================================================
+  // 🔹 CANCELLATION & REFUND TRACKING
+  // ============================================================================
+  cancellation: {
+    cancelledAt: Date,
+    cancelledBy: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: null
+    },
+    reason: String,
+    refundAmount: Number,
+    refundStatus: {
+      type: String,
+      enum: ['pending', 'processed', 'rejected'],
+      default: 'pending'
+    },
+    refundProcessedAt: Date
   }
 }, {
   timestamps: true

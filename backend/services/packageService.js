@@ -38,8 +38,18 @@ const deleteImageFromCloudinary = async (publicId) => {
 
 // Get all packages with optional filtering - UPDATED (no global inclusions)
 export const getPackages = async (query = {}) => {
-  const { status, minPrice, maxPrice, minDuration, maxDuration, search } = query;
+  const { status, minPrice, maxPrice, minDuration, maxDuration, search, includeArchived, onlyArchived } = query;
   const filter = {};
+
+  // Archive filtering
+  if (onlyArchived === 'true') {
+    filter.archived = true;
+  } else if (includeArchived !== 'true') {
+    filter.$or = [
+      { archived: false },
+      { archived: { $exists: false } }
+    ];
+  }
 
   // Filter by status
   if (status) filter.status = status;
@@ -225,6 +235,81 @@ export const deletePackage = async (packageId) => {
   
   if (!pkg) {
     throw new ApiError(404, 'Package not found');
+  }
+
+  if (pkg.image.isUploaded && pkg.image.publicId) {
+    await deleteImageFromCloudinary(pkg.image.publicId);
+  }
+
+  await Package.findByIdAndDelete(packageId);
+};
+
+// Archive package (soft delete)
+export const archivePackage = async (packageId, adminId, reason = null) => {
+  const pkg = await Package.findById(packageId);
+
+  if (!pkg) {
+    throw new ApiError(404, 'Package not found');
+  }
+
+  if (pkg.archived) {
+    throw new ApiError(400, 'Package is already archived');
+  }
+
+  const archivedPackage = await Package.findByIdAndUpdate(
+    packageId,
+    {
+      $set: {
+        archived: true,
+        archivedAt: new Date(),
+        archivedBy: adminId,
+        archivedReason: reason
+      }
+    },
+    { new: true, runValidators: true }
+  ).populate('archivedBy', 'name email');
+
+  return archivedPackage;
+};
+
+// Restore archived package
+export const restorePackage = async (packageId) => {
+  const pkg = await Package.findById(packageId);
+
+  if (!pkg) {
+    throw new ApiError(404, 'Package not found');
+  }
+
+  if (!pkg.archived) {
+    throw new ApiError(400, 'Package is not archived');
+  }
+
+  const restoredPackage = await Package.findByIdAndUpdate(
+    packageId,
+    {
+      $set: {
+        archived: false,
+        archivedAt: null,
+        archivedBy: null,
+        archivedReason: null
+      }
+    },
+    { new: true, runValidators: true }
+  );
+
+  return restoredPackage;
+};
+
+// Permanently delete package (only for archived packages)
+export const permanentDeletePackage = async (packageId) => {
+  const pkg = await Package.findById(packageId);
+
+  if (!pkg) {
+    throw new ApiError(404, 'Package not found');
+  }
+
+  if (!pkg.archived) {
+    throw new ApiError(400, 'Package must be archived before permanent deletion');
   }
 
   if (pkg.image.isUploaded && pkg.image.publicId) {

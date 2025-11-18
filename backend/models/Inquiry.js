@@ -60,6 +60,25 @@ const inquirySchema = mongoose.Schema(
     },
     respondedAt: {
       type: Date
+    },
+    // Archive fields (soft delete)
+    archived: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+    archivedAt: {
+      type: Date,
+      default: null
+    },
+    archivedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    archivedReason: {
+      type: String,
+      default: null
     }
   },
   {
