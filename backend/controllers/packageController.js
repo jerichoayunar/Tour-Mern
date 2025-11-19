@@ -81,3 +81,55 @@ export const deletePackage = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Archive package
+// @route   PUT /api/packages/:id/archive
+// @access  Private/Admin
+export const archivePackage = async (req, res, next) => {
+  try {
+    const pkg = await packageService.archivePackage(
+      req.params.id,
+      req.user._id,
+      req.body.reason
+    );
+    res.status(200).json({
+      success: true,
+      message: 'Package archived successfully!',
+      data: pkg,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Restore archived package
+// @route   PUT /api/packages/:id/restore
+// @access  Private/Admin
+export const restorePackage = async (req, res, next) => {
+  try {
+    const pkg = await packageService.restorePackage(req.params.id);
+    res.status(200).json({
+      success: true,
+      message: 'Package restored successfully!',
+      data: pkg,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Permanently delete package
+// @route   DELETE /api/packages/:id/permanent
+// @access  Private/Admin
+export const permanentDeletePackage = async (req, res, next) => {
+  try {
+    await packageService.permanentDeletePackage(req.params.id);
+    res.status(200).json({
+      success: true,
+      message: 'Package permanently deleted!',
+      data: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+};

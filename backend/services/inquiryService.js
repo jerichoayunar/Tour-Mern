@@ -4,11 +4,23 @@ import ApiError from '../utils/ApiError.js';
 
 // Get all inquiries with search, filter, pagination, and sort
 export const getInquiries = async (query = {}) => {
+  // received query (debug removed)
+  
   const pageSize = 10;
   const page = Number(query.pageNumber) || 1;
   
   // Build search query
   let searchQuery = {};
+  
+  // Archive filtering
+  if (query.onlyArchived === 'true') {
+    searchQuery.archived = true;
+  } else if (query.includeArchived !== 'true') {
+    searchQuery.$or = [
+      { archived: false },
+      { archived: { $exists: false } }
+    ];
+  }
   
   // Name search
   if (query.name) {
@@ -42,9 +54,13 @@ export const getInquiries = async (query = {}) => {
 
   // Sort options
   let sortOptions = {};
+  // sort parameter (debug removed)
   switch (query.sort) {
     case 'oldest':
       sortOptions = { createdAt: 1 };
+      break;
+    case 'newest':
+      sortOptions = { createdAt: -1 };
       break;
     case 'name':
       sortOptions = { name: 1 };
@@ -58,9 +74,10 @@ export const getInquiries = async (query = {}) => {
     case 'priority':
       sortOptions = { priority: -1 }; // High priority first
       break;
-    default: // newest first
+    default: // newest first (default)
       sortOptions = { createdAt: -1 };
   }
+  // sort options applied (debug removed)
 
   const count = await Inquiry.countDocuments(searchQuery);
   const inquiries = await Inquiry.find(searchQuery)
@@ -68,6 +85,8 @@ export const getInquiries = async (query = {}) => {
     .sort(sortOptions)
     .limit(pageSize)
     .skip(pageSize * (page - 1));
+
+  // inquiries fetched (detailed logs removed)
 
   return {
     inquiries,
@@ -229,4 +248,75 @@ export const markAsRead = async (inquiryId) => {
     // Re-throw the error with proper message
     throw new ApiError(500, `Failed to mark inquiry as read: ${error.message}`);
   }
+};
+
+// Archive inquiry (soft delete)
+export const archiveInquiry = async (inquiryId, adminId, reason = null) => {
+  const inquiry = await Inquiry.findById(inquiryId);
+
+  if (!inquiry) {
+    throw new ApiError(404, 'Inquiry not found');
+  }
+
+  if (inquiry.archived) {
+    throw new ApiError(400, 'Inquiry is already archived');
+  }
+
+  const archivedInquiry = await Inquiry.findByIdAndUpdate(
+    inquiryId,
+    {
+      $set: {
+        archived: true,
+        archivedAt: new Date(),
+        archivedBy: adminId,
+        archivedReason: reason
+      }
+    },
+    { new: true, runValidators: true }
+  ).populate('archivedBy', 'name email');
+
+  return archivedInquiry;
+};
+
+// Restore archived inquiry
+export const restoreInquiry = async (inquiryId) => {
+  const inquiry = await Inquiry.findById(inquiryId);
+
+  if (!inquiry) {
+    throw new ApiError(404, 'Inquiry not found');
+  }
+
+  if (!inquiry.archived) {
+    throw new ApiError(400, 'Inquiry is not archived');
+  }
+
+  const restoredInquiry = await Inquiry.findByIdAndUpdate(
+    inquiryId,
+    {
+      $set: {
+        archived: false,
+        archivedAt: null,
+        archivedBy: null,
+        archivedReason: null
+      }
+    },
+    { new: true, runValidators: true }
+  );
+
+  return restoredInquiry;
+};
+
+// Permanently delete inquiry (only for archived inquiries)
+export const permanentDeleteInquiry = async (inquiryId) => {
+  const inquiry = await Inquiry.findById(inquiryId);
+
+  if (!inquiry) {
+    throw new ApiError(404, 'Inquiry not found');
+  }
+
+  if (!inquiry.archived) {
+    throw new ApiError(400, 'Inquiry must be archived before permanent deletion');
+  }
+
+  await Inquiry.findByIdAndDelete(inquiryId);
 };

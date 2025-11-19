@@ -37,8 +37,18 @@ const deleteImageFromCloudinary = async (publicId) => {
 
 // Get all destinations with optional filtering - UPDATED
 export const getDestinations = async (query = {}) => {
-  const { status, search } = query; 
+  const { status, search, includeArchived, onlyArchived } = query; 
   const filter = {};
+
+  // Archive filtering
+  if (onlyArchived === 'true') {
+    filter.archived = true;
+  } else if (includeArchived !== 'true') {
+    filter.$or = [
+      { archived: false },
+      { archived: { $exists: false } }
+    ];
+  }
 
   if (status) filter.status = status;
   
@@ -172,6 +182,82 @@ export const deleteDestination = async (destinationId) => {
   
   if (!destination) {
     throw new ApiError(404, 'Destination not found');
+  }
+
+  // Delete image from Cloudinary if it was uploaded
+  if (destination.image.isUploaded && destination.image.publicId) {
+    await deleteImageFromCloudinary(destination.image.publicId);
+  }
+
+  await Destination.findByIdAndDelete(destinationId);
+};
+
+// Archive destination (soft delete)
+export const archiveDestination = async (destinationId, adminId, reason = null) => {
+  const destination = await Destination.findById(destinationId);
+
+  if (!destination) {
+    throw new ApiError(404, 'Destination not found');
+  }
+
+  if (destination.archived) {
+    throw new ApiError(400, 'Destination is already archived');
+  }
+
+  const archivedDestination = await Destination.findByIdAndUpdate(
+    destinationId,
+    {
+      $set: {
+        archived: true,
+        archivedAt: new Date(),
+        archivedBy: adminId,
+        archivedReason: reason
+      }
+    },
+    { new: true, runValidators: true }
+  ).populate('archivedBy', 'name email');
+
+  return archivedDestination;
+};
+
+// Restore archived destination
+export const restoreDestination = async (destinationId) => {
+  const destination = await Destination.findById(destinationId);
+
+  if (!destination) {
+    throw new ApiError(404, 'Destination not found');
+  }
+
+  if (!destination.archived) {
+    throw new ApiError(400, 'Destination is not archived');
+  }
+
+  const restoredDestination = await Destination.findByIdAndUpdate(
+    destinationId,
+    {
+      $set: {
+        archived: false,
+        archivedAt: null,
+        archivedBy: null,
+        archivedReason: null
+      }
+    },
+    { new: true, runValidators: true }
+  );
+
+  return restoredDestination;
+};
+
+// Permanently delete destination (only for archived destinations)
+export const permanentDeleteDestination = async (destinationId) => {
+  const destination = await Destination.findById(destinationId);
+
+  if (!destination) {
+    throw new ApiError(404, 'Destination not found');
+  }
+
+  if (!destination.archived) {
+    throw new ApiError(400, 'Destination must be archived before permanent deletion');
   }
 
   // Delete image from Cloudinary if it was uploaded

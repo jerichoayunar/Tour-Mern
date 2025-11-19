@@ -6,6 +6,8 @@ import {
   createBooking,
   updateBookingStatus,
   deleteBooking,
+  cancelBooking,
+  processRefund,
 } from '../controllers/bookingController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { validateRequest } from '../middleware/validateMiddleware.js';
@@ -30,6 +32,9 @@ router.post('/', validateRequest(createBookingSchema), createBooking);
 // GET /api/bookings/:id - Get a specific booking by ID
 router.get('/:id', getBooking);
 
+// PUT /api/bookings/:id/cancel - Cancel booking with refund calculation
+router.put('/:id/cancel', cancelBooking);
+
 // DELETE /api/bookings/:id - Delete a booking (user can delete their own)
 router.delete('/:id', deleteBooking);
 
@@ -44,6 +49,9 @@ router.get('/', getBookings);
 
 // PUT /api/bookings/:id/status - Update booking status (admin only with validation)
 router.put('/:id/status', validateRequest(updateStatusSchema), updateBookingStatus);
+
+// PUT /api/bookings/:id/refund - Process refund approval/rejection
+router.put('/:id/refund', processRefund);
 
 // Export the router for use in main Express app
 export { router as bookingRoutes };

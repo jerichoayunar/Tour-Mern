@@ -31,6 +31,8 @@ import { inquiryRoutes } from './routes/inquiryRoutes.js';
 import { userRoutes } from './routes/userRoutes.js';
 import { adminRoutes } from './routes/adminRoutes.js';
 import { activityRoutes } from './routes/activityRoutes.js';
+import { adminSettingsRoutes } from './routes/adminSettingsRoutes.js';
+import { settingsRoutes } from './routes/settingsRoutes.js';
 
 // 🧩 Import global error handler
 import { errorHandler } from './middleware/errorMiddleware.js';
@@ -125,7 +127,13 @@ app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/activities', activityRoutes);
-app.use('/admin/analytics', analyticsRoutes);
+app.use('/api/admin/settings', adminSettingsRoutes); // Admin settings
+app.use('/api/settings', settingsRoutes); // Public settings
+// 🔧 FIXED: Changed from '/admin/analytics' to '/api/admin/analytics'
+// WHY: Frontend axios calls use base URL 'http://localhost:5000/api'
+// So frontend requests to '/admin/analytics/metrics' resolve to 'http://localhost:5000/api/admin/analytics/metrics'
+// Without this fix, analytics dashboard shows 404 errors.
+app.use('/api/admin/analytics', analyticsRoutes);
 
 // ======================================================
 // 🔹 STEP 7: Global Error Handler

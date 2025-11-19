@@ -131,6 +131,28 @@ const userSchema = new mongoose.Schema(
     // ==================================================
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+
+    // ==================================================
+    // 🔹 ARCHIVE FIELDS (Soft Delete System)
+    // ==================================================
+    archived: {
+      type: Boolean,
+      default: false,
+      index: true // For filtering queries
+    },
+    archivedAt: {
+      type: Date,
+      default: null
+    },
+    archivedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    archivedReason: {
+      type: String,
+      default: null
+    }
   },
   {
     timestamps: true, // Auto add createdAt and updatedAt
