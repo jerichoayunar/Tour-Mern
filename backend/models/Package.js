@@ -81,6 +81,26 @@ const packageSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'inactive'],
     default: 'active'
+  },
+  
+  // Archive fields (soft delete)
+  archived: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  archivedAt: {
+    type: Date,
+    default: null
+  },
+  archivedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  archivedReason: {
+    type: String,
+    default: null
   }
 }, { 
   timestamps: true 
@@ -89,6 +109,7 @@ const packageSchema = new mongoose.Schema({
 // Index for better search performance
 packageSchema.index({ title: 'text' });
 packageSchema.index({ status: 1, price: 1 });
+packageSchema.index({ price: 1, duration: 1 }); // Compound index for filtering
 packageSchema.index({ createdAt: -1 });
 
 export default mongoose.model('Package', packageSchema);

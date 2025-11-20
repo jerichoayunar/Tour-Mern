@@ -234,6 +234,35 @@ export const useBookings = (initialFilters = {}) => {
   }, [showToast, fetchMyBookings]); // 🛠️ FIX: Add fetchMyBookings dependency
 
   // ============================================================================
+  // 🎯 CANCEL BOOKING - OPTIMIZED
+  // ============================================================================
+  const cancelBooking = useCallback(async (bookingId) => {
+    if (!bookingId) {
+      throw new Error('Booking ID is required');
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      console.log('🔄 Cancelling booking:', bookingId);
+      await bookingService.cancelBooking(bookingId);
+      showToast('Booking cancelled successfully!', 'success');
+      console.log('✅ Booking cancelled successfully');
+      
+      await fetchMyBookings();
+    } catch (err) {
+      const errorMessage = err.message || 'Failed to cancel booking';
+      setError(errorMessage);
+      showToast(errorMessage, 'error');
+      console.error('❌ Cancel booking error:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast, fetchMyBookings]);
+
+  // ============================================================================
   // 🎯 FILTER MANAGEMENT - OPTIMIZED
   // ============================================================================
   const updateFilters = useCallback((newFilters) => {
@@ -261,6 +290,7 @@ export const useBookings = (initialFilters = {}) => {
     createBooking,
     updateBookingStatus,
     deleteBooking,
+    cancelBooking, // Export new function
     updateFilters,
     clearFilters,
     

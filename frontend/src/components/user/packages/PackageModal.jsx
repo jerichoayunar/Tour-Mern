@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { 
   MapPin, 
   Clock, 
@@ -8,7 +8,6 @@ import {
   Car,
   Utensils,
   Home,
-  Star,
   Heart,
   X,
   Calendar
@@ -16,6 +15,7 @@ import {
 import Modal from '../../ui/Modal';
 import Button from '../../ui/Button';
 import LazyImage from '../../ui/LazyImage';
+import { formatPrice } from '../../../utils/formatters';
 
 const PackageModal = ({ package: pkg, isOpen, onClose }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -28,16 +28,6 @@ const PackageModal = ({ package: pkg, isOpen, onClose }) => {
       return pkg.image.url;
     }
     return pkg.image || 'https://via.placeholder.com/800x600?text=Premium+Tour';
-  };
-
-  // Format price
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price || 0);
   };
 
   // Calculate day-specific inclusion summary
@@ -139,7 +129,7 @@ const PackageModal = ({ package: pkg, isOpen, onClose }) => {
 
           {/* Duration Badge */}
           <div className="absolute top-4 left-4">
-            <div className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2 shadow-md">
               <Clock className="w-4 h-4" />
               {pkg.duration} Day{pkg.duration !== 1 ? 's' : ''}
             </div>
@@ -152,7 +142,7 @@ const PackageModal = ({ package: pkg, isOpen, onClose }) => {
             <h2 className="text-3xl font-bold text-gray-900 mb-2">{pkg.title}</h2>
           </div>
           <div className="text-right">
-            <div className="text-3xl font-bold text-blue-600 mb-2">
+            <div className="text-3xl font-bold text-amber-600 mb-2">
               {formatPrice(pkg.price)}
             </div>
             <div className="text-gray-500">per person</div>
@@ -162,34 +152,34 @@ const PackageModal = ({ package: pkg, isOpen, onClose }) => {
         {/* Quick Info - Simplified */}
         <div className="flex flex-wrap gap-4 text-gray-600">
           <div className="flex items-center gap-2">
-            <Clock size={20} />
+            <Clock size={20} className="text-amber-500" />
             <span className="font-medium">{pkg.duration} Days</span>
           </div>
           <div className="flex items-center gap-2">
-            <Users size={20} />
+            <Users size={20} className="text-amber-500" />
             <span className="font-medium">Small Groups</span>
           </div>
           <div className="flex items-center gap-2">
-            <Calendar size={20} />
+            <Calendar size={20} className="text-amber-500" />
             <span className="font-medium">{pkg.itinerary?.length || 0} Itinerary Days</span>
           </div>
         </div>
 
         {/* Inclusion Summary - Simplified */}
-        <div className="bg-blue-50 rounded-2xl p-6">
+        <div className="bg-amber-50 rounded-2xl p-6 border border-amber-100">
           <h3 className="text-xl font-semibold text-gray-900 mb-4">What's Included</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center bg-white rounded-xl p-4">
-              <Car size={24} className="mx-auto mb-2 text-blue-600" />
+            <div className="text-center bg-white rounded-xl p-4 shadow-sm">
+              <Car size={24} className="mx-auto mb-2 text-amber-600" />
               <div className="text-lg font-bold text-gray-900">{inclusionSummary.transport}</div>
               <div className="text-sm text-gray-600">Transport Days</div>
             </div>
-            <div className="text-center bg-white rounded-xl p-4">
+            <div className="text-center bg-white rounded-xl p-4 shadow-sm">
               <Utensils size={24} className="mx-auto mb-2 text-green-600" />
               <div className="text-lg font-bold text-gray-900">{inclusionSummary.meals}</div>
               <div className="text-sm text-gray-600">Meal Days</div>
             </div>
-            <div className="text-center bg-white rounded-xl p-4">
+            <div className="text-center bg-white rounded-xl p-4 shadow-sm">
               <Home size={24} className="mx-auto mb-2 text-purple-600" />
               <div className="text-lg font-bold text-gray-900">{inclusionSummary.stay}</div>
               <div className="text-sm text-gray-600">Stay Nights</div>
@@ -210,16 +200,16 @@ const PackageModal = ({ package: pkg, isOpen, onClose }) => {
 
         {/* Itinerary Preview - Simplified */}
         {pkg.itinerary && pkg.itinerary.length > 0 && (
-          <div className="bg-gray-50 rounded-2xl p-6">
+          <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
             <h3 className="text-xl font-semibold text-gray-900 mb-6">Daily Itinerary</h3>
             <div className="space-y-4">
               {pkg.itinerary.slice(0, 3).map((day, index) => (
                 <div
                   key={day.day}
-                  className="border-l-4 border-blue-500 pl-6 py-4 bg-white rounded-xl"
+                  className="border-l-4 border-amber-500 pl-6 py-4 bg-white rounded-xl shadow-sm"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="bg-blue-500 text-white rounded-xl w-10 h-10 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                    <div className="bg-amber-500 text-white rounded-xl w-10 h-10 flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-sm">
                       {day.day}
                     </div>
                     <div className="flex-1">
@@ -228,7 +218,7 @@ const PackageModal = ({ package: pkg, isOpen, onClose }) => {
                         {/* Day-specific inclusion badges */}
                         <div className="flex gap-2 flex-shrink-0 ml-4">
                           {day.inclusions?.transport && (
-                            <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded-full font-medium">
+                            <span className="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded-full font-medium">
                               🚗 Transport
                             </span>
                           )}
@@ -250,7 +240,7 @@ const PackageModal = ({ package: pkg, isOpen, onClose }) => {
                       {day.places && day.places.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           <div className="flex items-center gap-1 text-sm text-gray-600 font-medium mb-2 w-full">
-                            <MapPin size={16} className="text-blue-500" />
+                            <MapPin size={16} className="text-amber-500" />
                             Places to Visit:
                           </div>
                           {day.places.map((place, placeIndex) => (
@@ -287,7 +277,7 @@ const PackageModal = ({ package: pkg, isOpen, onClose }) => {
           </Button>
           <Button
             variant="primary"
-            className="flex-1 bg-blue-500 hover:bg-blue-600"
+            className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 border-none shadow-md hover:shadow-lg"
             onClick={handleBookNow}
           >
             Book This Package

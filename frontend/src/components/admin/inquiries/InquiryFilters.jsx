@@ -16,12 +16,19 @@ const InquiryFilters = ({ filters, onFiltersChange, onClearFilters }) => {
   };
 
   const handleClear = () => {
-    const emptyFilters = {};
-    setLocalFilters(emptyFilters);
+    const defaultFilters = { sort: 'newest' };
+    setLocalFilters(defaultFilters);
     onClearFilters();
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => value !== undefined && value !== '');
+  const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+    if (value === undefined || value === '') return false;
+    // Ignore default sort
+    if (key === 'sort' && value === 'newest') return false;
+    // Ignore default page size (if 10 is default)
+    if (key === 'pageSize' && value === '10') return false;
+    return true;
+  });
 
   return (
     <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
@@ -82,7 +89,7 @@ const InquiryFilters = ({ filters, onFiltersChange, onClearFilters }) => {
               Sort By
             </label>
             <select
-              value={localFilters.sort || ''}
+              value={localFilters.sort || 'newest'}
               onChange={(e) => handleFilterChange('sort', e.target.value)}
               className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             >

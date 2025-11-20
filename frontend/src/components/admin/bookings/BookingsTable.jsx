@@ -7,7 +7,11 @@ const BookingsTable = ({
   bookings, 
   onViewDetails, 
   onStatusUpdate, 
-  showResultsCount = true 
+  showResultsCount = true,
+  isArchived = false,
+  onArchive,
+  onRestore,
+  onDeletePermanent
 }) => {
   // ============================================================================
   // 🎯 FORMATTING FUNCTIONS
@@ -133,6 +137,10 @@ const BookingsTable = ({
               booking={booking}
               onViewDetails={onViewDetails}
               onStatusUpdate={onStatusUpdate}
+              isArchived={isArchived}
+              onArchive={onArchive}
+              onRestore={onRestore}
+              onDeletePermanent={onDeletePermanent}
             />
           </div>
         </td>

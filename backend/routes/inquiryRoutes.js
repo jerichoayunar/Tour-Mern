@@ -7,7 +7,10 @@ import {
   updateInquiry,
   deleteInquiry,
   getInquiryStats,
-  markAsRead
+  markAsRead,
+  archiveInquiry,
+  restoreInquiry,
+  permanentDeleteInquiry
 } from '../controllers/inquiryController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { validateRequest } from '../middleware/validateMiddleware.js';
@@ -21,7 +24,7 @@ const router = express.Router();
 
 const createInquiryLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'production' ? 3 : 100, // Higher limit in development
+  max: process.env.NODE_ENV === 'production' ? 3 : 100, // 3 in production, 100 in development
   message: {
     success: false,
     message: 'Too many inquiries created from this IP, please try again later.'
@@ -43,6 +46,9 @@ router.get('/stats', getInquiryStats);
 router.get('/:id', getInquiryById);
 router.put('/:id', validateRequest(updateInquirySchema), updateInquiry);
 router.put('/:id/read', markAsRead);
+router.put('/:id/archive', archiveInquiry);
+router.put('/:id/restore', restoreInquiry);
 router.delete('/:id', deleteInquiry);
+router.delete('/:id/permanent', permanentDeleteInquiry);
 
 export { router as inquiryRoutes };

@@ -110,5 +110,26 @@ clearLocalAuth: () => {
    */
   getStoredToken: () => {
     return localStorage.getItem('token');
+  },
+
+  /**
+   * UPDATE USER PROFILE
+   */
+  updateProfile: async (profileData) => {
+    const response = await api.put('/users/profile', profileData);
+    return response.data;
   }
 };
+
+export const {
+  register,
+  login,
+  getMe,
+  logout,
+  clearLocalAuth,
+  forgotPassword,
+  resetPassword,
+  changePassword,
+  updateProfile,
+  getStoredToken
+} = authService;

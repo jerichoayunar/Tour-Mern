@@ -1,6 +1,12 @@
 // src/pages/admin/ManageBookings.jsx - UPDATED FOR BACKEND COMPATIBILITY
 import React, { useState, useEffect, useCallback } from "react"; // 🛠️ ADD: useCallback
-import { getBookings, updateBookingStatus } from "../../services/bookingService";
+import { 
+  getBookings, 
+  updateBookingStatus,
+  archiveBooking,
+  restoreBooking,
+  deleteBookingPermanent
+} from "../../services/bookingService";
 import { useToast } from "../../context/ToastContext";
 import { useAuth } from "../../context/AuthContext";
 import BookingFilters from "../../components/admin/bookings/BookingFilters";
@@ -16,6 +22,7 @@ const ManageBookings = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false); // 📦 ARCHIVE STATE
   const [filters, setFilters] = useState({ 
     search: "", 
     status: "", 
@@ -61,12 +68,13 @@ const ManageBookings = () => {
     }
     
     try {
-      console.log('🔄 Fetching all bookings');
-      const response = await getBookings(); // Get ALL bookings without filters
+      console.log(`🔄 Fetching ${showArchived ? 'archived' : 'active'} bookings`);
+      // Pass archived flag to API
+      const response = await getBookings({ onlyArchived: showArchived }); 
       
       if (response && response.success) {
         setAllBookings(response.data || []);
-        console.log('✅ All bookings loaded:', response.data?.length || 0);
+        console.log('✅ Bookings loaded:', response.data?.length || 0);
       } else {
         throw new Error(response?.message || 'Failed to load bookings');
       }
@@ -160,10 +168,10 @@ const ManageBookings = () => {
     applyFilters();
   }, [applyFilters]); // 🛠️ FIX: Only depend on applyFilters (which has filters/allBookings as deps)
 
-  // Load all bookings on component mount
+  // Load all bookings on component mount or when archive mode changes
   useEffect(() => {
     fetchBookings();
-  }, []); // 🛠️ FIX: Empty dependency array - only run on mount
+  }, [showArchived]); // 🛠️ FIX: Re-fetch when showArchived changes
 
   // ============================================================================
   // 🎯 EVENT HANDLERS
@@ -172,6 +180,53 @@ const ManageBookings = () => {
   // Manual refresh
   const handleRefresh = () => {
     fetchBookings(true);
+  };
+
+  // Archive Booking
+  const handleArchive = async (booking) => {
+    if (!window.confirm(`Are you sure you want to archive the booking for ${booking.clientName || 'this client'}?`)) {
+      return;
+    }
+
+    try {
+      const response = await archiveBooking(booking._id);
+      if (response.success) {
+        showToast("Booking archived successfully", "success");
+        fetchBookings(true);
+      }
+    } catch (error) {
+      showToast(error.message || "Failed to archive booking", "error");
+    }
+  };
+
+  // Restore Booking
+  const handleRestore = async (booking) => {
+    try {
+      const response = await restoreBooking(booking._id);
+      if (response.success) {
+        showToast("Booking restored successfully", "success");
+        fetchBookings(true);
+      }
+    } catch (error) {
+      showToast(error.message || "Failed to restore booking", "error");
+    }
+  };
+
+  // Permanent Delete
+  const handleDeletePermanent = async (booking) => {
+    if (!window.confirm(`⚠️ WARNING: This will PERMANENTLY delete the booking for ${booking.clientName || 'this client'}. This action CANNOT be undone. Are you sure?`)) {
+      return;
+    }
+
+    try {
+      const response = await deleteBookingPermanent(booking._id);
+      if (response.success) {
+        showToast("Booking permanently deleted", "success");
+        fetchBookings(true);
+      }
+    } catch (error) {
+      showToast(error.message || "Failed to delete booking", "error");
+    }
   };
 
   // Enhanced status update with optimistic UI
@@ -260,6 +315,14 @@ const ManageBookings = () => {
             </p>
           </div>
           <div className="flex items-center space-x-3 mt-4 lg:mt-0">
+            <Button
+              variant={showArchived ? "primary" : "outline"}
+              onClick={() => setShowArchived(!showArchived)}
+              className="flex items-center space-x-2"
+            >
+              <span>{showArchived ? '📂' : '📦'}</span>
+              <span>{showArchived ? 'View Active' : 'View Archived'}</span>
+            </Button>
             <Button
               variant="outline"
               onClick={handleExport}
@@ -364,18 +427,29 @@ const ManageBookings = () => {
               bookings={filteredBookings}
               onViewDetails={handleViewDetails}
               onStatusUpdate={handleStatusUpdate}
+              isArchived={showArchived}
+              onArchive={handleArchive}
+              onRestore={handleRestore}
+              onDeletePermanent={handleDeletePermanent}
             />
           ) : (
             /* Empty State */
             <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-              <div className="text-gray-400 text-6xl mb-4">📋</div>
+              <div className="text-gray-400 text-6xl mb-4">
+                {showArchived ? '📦' : '📋'}
+              </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {hasActiveFilters ? "No matching bookings found" : "No bookings yet"}
+                {hasActiveFilters 
+                  ? "No matching bookings found" 
+                  : (showArchived ? "No archived bookings" : "No bookings yet")
+                }
               </h3>
               <p className="text-gray-500 mb-6 max-w-md mx-auto">
                 {hasActiveFilters 
                   ? "No bookings match your current filters. Try adjusting your search criteria."
-                  : "No bookings have been created yet. Bookings will appear here once customers make reservations."
+                  : (showArchived 
+                      ? "Archived bookings will appear here." 
+                      : "No bookings have been created yet. Bookings will appear here once customers make reservations.")
                 }
               </p>
               {hasActiveFilters && (

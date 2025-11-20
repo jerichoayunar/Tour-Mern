@@ -4,10 +4,22 @@ import ApiError from '../utils/ApiError.js';
 
 // Get all clients with enhanced filtering
 export const getClients = async (query = {}) => {
-  const { name, email, phone, role, status, loginMethod } = query;
+  const { name, email, phone, role, status, loginMethod, includeArchived, onlyArchived } = query;
   
   // Build filter - only non-admin users by default
   const filter = { role: { $ne: 'admin' } };
+  
+  // Archive filtering
+  if (onlyArchived === 'true') {
+    filter.archived = true; // Show only archived
+  } else if (includeArchived !== 'true') {
+    // Hide archived - check for both false AND undefined (existing users)
+    filter.$or = [
+      { archived: false },
+      { archived: { $exists: false } }
+    ];
+  }
+  // If includeArchived === 'true', don't filter by archived status (show all)
   
   // Enhanced filtering capabilities
   if (name) filter.name = { $regex: name, $options: 'i' };
@@ -19,6 +31,7 @@ export const getClients = async (query = {}) => {
 
   const clients = await User.find(filter)
     .select('-password -resetPasswordToken -resetPasswordExpire')
+    .populate('archivedBy', 'name email')
     .sort({ createdAt: -1 });
 
   return clients;
@@ -81,9 +94,95 @@ export const deleteClient = async (clientId) => {
   await User.findByIdAndDelete(clientId);
 };
 
+// Archive client (soft delete)
+export const archiveClient = async (clientId, adminId, reason = null) => {
+  const client = await User.findById(clientId);
+
+  if (!client || client.role === 'admin') {
+    throw new ApiError(404, 'Client not found');
+  }
+
+  if (client.archived) {
+    throw new ApiError(400, 'Client is already archived');
+  }
+
+  // Use findByIdAndUpdate for atomic operation
+  const archivedClient = await User.findByIdAndUpdate(
+    clientId,
+    {
+      $set: {
+        archived: true,
+        archivedAt: new Date(),
+        archivedBy: adminId,
+        archivedReason: reason
+      }
+    },
+    { new: true, runValidators: true }
+  )
+    .select('-password -resetPasswordToken -resetPasswordExpire')
+    .populate('archivedBy', 'name email');
+
+  return archivedClient;
+};
+
+// Restore archived client
+export const restoreClient = async (clientId) => {
+  const client = await User.findById(clientId);
+
+  if (!client || client.role === 'admin') {
+    throw new ApiError(404, 'Client not found');
+  }
+
+  if (!client.archived) {
+    throw new ApiError(400, 'Client is not archived');
+  }
+
+  // Use findByIdAndUpdate for atomic operation
+  const restoredClient = await User.findByIdAndUpdate(
+    clientId,
+    {
+      $set: { archived: false },
+      $unset: {
+        archivedAt: 1,
+        archivedBy: 1,
+        archivedReason: 1
+      }
+    },
+    { new: true, runValidators: false } // Disable validation for restore to prevent issues with legacy data
+  ).select('-password -resetPasswordToken -resetPasswordExpire');
+
+  return restoredClient;
+};
+
+// Permanently delete client (only for archived clients)
+export const permanentDeleteClient = async (clientId) => {
+  const client = await User.findById(clientId);
+
+  if (!client || client.role === 'admin') {
+    throw new ApiError(404, 'Client not found');
+  }
+
+  if (!client.archived) {
+    throw new ApiError(400, 'Client must be archived before permanent deletion');
+  }
+
+  await User.findByIdAndDelete(clientId);
+};
+
 // ✅ ENHANCED: Get client statistics with more insights
 export const getClientStats = async () => {
-  const totalClients = await User.countDocuments({ role: { $ne: 'admin' } });
+  const totalClients = await User.countDocuments({ 
+    role: { $ne: 'admin' },
+    $or: [
+      { archived: false },
+      { archived: { $exists: false } }
+    ]
+  });
+  
+  const archivedClients = await User.countDocuments({
+    role: { $ne: 'admin' },
+    archived: true
+  });
   
   // Last 30 days registrations
   const thirtyDaysAgo = new Date();
@@ -91,6 +190,10 @@ export const getClientStats = async () => {
   
   const newClientsLast30Days = await User.countDocuments({
     role: { $ne: 'admin' },
+    $or: [
+      { archived: false },
+      { archived: { $exists: false } }
+    ],
     createdAt: { $gte: thirtyDaysAgo }
   });
 
@@ -100,28 +203,45 @@ export const getClientStats = async () => {
   
   const newClientsLast7Days = await User.countDocuments({
     role: { $ne: 'admin' },
+    $or: [
+      { archived: false },
+      { archived: { $exists: false } }
+    ],
     createdAt: { $gte: sevenDaysAgo }
   });
 
   // ✅ NEW: Authentication method breakdown
   const localUsers = await User.countDocuments({ 
     role: { $ne: 'admin' },
+    $or: [
+      { archived: false },
+      { archived: { $exists: false } }
+    ],
     loginMethod: 'local' 
   });
   
   const googleUsers = await User.countDocuments({ 
     role: { $ne: 'admin' },
+    $or: [
+      { archived: false },
+      { archived: { $exists: false } }
+    ],
     loginMethod: 'google' 
   });
 
   // ✅ NEW: Status breakdown
   const activeUsers = await User.countDocuments({ 
     role: { $ne: 'admin' },
+    $or: [
+      { archived: false },
+      { archived: { $exists: false } }
+    ],
     status: 'active' 
   });
 
   return {
     totalClients,
+    archivedClients, // NEW: archived count
     newClientsLast30Days,
     newClientsLast7Days,
     // ✅ NEW FIELDS: Enhanced analytics

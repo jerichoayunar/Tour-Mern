@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useSettings } from "../../../context/SettingsContext";
 
 // Simple SVG Icons to replace lucide-react imports
 const MapPinIcon = ({ className = "w-5 h-5" }) => (
@@ -44,6 +45,8 @@ const TiktokIcon = ({ className = "w-5 h-5" }) => (
 );
 
 function Footer() {
+  const { settings } = useSettings();
+
   return (
     <footer className="bg-slate-900/90 backdrop-blur-lg border-t border-slate-700/50 relative overflow-hidden">
       {/* Background Pattern */}
@@ -56,8 +59,10 @@ function Footer() {
           {/* Company Info */}
           <div className="lg:col-span-2">
             <h3 className="text-2xl font-bold text-white mb-4">
-              Bukidnon Tours
-              <span className="block text-amber-400 text-sm font-normal mt-1">Adventure Awards</span>
+              {settings?.general?.siteName || "Bukidnon Tours"}
+              <span className="block text-amber-400 text-sm font-normal mt-1">
+                {settings?.general?.tagline || "Adventure Awaits"}
+              </span>
             </h3>
             
             {/* Logo and Brand */}
@@ -65,8 +70,8 @@ function Footer() {
               <div className="relative">
                 <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg flex items-center justify-center transform group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
                   <img
-                    src="/images/destinations/bukidnonupdates.jpg"
-                    alt="ExploreBukidnon"
+                    src={settings?.general?.logo || "/images/destinations/bukidnonupdates.jpg"}
+                    alt={settings?.general?.siteName || "ExploreBukidnon"}
                     className="w-12 h-12 object-cover rounded-xl"
                   />
                 </div>
@@ -75,7 +80,7 @@ function Footer() {
 
               <div className="flex flex-col">
                 <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent tracking-tight group-hover:scale-105 transition-transform duration-300">
-                  ExploreBukidnon
+                  {settings?.general?.siteName || "ExploreBukidnon"}
                 </h3>
                 <p className="text-sm text-slate-300 font-medium mt-1 tracking-wide">
                   Travel & Adventures
@@ -85,8 +90,7 @@ function Footer() {
 
             {/* Description */}
             <p className="text-slate-300 mb-6 leading-relaxed max-w-md border-l-4 border-amber-400 pl-4">
-              Your trusted partner for exploring breathtaking landscapes and rich cultural experiences 
-              across Bukidnon's scenic highlands.
+              {settings?.general?.description || "Your trusted partner for exploring breathtaking landscapes and rich cultural experiences across Bukidnon's scenic highlands."}
             </p>
 
             {/* Contact Info */}
@@ -94,21 +98,21 @@ function Footer() {
               <div className="flex items-center gap-3 group">
                 <MapPinIcon className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
                 <span className="text-slate-300 text-sm group-hover:text-white transition-colors">
-                  Bukidnon, Philippines
+                  {settings?.contact?.address || "Bukidnon, Philippines"}
                 </span>
               </div>
 
               <div className="flex items-center gap-3 group">
                 <PhoneIcon className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
                 <span className="text-slate-300 text-sm group-hover:text-white transition-colors">
-                  +63 912 345 6789
+                  {settings?.contact?.phone || "+63 912 345 6789"}
                 </span>
               </div>
 
               <div className="flex items-center gap-3 group">
                 <MailIcon className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
                 <span className="text-slate-300 text-sm group-hover:text-white transition-colors">
-                  @Bukidnon Update's
+                  {settings?.contact?.supportEmail || "info@bukidnontours.com"}
                 </span>
               </div>
             </div>
@@ -152,19 +156,19 @@ function Footer() {
             <div className="flex gap-3 mb-6">
               {[
                 { 
-                  href: "https://www.facebook.com/bukidnonupdates", 
+                  href: settings?.socialMedia?.facebook || "https://www.facebook.com/bukidnonupdates", 
                   icon: FacebookIcon, 
                   color: "hover:bg-blue-600 hover:border-blue-600",
                   label: "Facebook"
                 },
                 { 
-                  href: "https://www.tiktok.com/@bukidnonupdates", 
+                  href: settings?.socialMedia?.tiktok || "https://www.tiktok.com/@bukidnonupdates", 
                   icon: TiktokIcon, 
                   color: "hover:bg-black hover:border-black",
                   label: "TikTok"
                 },
                 { 
-                  href: "https://www.instagram.com/bukidnonupdatess", 
+                  href: settings?.socialMedia?.instagram || "https://www.instagram.com/bukidnonupdatess", 
                   icon: InstagramIcon, 
                   color: "hover:bg-gradient-to-r hover:from-purple-600 hover:via-pink-600 hover:to-orange-500 hover:border-transparent",
                   label: "Instagram"
@@ -203,7 +207,7 @@ function Footer() {
         <div className="border-t border-slate-700/50 mt-8 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-slate-400 text-sm">
-              © 2024 Bukidnon Tours. All rights reserved.
+              © {new Date().getFullYear()} {settings?.general?.siteName || "Bukidnon Tours"}. All rights reserved.
             </p>
             <div className="flex items-center gap-2 mt-2 md:mt-0">
               <span className="text-slate-400 text-sm">ExploreBukidnon Travel & Adventures</span>

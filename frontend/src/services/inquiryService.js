@@ -36,6 +36,21 @@ const createInquiry = async (inquiryData) => {
   return response.data;
 };
 
+const archiveInquiry = async (id, reason = null) => {
+  const response = await api.put(`/inquiries/${id}/archive`, { reason });
+  return response.data;
+};
+
+const restoreInquiry = async (id) => {
+  const response = await api.put(`/inquiries/${id}/restore`);
+  return response.data;
+};
+
+const permanentDeleteInquiry = async (id) => {
+  const response = await api.delete(`/inquiries/${id}/permanent`);
+  return response.data;
+};
+
 export default {
   getInquiries,
   getInquiryStats,
@@ -43,5 +58,8 @@ export default {
   updateInquiry,
   markAsRead,
   deleteInquiry,
-  createInquiry
+  createInquiry,
+  archiveInquiry,
+  restoreInquiry,
+  permanentDeleteInquiry
 };
