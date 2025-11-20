@@ -130,6 +130,11 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
             <div className="flex items-center space-x-3 mb-2">
               <h2 className="text-2xl font-bold text-gray-900">Booking Details</h2>
               <BookingStatusBadge status={booking.status} />
+              {booking.archived && (
+                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600 border border-gray-200">
+                  📦 Archived
+                </span>
+              )}
             </div>
             <p className="text-gray-600">
               Booking ID: <span className="font-mono text-gray-800">{booking._id}</span>
@@ -305,18 +310,21 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 rows="6"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Add internal notes, comments, or special instructions for this booking..."
+                disabled={booking.archived}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
+                placeholder={booking.archived ? "Notes cannot be edited for archived bookings." : "Add internal notes, comments, or special instructions for this booking..."}
               />
-              <div className="flex justify-end mt-2">
-                <Button
-                  onClick={handleSaveNotes}
-                  variant="primary"
-                  size="sm"
-                >
-                  Save Notes
-                </Button>
-              </div>
+              {!booking.archived && (
+                <div className="flex justify-end mt-2">
+                  <Button
+                    onClick={handleSaveNotes}
+                    variant="primary"
+                    size="sm"
+                  >
+                    Save Notes
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -327,29 +335,33 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
             Last updated: {new Date(booking.updatedAt || booking.createdAt).toLocaleString()}
           </div>
           <div className="flex space-x-3">
-            {booking.status !== "confirmed" && booking.status !== "cancelled" && (
-              <Button
-                onClick={() => handleStatusChange("confirmed")}
-                variant="primary"
-              >
-                ✅ Confirm Booking
-              </Button>
-            )}
-            {booking.status !== "cancelled" && (
-              <Button
-                onClick={() => handleStatusChange("cancelled")}
-                variant="danger"
-              >
-                ❌ Cancel Booking
-              </Button>
-            )}
-            {booking.status === "cancelled" && (
-              <Button
-                onClick={() => handleStatusChange("pending")}
-                variant="secondary"
-              >
-                🔄 Reopen Booking
-              </Button>
+            {!booking.archived && (
+              <>
+                {booking.status !== "confirmed" && booking.status !== "cancelled" && (
+                  <Button
+                    onClick={() => handleStatusChange("confirmed")}
+                    variant="primary"
+                  >
+                    ✅ Confirm Booking
+                  </Button>
+                )}
+                {booking.status !== "cancelled" && (
+                  <Button
+                    onClick={() => handleStatusChange("cancelled")}
+                    variant="danger"
+                  >
+                    ❌ Cancel Booking
+                  </Button>
+                )}
+                {booking.status === "cancelled" && (
+                  <Button
+                    onClick={() => handleStatusChange("pending")}
+                    variant="secondary"
+                  >
+                    🔄 Reopen Booking
+                  </Button>
+                )}
+              </>
             )}
             <Button
               onClick={onClose}

@@ -1,11 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import { useSettings } from "../../../context/SettingsContext";
 import { ChevronDown, User, LogOut, Settings, History, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
 
 function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { settings } = useSettings();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -34,8 +36,8 @@ function Navbar() {
           >
             <div className="relative">
               <img
-                src="/images/destinations/bukidnonupdates.jpg"
-                alt="Bukidnon Tours"
+                src={settings?.general?.logo || "/images/destinations/bukidnonupdates.jpg"}
+                alt={settings?.general?.siteName || "Bukidnon Tours"}
                 className="w-12 h-12 object-contain transform group-hover:scale-110 transition-transform duration-300"
               />
               <div className="absolute inset-0 rounded-xl bg-blue-400/10 blur-md group-hover:blur-lg transition-all duration-300 -z-10" />
@@ -43,10 +45,10 @@ function Navbar() {
             {/* Hide text on smaller screens, show on larger */}
             <div className="hidden lg:flex flex-col">
               <span className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent tracking-tight">
-                Bukidnon Tours
+                {settings?.general?.siteName || "Bukidnon Tours"}
               </span>
               <span className="text-xs text-gray-500 font-medium -mt-1">
-                Adventure Awaits
+                {settings?.general?.tagline || "Adventure Awaits"}
               </span>
             </div>
           </Link>

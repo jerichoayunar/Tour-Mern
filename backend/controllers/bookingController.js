@@ -299,3 +299,109 @@ export const processRefund = async (req, res, next) => {
     next(error);
   }
 };
+
+// ============================================================================
+// 🔹 ARCHIVE SYSTEM
+// ============================================================================
+
+// @desc    Archive booking (soft delete)
+// @route   PUT /api/bookings/:id/archive
+// @access  Private/Admin
+export const archiveBooking = async (req, res, next) => {
+  try {
+    const { reason } = req.body;
+    const booking = await bookingService.archiveBooking(
+      req.params.id,
+      req.user._id,
+      reason
+    );
+
+    try {
+      await logActivity({
+        userId: req.user.id,
+        type: 'booking_archived',
+        description: `Booking archived`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        metadata: {
+          bookingId: req.params.id,
+          reason
+        }
+      });
+    } catch (activityError) {
+      console.log('Activity logging failed:', activityError.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking archived successfully!',
+      data: booking,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Restore archived booking
+// @route   PUT /api/bookings/:id/restore
+// @access  Private/Admin
+export const restoreBooking = async (req, res, next) => {
+  try {
+    const booking = await bookingService.restoreBooking(req.params.id);
+
+    try {
+      await logActivity({
+        userId: req.user.id,
+        type: 'booking_restored',
+        description: `Booking restored from archive`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        metadata: {
+          bookingId: req.params.id
+        }
+      });
+    } catch (activityError) {
+      console.log('Activity logging failed:', activityError.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking restored successfully!',
+      data: booking,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Permanently delete booking (archived only)
+// @route   DELETE /api/bookings/:id/permanent
+// @access  Private/Admin
+export const permanentDeleteBooking = async (req, res, next) => {
+  try {
+    await bookingService.permanentDeleteBooking(req.params.id);
+
+    try {
+      await logActivity({
+        userId: req.user.id,
+        type: 'booking_deleted_permanent',
+        description: `Booking permanently deleted`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        metadata: {
+          bookingId: req.params.id
+        }
+      });
+    } catch (activityError) {
+      console.log('Activity logging failed:', activityError.message);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Booking permanently deleted!',
+      data: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+};

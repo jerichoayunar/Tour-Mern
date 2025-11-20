@@ -1,5 +1,5 @@
 // src/context/BookingContext.jsx
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { useBookings } from '../hooks/useBookings';
 
@@ -141,7 +141,7 @@ export const BookingProvider = ({ children }) => {
     dispatch({ type: BOOKING_ACTIONS.SET_ERROR, payload: null });
   };
 
-  const value = {
+  const value = useMemo(() => ({
     bookings: state.bookings,
     loading: state.loading,
     error: state.error,
@@ -150,7 +150,7 @@ export const BookingProvider = ({ children }) => {
     deleteBooking,
     loadUserBookings,
     clearBookingError,
-  };
+  }), [state.bookings, state.loading, state.error]);
 
   return (
     <BookingContext.Provider value={value}>

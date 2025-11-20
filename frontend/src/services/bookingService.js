@@ -61,13 +61,57 @@ export const deleteBooking = async (bookingId) => {
   }
 };
 
+// REGULAR USER: Cancel booking
+export const cancelBooking = async (bookingId) => {
+  try {
+    const response = await api.put(`/bookings/${bookingId}/cancel`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// ADMIN: Archive booking
+export const archiveBooking = async (bookingId, reason) => {
+  try {
+    const response = await api.put(`/bookings/${bookingId}/archive`, { reason });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// ADMIN: Restore booking
+export const restoreBooking = async (bookingId) => {
+  try {
+    const response = await api.put(`/bookings/${bookingId}/restore`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// ADMIN: Permanently delete booking
+export const deleteBookingPermanent = async (bookingId) => {
+  try {
+    const response = await api.delete(`/bookings/${bookingId}/permanent`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
 export default {
   // Admin functions
   getBookings,
   updateBookingStatus,
+  archiveBooking,
+  restoreBooking,
+  deleteBookingPermanent,
   // User functions
   getMyBookings,
   createBooking,
   getBooking,
-  deleteBooking
+  deleteBooking,
+  cancelBooking // Export new function
 };

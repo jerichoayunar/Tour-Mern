@@ -26,7 +26,7 @@ const DestinationCard = ({ destination, onClick, viewMode = 'grid' }) => {
   if (viewMode === 'list') {
     return (
       <div 
-        className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden border border-gray-200/60 hover:border-blue-200 p-6 flex gap-6"
+        className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden border border-gray-200/60 hover:border-amber-200 p-6 flex gap-6"
         onClick={handleClick}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -51,7 +51,7 @@ const DestinationCard = ({ destination, onClick, viewMode = 'grid' }) => {
           {/* Badges - Only show if destination is new */}
           {isNew && (
             <div className="absolute top-2 left-2">
-              <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-bold backdrop-blur-sm flex items-center gap-1">
+              <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold backdrop-blur-sm flex items-center gap-1 shadow-md">
                 <Clock className="w-3 h-3" />
                 NEW
               </span>
@@ -75,7 +75,7 @@ const DestinationCard = ({ destination, onClick, viewMode = 'grid' }) => {
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between mb-2">
-            <h3 className="text-xl font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
+            <h3 className="text-xl font-bold text-gray-900 line-clamp-1 group-hover:text-amber-600 transition-colors">
               {destination.name}
             </h3>
             {/* Status Badge */}
@@ -87,7 +87,7 @@ const DestinationCard = ({ destination, onClick, viewMode = 'grid' }) => {
           </div>
           
           <div className="flex items-center text-gray-600 mb-3">
-            <MapPin className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
+            <MapPin className="w-4 h-4 mr-2 text-amber-500 flex-shrink-0" />
             <span className="text-sm font-medium">{destination.location}</span>
           </div>
 
@@ -101,7 +101,7 @@ const DestinationCard = ({ destination, onClick, viewMode = 'grid' }) => {
               {/* Removed date information */}
             </div>
             
-            <span className="text-blue-600 font-semibold group-hover:text-blue-700 transition-colors flex items-center gap-1">
+            <span className="text-amber-600 font-semibold group-hover:text-amber-700 transition-colors flex items-center gap-1">
               View Details
               <ExternalLink className="w-3 h-3" />
             </span>
@@ -114,7 +114,7 @@ const DestinationCard = ({ destination, onClick, viewMode = 'grid' }) => {
   // Grid View
   return (
     <div 
-      className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden border border-gray-200/60 hover:border-blue-200"
+      className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden border border-gray-200/60 hover:border-amber-200"
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -147,7 +147,7 @@ const DestinationCard = ({ destination, onClick, viewMode = 'grid' }) => {
         <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
           {/* New Badge - Only show if destination is new */}
           {isNew && (
-            <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm flex items-center gap-1">
+            <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm flex items-center gap-1 shadow-md">
               <Clock className="w-3 h-3" />
               NEW
             </span>
@@ -185,13 +185,13 @@ const DestinationCard = ({ destination, onClick, viewMode = 'grid' }) => {
       {/* Content */}
       <div className="p-5">
         <div className="flex items-start justify-between mb-3">
-          <h3 className="text-lg font-bold text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">
+          <h3 className="text-lg font-bold text-gray-900 line-clamp-1 group-hover:text-amber-600 transition-colors">
             {destination.name}
           </h3>
         </div>
         
         <div className="flex items-center text-gray-600 mb-3">
-          <MapPin className="w-4 h-4 mr-2 text-blue-500 flex-shrink-0" />
+          <MapPin className="w-4 h-4 mr-2 text-amber-500 flex-shrink-0" />
           <span className="text-sm font-medium line-clamp-1">{destination.location}</span>
         </div>
 
@@ -201,7 +201,7 @@ const DestinationCard = ({ destination, onClick, viewMode = 'grid' }) => {
 
         {/* Metadata Footer */}
         <div className="flex items-center justify-between text-xs text-gray-500 pt-3 border-t border-gray-200">
-          <span className="text-blue-600 font-semibold group-hover:text-blue-700 transition-colors flex items-center gap-1">
+          <span className="text-amber-600 font-semibold group-hover:text-amber-700 transition-colors flex items-center gap-1">
             Explore
             <ExternalLink className="w-3 h-3" />
           </span>

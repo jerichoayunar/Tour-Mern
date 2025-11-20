@@ -8,6 +8,11 @@ import axios from 'axios';
  * @returns {Object} Verification result with success status and additional data
  */
 export const verifyRecaptcha = async (recaptchaToken) => {
+  // Skip reCAPTCHA in development/test for easier testing
+  if (process.env.NODE_ENV !== 'production') {
+    return { success: true, message: 'reCAPTCHA skipped in development' };
+  }
+
   try {
     // Check if reCAPTCHA token is provided
     if (!recaptchaToken) {

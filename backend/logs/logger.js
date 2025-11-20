@@ -1,19 +1,48 @@
 // logs/logger.js
-import { createLogger, format, transports } from 'winston';
+import winston from 'winston';
+import 'winston-daily-rotate-file';
+
+const { createLogger, format, transports } = winston;
+
+// Define log format
+const logFormat = format.combine(
+  format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+  format.errors({ stack: true }),
+  format.splat(),
+  format.json()
+);
+
+// Define transport for daily rotation
+const dailyRotateTransport = new transports.DailyRotateFile({
+  filename: 'logs/application-%DATE%.log',
+  datePattern: 'YYYY-MM-DD',
+  zippedArchive: true,
+  maxSize: '20m',
+  maxFiles: '14d',
+  level: 'info'
+});
 
 const logger = createLogger({
-  level: 'info',
-  format: format.combine(
-    format.timestamp(),
-    format.printf(({ timestamp, level, message, ...meta }) => {
-      return `${timestamp} [${level.toUpperCase()}]: ${message} ${Object.keys(meta).length ? JSON.stringify(meta) : ''}`;
-    })
-  ),
+  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+  format: logFormat,
+  defaultMeta: { service: 'tour-booking-service' },
   transports: [
-    new transports.Console(),
+    // Write all logs with importance level of `error` or less to `error.log`
     new transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new transports.File({ filename: 'logs/combined.log' }),
+    // Write all logs with importance level of `info` or less to daily rotated file
+    dailyRotateTransport
   ],
 });
+
+// If we're not in production then log to the `console` with the format:
+// `${info.level}: ${info.message} JSON.stringify({ ...rest }) `
+if (process.env.NODE_ENV !== 'production') {
+  logger.add(new transports.Console({
+    format: format.combine(
+      format.colorize(),
+      format.simple()
+    ),
+  }));
+}
 
 export default logger;

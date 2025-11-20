@@ -1,6 +1,14 @@
 // src/pages/admin/ManagePackages.jsx - REMOVED GLOBAL INCLUSIONS
 import React, { useEffect, useState } from "react";
-import { getPackages, createPackage, updatePackage, deletePackage } from "../../services/packageService";
+import { 
+  getPackages, 
+  createPackage, 
+  updatePackage, 
+  deletePackage,
+  archivePackage,
+  restorePackage,
+  deletePackagePermanent
+} from "../../services/packageService";
 import { useToast } from "../../context/ToastContext";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
@@ -16,6 +24,7 @@ const ManagePackages = () => {
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPackage, setEditingPackage] = useState(null);
+  const [showArchived, setShowArchived] = useState(false); // 📦 ARCHIVE STATE
 
   // Format currency function for Philippine Peso
   const formatPrice = (price) => {
@@ -64,8 +73,9 @@ const ManagePackages = () => {
   const fetchPackages = async () => {
     try {
       setLoading(true);
-      console.log('🔄 Fetching packages...');
-      const response = await getPackages();
+      console.log(`🔄 Fetching ${showArchived ? 'archived' : 'active'} packages...`);
+      // Pass archived filter
+      const response = await getPackages({ onlyArchived: showArchived });
       console.log('✅ Packages data:', response);
       setPackages(response || []);
     } catch (error) {
@@ -77,10 +87,10 @@ const ManagePackages = () => {
     }
   };
 
-  // Fetch packages on component mount
+  // Fetch packages on component mount or when archive mode changes
   useEffect(() => {
     fetchPackages();
-  }, []);
+  }, [showArchived]);
 
   // ------------------ CRUD OPERATIONS ------------------
   const handleSave = async (formData) => {
@@ -133,6 +143,56 @@ const ManagePackages = () => {
     setModalOpen(true);
   };
 
+  // Archive Package
+  const handleArchive = async (pkg) => {
+    if (!window.confirm(`Are you sure you want to archive "${pkg.title}"?`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await archivePackage(pkg._id);
+      showToast("Package archived successfully", "success");
+      fetchPackages();
+    } catch (error) {
+      showToast(error.message || "Failed to archive package", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Restore Package
+  const handleRestore = async (pkg) => {
+    try {
+      setLoading(true);
+      await restorePackage(pkg._id);
+      showToast("Package restored successfully", "success");
+      fetchPackages();
+    } catch (error) {
+      showToast(error.message || "Failed to restore package", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Permanent Delete
+  const handleDeletePermanent = async (pkg) => {
+    if (!window.confirm(`⚠️ WARNING: This will PERMANENTLY delete "${pkg.title}". This action CANNOT be undone. Are you sure?`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await deletePackagePermanent(pkg._id);
+      showToast("Package permanently deleted", "success");
+      fetchPackages();
+    } catch (error) {
+      showToast(error.message || "Failed to delete package", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ------------------ RENDER COMPONENT ------------------
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -151,6 +211,18 @@ const ManagePackages = () => {
         >
           <span className="text-lg">+</span>
           <span>Add New Package</span>
+        </Button>
+      </div>
+
+      {/* Archive Toggle */}
+      <div className="flex justify-end mb-4">
+        <Button
+          variant={showArchived ? "primary" : "outline"}
+          onClick={() => setShowArchived(!showArchived)}
+          className="flex items-center space-x-2"
+        >
+          <span>{showArchived ? '📂' : '📦'}</span>
+          <span>{showArchived ? 'View Active' : 'View Archived'}</span>
         </Button>
       </div>
 
@@ -290,6 +362,10 @@ const ManagePackages = () => {
           data={packages} 
           onEdit={handleEdit} 
           onDelete={handleDelete} 
+          isArchived={showArchived}
+          onArchive={handleArchive}
+          onRestore={handleRestore}
+          onDeletePermanent={handleDeletePermanent}
         />
       )}
 

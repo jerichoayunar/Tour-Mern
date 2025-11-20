@@ -103,7 +103,7 @@ const DestinationFilters = ({
               placeholder="Search destinations, locations..."
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 placeholder-gray-400"
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 bg-gray-50 placeholder-gray-400"
             />
           </div>
         </div>
@@ -115,7 +115,7 @@ const DestinationFilters = ({
             <select
               value={filters.location || ''}
               onChange={(e) => handleLocationSelect(e.target.value)}
-              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[180px]"
+              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[180px]"
             >
               <option value="">All Locations</option>
               {availableLocations.map(location => (
@@ -150,7 +150,7 @@ const DestinationFilters = ({
             <select
               value={filters.sortBy}
               onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[160px]"
+              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[160px]"
             >
               <option value="name">Sort: A-Z</option>
               <option value="nameDesc">Sort: Z-A</option>
@@ -176,12 +176,12 @@ const DestinationFilters = ({
                   onClick={() => clearFilter(filter.type)}
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 group border ${
                     filter.type === 'search' 
-                      ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
+                      ? 'bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-100'
                       : filter.type === 'location'
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
                       : filter.type === 'status'
                       ? 'bg-orange-50 text-orange-700 border-orange-100 hover:bg-orange-100'
-                      : 'bg-purple-50 text-purple-700 border-purple-100 hover:bg-purple-100'
+                      : 'bg-yellow-50 text-yellow-700 border-yellow-100 hover:bg-yellow-100'
                   }`}
                 >
                   <span>{filter.label}</span>

@@ -23,6 +23,7 @@ export const protect = async (req, res, next) => {
 
       // If user doesn't exist anymore
       if (!req.user) {
+        console.log('Protect Middleware: User not found for ID:', decoded.id);
         return res.status(401).json({
           success: false,
           message: 'Not authorized, user not found'
@@ -32,6 +33,7 @@ export const protect = async (req, res, next) => {
       // User is authenticated, proceed to next middleware/controller
       next();
     } catch (error) {
+      console.error('Protect Middleware Error:', error.message);
       // Token is invalid or expired
       return res.status(401).json({
         success: false,
@@ -42,6 +44,7 @@ export const protect = async (req, res, next) => {
 
   // No token provided
   if (!token) {
+    console.log('Protect Middleware: No token provided in header');
     return res.status(401).json({
       success: false,
       message: 'Not authorized, no token'

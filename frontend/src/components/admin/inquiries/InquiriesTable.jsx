@@ -1,22 +1,25 @@
 // src/components/admin/inquiries/InquiriesTable.jsx
 import React from 'react';
-import { Eye, Mail, Trash2, Clock, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Mail, Trash2, Clock, AlertCircle, ChevronLeft, ChevronRight, Archive } from 'lucide-react';
 
 const InquiriesTable = ({ 
   inquiries, 
   loading, 
+  showArchived,
   onView, 
   onMarkAsRead, 
-  onDelete,
+  onArchive,
+  onRestore,
+  onPermanentDelete,
   pagination,
   onPageChange
 }) => {
   const getStatusColor = (status) => {
     const colors = {
-      new: 'bg-blue-100 text-blue-800 border-blue-200',
-      read: 'bg-gray-100 text-gray-800 border-gray-200',
-      replied: 'bg-green-100 text-green-800 border-green-200',
-      closed: 'bg-purple-100 text-purple-800 border-purple-200'
+      new: 'bg-amber-100 text-amber-800 border-amber-200',
+      read: 'bg-stone-100 text-stone-800 border-stone-200',
+      replied: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      closed: 'bg-stone-200 text-stone-800 border-stone-300'
     };
     return colors[status] || colors.new;
   };
@@ -30,13 +33,38 @@ const InquiriesTable = ({
     return colors[priority] || colors.medium;
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const formatDate = (dateString, inquiry) => {
+    const date = new Date(dateString);
+    
+    // Check if date is valid
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    // Fallback to ID timestamp if date is invalid
+    if (inquiry && inquiry._id) {
+      try {
+        const timestamp = parseInt(inquiry._id.substring(0, 8), 16) * 1000;
+        const idDate = new Date(timestamp);
+        if (!isNaN(idDate.getTime())) {
+          return idDate.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        }
+      } catch (e) {
+        // Ignore error
+      }
+    }
+    
+    return 'N/A';
   };
 
   const isNewInquiry = (createdAt, status) => {
@@ -48,7 +76,7 @@ const InquiriesTable = ({
     return (
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
         <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
         </div>
       </div>
     );
@@ -92,13 +120,13 @@ const InquiriesTable = ({
               <tr 
                 key={inquiry._id} 
                 className={`hover:bg-gray-50 transition-colors ${
-                  inquiry.status === 'new' ? 'bg-blue-50' : ''
+                  inquiry.status === 'new' ? 'bg-amber-50' : ''
                 }`}
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center">
                     {isNewInquiry(inquiry.createdAt, inquiry.status) && (
-                      <span className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mr-3"></span>
+                      <span className="flex-shrink-0 w-2 h-2 bg-amber-600 rounded-full mr-3"></span>
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2">
@@ -106,7 +134,7 @@ const InquiriesTable = ({
                           {inquiry.name}
                         </p>
                         {isNewInquiry(inquiry.createdAt, inquiry.status) && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                             New
                           </span>
                         )}
@@ -134,33 +162,55 @@ const InquiriesTable = ({
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <div className="flex items-center">
                     <Clock className="w-4 h-4 mr-1 text-gray-400" />
-                    {formatDate(inquiry.createdAt)}
+                    {formatDate(inquiry.createdAt, inquiry)}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                   <button
                     onClick={() => onView(inquiry)}
-                    className="text-blue-600 hover:text-blue-900 transition-colors p-1 rounded"
+                    className="text-amber-600 hover:text-amber-900 transition-colors p-1 rounded"
                     title="View Inquiry"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
-                  {inquiry.status === 'new' && (
-                    <button
-                      onClick={() => onMarkAsRead(inquiry._id)}
-                      className="text-gray-600 hover:text-gray-900 transition-colors p-1 rounded"
-                      title="Mark as Read"
-                    >
-                      <Mail className="w-4 h-4" />
-                    </button>
+                  
+                  {showArchived ? (
+                    <>
+                      <button
+                        onClick={() => onRestore(inquiry)}
+                        className="text-green-600 hover:text-green-900 transition-colors p-1 rounded"
+                        title="Restore Inquiry"
+                      >
+                        <Clock className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => onPermanentDelete(inquiry)}
+                        className="text-red-600 hover:text-red-900 transition-colors p-1 rounded"
+                        title="Delete Forever"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      {inquiry.status === 'new' && (
+                        <button
+                          onClick={() => onMarkAsRead(inquiry._id)}
+                          className="text-gray-600 hover:text-gray-900 transition-colors p-1 rounded"
+                          title="Mark as Read"
+                        >
+                          <Mail className="w-4 h-4" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => onArchive(inquiry)}
+                        className="text-orange-600 hover:text-orange-900 transition-colors p-1 rounded"
+                        title="Archive Inquiry"
+                      >
+                        <Archive className="w-4 h-4" />
+                      </button>
+                    </>
                   )}
-                  <button
-                    onClick={() => onDelete(inquiry)}
-                    className="text-red-600 hover:text-red-900 transition-colors p-1 rounded"
-                    title="Delete Inquiry"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
                 </td>
               </tr>
             ))}

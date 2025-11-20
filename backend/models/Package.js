@@ -109,6 +109,7 @@ const packageSchema = new mongoose.Schema({
 // Index for better search performance
 packageSchema.index({ title: 'text' });
 packageSchema.index({ status: 1, price: 1 });
+packageSchema.index({ price: 1, duration: 1 }); // Compound index for filtering
 packageSchema.index({ createdAt: -1 });
 
 export default mongoose.model('Package', packageSchema);

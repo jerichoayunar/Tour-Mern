@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import InquiriesTable from '../../components/admin/inquiries/InquiriesTable';
 import InquiryFilters from '../../components/admin/inquiries/InquiryFilters';
 import InquiryModal from '../../components/admin/inquiries/InquiryModal';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import inquiryService from '../../services/inquiryService';
 import { useToast } from '../../context/ToastContext';
 import { Mail, MessageSquare, Clock, Archive } from 'lucide-react';
@@ -11,17 +12,30 @@ const ManageInquiries = () => {
   const [inquiries, setInquiries] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState({ sort: 'newest' });
   const [selectedInquiry, setSelectedInquiry] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    type: 'danger',
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
   
   const { showToast } = useToast();
 
   const fetchInquiries = async (params = {}) => {
     setLoading(true);
     try {
-      const response = await inquiryService.getInquiries({ ...filters, ...params });
+      const queryParams = {
+        ...filters,
+        ...params,
+        onlyArchived: showArchived
+      };
+      const response = await inquiryService.getInquiries(queryParams);
       if (response.success) {
         setInquiries(response.inquiries || []);
         setPagination({
@@ -51,7 +65,7 @@ const ManageInquiries = () => {
   useEffect(() => {
     fetchInquiries();
     fetchStats();
-  }, [filters]);
+  }, [filters, showArchived]);
 
   const handleViewInquiry = async (inquiry) => {
     try {
@@ -102,31 +116,95 @@ const ManageInquiries = () => {
     }
   };
 
-  const handleDeleteInquiry = async (inquiry) => {
-    if (window.confirm(`Delete inquiry from ${inquiry.name}?`)) {
-      try {
-        const response = await inquiryService.deleteInquiry(inquiry._id);
-        if (response.success) {
-          showToast('Inquiry deleted successfully!', 'success');
-          await fetchInquiries();
-          await fetchStats();
+  const handleArchiveInquiry = (inquiry) => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'warning',
+      title: 'Archive Inquiry',
+      message: `Are you sure you want to archive the inquiry from "${inquiry.name}"? It will be moved to the archived list.`,
+      confirmText: 'Archive',
+      onConfirm: async () => {
+        try {
+          const response = await inquiryService.archiveInquiry(inquiry._id);
+          if (response.success) {
+            showToast('Inquiry archived successfully!', 'success');
+            await fetchInquiries();
+            await fetchStats();
+          }
+        } catch (error) {
+          showToast('Error archiving inquiry', 'error');
         }
-      } catch (error) {
-        showToast('Error deleting inquiry', 'error');
       }
-    }
+    });
+  };
+
+  const handleRestoreInquiry = (inquiry) => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'info',
+      title: 'Restore Inquiry',
+      message: `Are you sure you want to restore the inquiry from "${inquiry.name}"? It will be moved back to the active list.`,
+      confirmText: 'Restore',
+      onConfirm: async () => {
+        try {
+          const response = await inquiryService.restoreInquiry(inquiry._id);
+          if (response.success) {
+            showToast('Inquiry restored successfully!', 'success');
+            await fetchInquiries();
+            await fetchStats();
+          }
+        } catch (error) {
+          showToast('Error restoring inquiry', 'error');
+        }
+      }
+    });
+  };
+
+  const handlePermanentDelete = (inquiry) => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Delete Inquiry Permanently',
+      message: `Are you sure you want to permanently delete the inquiry from "${inquiry.name}"? This action cannot be undone.`,
+      confirmText: 'Delete Forever',
+      onConfirm: async () => {
+        try {
+          const response = await inquiryService.permanentDeleteInquiry(inquiry._id);
+          if (response.success) {
+            showToast('Inquiry permanently deleted!', 'success');
+            await fetchInquiries();
+            await fetchStats();
+          }
+        } catch (error) {
+          showToast('Error deleting inquiry', 'error');
+        }
+      }
+    });
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Inquiry Management</h1>
-        <p className="text-gray-600">Manage customer inquiries and responses</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Inquiry Management</h1>
+          <p className="text-gray-600">Manage customer inquiries and responses</p>
+        </div>
+        
+        <button
+          onClick={() => setShowArchived(!showArchived)}
+          className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${
+            showArchived 
+              ? 'bg-gray-800 text-white hover:bg-gray-700' 
+              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+          }`}
+        >
+          {showArchived ? '← Back to Active Inquiries' : '📦 View Archived Inquiries'}
+        </button>
       </div>
 
-      {/* Stats Cards */}
-      {stats && (
+      {/* Stats Cards - Hide when viewing archives */}
+      {stats && !showArchived && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Total Inquiries */}
           <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
@@ -186,16 +264,19 @@ const ManageInquiries = () => {
       <InquiryFilters
         filters={filters}
         onFiltersChange={setFilters}
-        onClearFilters={() => setFilters({})}
+        onClearFilters={() => setFilters({ sort: 'newest' })}
       />
 
       {/* Table */}
       <InquiriesTable
         inquiries={inquiries}
         loading={loading}
+        showArchived={showArchived}
         onView={handleViewInquiry}
         onMarkAsRead={handleMarkAsRead}
-        onDelete={handleDeleteInquiry}
+        onArchive={handleArchiveInquiry}
+        onRestore={handleRestoreInquiry}
+        onPermanentDelete={handlePermanentDelete}
         pagination={pagination}
         onPageChange={(page) => fetchInquiries({ pageNumber: page })}
       />
@@ -212,6 +293,17 @@ const ManageInquiries = () => {
           onUpdate={handleUpdateInquiry}
         />
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmationModal.onConfirm}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        type={confirmationModal.type}
+        confirmText={confirmationModal.confirmText}
+      />
     </div>
   );
 };

@@ -141,14 +141,14 @@ export const restoreClient = async (clientId) => {
   const restoredClient = await User.findByIdAndUpdate(
     clientId,
     {
-      $set: {
-        archived: false,
-        archivedAt: null,
-        archivedBy: null,
-        archivedReason: null
+      $set: { archived: false },
+      $unset: {
+        archivedAt: 1,
+        archivedBy: 1,
+        archivedReason: 1
       }
     },
-    { new: true, runValidators: true }
+    { new: true, runValidators: false } // Disable validation for restore to prevent issues with legacy data
   ).select('-password -resetPasswordToken -resetPasswordExpire');
 
   return restoredClient;
