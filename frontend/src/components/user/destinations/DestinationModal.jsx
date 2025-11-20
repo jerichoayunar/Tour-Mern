@@ -130,7 +130,7 @@ const DestinationModal = ({ destination, isOpen, onClose }) => {
           {/* Status Badge */}
           <div className="absolute top-4 left-4 flex flex-col gap-2">
             {isNew && (
-              <span className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+              <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
                 NEW DESTINATION
               </span>
             )}
@@ -147,16 +147,16 @@ const DestinationModal = ({ destination, isOpen, onClose }) => {
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">{destination.name}</h2>
             <div className="flex items-center gap-2 text-lg font-semibold text-gray-700">
-              <MapPin className="w-5 h-5 text-blue-500" />
+              <MapPin className="w-5 h-5 text-amber-500" />
               {destination.location}
             </div>
           </div>
         </div>
 
         {/* Description */}
-        <div className="bg-blue-50 rounded-2xl p-6">
+        <div className="bg-amber-50 rounded-2xl p-6 border border-amber-100">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-800 mb-3">
-            <Navigation className="w-5 h-5 text-blue-500" />
+            <Navigation className="w-5 h-5 text-amber-500" />
             About this Destination
           </h3>
           <p className="text-gray-700 leading-relaxed text-justify">
@@ -166,9 +166,9 @@ const DestinationModal = ({ destination, isOpen, onClose }) => {
 
         {/* Map Section - Only show if we have map URL */}
         {mapUrl && (
-          <div className="bg-gray-50 rounded-2xl p-6">
+          <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-800 mb-4">
-              <Map className="w-5 h-5 text-red-500" />
+              <Map className="w-5 h-5 text-amber-500" />
               Location on Map
             </h3>
             <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-white">

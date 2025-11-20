@@ -40,6 +40,36 @@ export const deleteClient = async (clientId) => {
   }
 };
 
+// Archive client
+export const archiveClient = async (clientId, reason = null) => {
+  try {
+    const response = await api.put(`/clients/${clientId}/archive`, { reason });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+// Restore client
+export const restoreClient = async (clientId) => {
+  try {
+    const response = await api.put(`/clients/${clientId}/restore`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
+// Permanently delete client
+export const permanentDeleteClient = async (clientId) => {
+  try {
+    const response = await api.delete(`/clients/${clientId}/permanent`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
+};
+
 // Get client statistics
 export const getClientStats = async () => {
   try {
@@ -57,6 +87,9 @@ export const clientService = {
   getClient,
   updateClient,
   deleteClient,
+  archiveClient,
+  restoreClient,
+  permanentDeleteClient,
   getClientStats,
 
   // Utility functions for frontend
@@ -74,7 +107,11 @@ export const clientService = {
     updatedAt: client.updatedAt,
     lastLogin: client.lastLogin,
     bookingCount: client.bookingCount || 0,
-    totalSpent: client.totalSpent || 0
+    totalSpent: client.totalSpent || 0,
+    archived: client.archived || false,
+    archivedAt: client.archivedAt,
+    archivedBy: client.archivedBy,
+    archivedReason: client.archivedReason
   }),
 
   // Filter clients by various criteria

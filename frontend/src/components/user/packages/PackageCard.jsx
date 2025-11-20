@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import Button from '../../ui/Button';
 import LazyImage from '../../ui/LazyImage';
+import { formatPrice } from '../../../utils/formatters';
 
 const PackageCard = ({ package: pkg, onViewDetails }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -22,16 +23,6 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
       return pkg.image.url;
     }
     return pkg.image || 'https://via.placeholder.com/300x200?text=No+Image';
-  };
-
-  // Format price in PHP
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-PH', {
-      style: 'currency',
-      currency: 'PHP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price || 0);
   };
 
   // Calculate day-specific inclusion summary
@@ -51,7 +42,7 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
 
   return (
     <div 
-      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200/60 hover:border-blue-200"
+      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200/60 hover:border-amber-200"
       onClick={() => onViewDetails(pkg._id)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -78,14 +69,14 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
         {/* Simple Badges */}
         <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
           {/* Duration Badge */}
-          <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 backdrop-blur-sm">
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 backdrop-blur-sm shadow-md">
             <Clock size={14} />
             {pkg.duration} Day{pkg.duration !== 1 ? 's' : ''}
           </div>
 
           {/* Itinerary Badge */}
           {pkg.itinerary && pkg.itinerary.length > 0 && (
-            <div className="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 backdrop-blur-sm">
+            <div className="bg-emerald-600 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 backdrop-blur-sm shadow-md">
               {pkg.itinerary.length} Itinerary
             </div>
           )}
@@ -103,11 +94,11 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
       <div className="p-5">
         {/* Title and Price */}
         <div className="flex items-start justify-between mb-3">
-          <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors flex-1 mr-3">
+          <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-amber-600 transition-colors flex-1 mr-3">
             {pkg.title}
           </h3>
           <div className="text-right flex-shrink-0">
-            <div className="text-xl font-bold text-blue-600">
+            <div className="text-xl font-bold text-amber-600">
               {formatPrice(pkg.price)}
             </div>
             <div className="text-gray-500 text-xs">per person</div>
@@ -117,17 +108,17 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
         {/* Simple Inclusion Summary */}
         <div className="flex items-center justify-between mb-4 px-2">
           <div className="text-center">
-            <Car size={16} className="mx-auto mb-1 text-blue-600" />
+            <Car size={16} className="mx-auto mb-1 text-amber-600" />
             <div className="text-xs font-semibold text-gray-900">{inclusionSummary.transport}</div>
             <div className="text-xs text-gray-500">Transport</div>
           </div>
           <div className="text-center">
-            <Utensils size={16} className="mx-auto mb-1 text-green-600" />
+            <Utensils size={16} className="mx-auto mb-1 text-emerald-600" />
             <div className="text-xs font-semibold text-gray-900">{inclusionSummary.meals}</div>
             <div className="text-xs text-gray-500">Meals</div>
           </div>
           <div className="text-center">
-            <Home size={16} className="mx-auto mb-1 text-purple-600" />
+            <Home size={16} className="mx-auto mb-1 text-indigo-600" />
             <div className="text-xs font-semibold text-gray-900">{inclusionSummary.stay}</div>
             <div className="text-xs text-gray-500">Stay</div>
           </div>
@@ -135,7 +126,7 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
 
         {/* Simple CTA - FIXED CURSOR ISSUE */}
         <button 
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 rounded-xl transition-colors duration-300 flex items-center justify-center gap-2 group-hover:bg-blue-600 cursor-pointer"
+          className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
           onClick={(e) => {
             e.stopPropagation(); // Prevent card click when button is clicked
             onViewDetails(pkg._id);

@@ -1,39 +1,7 @@
 // backend/services/destinationService.js - UPDATED
 import Destination from '../models/Destination.js';
 import ApiError from '../utils/ApiError.js';
-import { cloudinary } from '../utils/cloudinary.js';
-
-// Helper function to upload image to Cloudinary
-const uploadImageToCloudinary = async (imageBuffer) => {
-  return new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: 'tour-mern/destinations',
-        transformation: [
-          { width: 800, height: 600, crop: 'limit', quality: 'auto' }
-        ]
-      },
-      (error, result) => {
-        if (error) reject(new ApiError(500, 'Image upload failed'));
-        else resolve(result);
-      }
-    );
-    
-    uploadStream.end(imageBuffer);
-  });
-};
-
-// Helper function to delete image from Cloudinary
-const deleteImageFromCloudinary = async (publicId) => {
-  if (publicId) {
-    try {
-      await cloudinary.uploader.destroy(publicId);
-    } catch (error) {
-      console.error('Error deleting image from Cloudinary:', error);
-      // Don't throw error - we don't want to fail the main operation
-    }
-  }
-};
+import { uploadToCloudinary, deleteFromCloudinary } from './uploadService.js';
 
 // Get all destinations with optional filtering - UPDATED
 export const getDestinations = async (query = {}) => {
@@ -94,12 +62,7 @@ export const createDestination = async (data, imageFile) => {
   // Handle image upload if file provided
   if (imageFile) {
     try {
-      const result = await uploadImageToCloudinary(imageFile.buffer);
-      imageData = {
-        url: result.secure_url,
-        publicId: result.public_id,
-        isUploaded: true
-      };
+      imageData = await uploadToCloudinary(imageFile.buffer, 'tour-mern/destinations');
     } catch (error) {
       throw new ApiError(500, 'Failed to upload image');
     }
@@ -141,17 +104,13 @@ export const updateDestination = async (destinationId, updateData, imageFile) =>
   if (imageFile) {
     // Delete old image from Cloudinary if it was uploaded
     if (destination.image.isUploaded && destination.image.publicId) {
-      await deleteImageFromCloudinary(destination.image.publicId);
+      await deleteFromCloudinary(destination.image.publicId);
     }
 
     // Upload new image
     try {
-      const result = await uploadImageToCloudinary(imageFile.buffer);
-      updateData.image = {
-        url: result.secure_url,
-        publicId: result.public_id,
-        isUploaded: true
-      };
+      const result = await uploadToCloudinary(imageFile.buffer, 'tour-mern/destinations');
+      updateData.image = result;
     } catch (error) {
       throw new ApiError(500, 'Failed to upload image');
     }
@@ -186,7 +145,7 @@ export const deleteDestination = async (destinationId) => {
 
   // Delete image from Cloudinary if it was uploaded
   if (destination.image.isUploaded && destination.image.publicId) {
-    await deleteImageFromCloudinary(destination.image.publicId);
+    await deleteFromCloudinary(destination.image.publicId);
   }
 
   await Destination.findByIdAndDelete(destinationId);
@@ -262,7 +221,7 @@ export const permanentDeleteDestination = async (destinationId) => {
 
   // Delete image from Cloudinary if it was uploaded
   if (destination.image.isUploaded && destination.image.publicId) {
-    await deleteImageFromCloudinary(destination.image.publicId);
+    await deleteFromCloudinary(destination.image.publicId);
   }
 
   await Destination.findByIdAndDelete(destinationId);

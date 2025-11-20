@@ -1,40 +1,6 @@
 import Package from '../models/Package.js';
 import ApiError from '../utils/ApiError.js';
-import { cloudinary } from '../utils/cloudinary.js';
-
-// Cloudinary upload function
-const uploadImageToCloudinary = async (file) => {
-  try {
-    const b64 = Buffer.from(file.buffer).toString('base64');
-    const dataURI = `data:${file.mimetype};base64,${b64}`;
-    
-    const uploadResult = await cloudinary.uploader.upload(dataURI, {
-      folder: 'tour-mern/packages',
-      transformation: [
-        { width: 800, height: 600, crop: 'limit', quality: 'auto' }
-      ]
-    });
-
-    return {
-      url: uploadResult.secure_url,
-      publicId: uploadResult.public_id,
-      isUploaded: true
-    };
-  } catch (error) {
-    throw new ApiError(500, 'Failed to upload image to Cloudinary');
-  }
-};
-
-// Cloudinary delete function
-const deleteImageFromCloudinary = async (publicId) => {
-  try {
-    if (publicId) {
-      await cloudinary.uploader.destroy(publicId);
-    }
-  } catch (error) {
-    console.error('Failed to delete image from Cloudinary:', error);
-  }
-};
+import { uploadToCloudinary, deleteFromCloudinary } from './uploadService.js';
 
 // Get all packages with optional filtering - UPDATED (no global inclusions)
 export const getPackages = async (query = {}) => {
@@ -120,7 +86,7 @@ export const createPackage = async (data, file = null) => {
   };
 
   if (file) {
-    imageData = await uploadImageToCloudinary(file);
+    imageData = await uploadToCloudinary(file.buffer, 'tour-mern/packages');
   } else if (image) {
     imageData.url = image;
     imageData.isUploaded = false;
@@ -179,9 +145,9 @@ export const updatePackage = async (packageId, updateData, file = null) => {
 
   if (file) {
     if (pkg.image.isUploaded && pkg.image.publicId) {
-      await deleteImageFromCloudinary(pkg.image.publicId);
+      await deleteFromCloudinary(pkg.image.publicId);
     }
-    imageData = await uploadImageToCloudinary(file);
+    imageData = await uploadToCloudinary(file.buffer, 'tour-mern/packages');
   } else if (updateData.image !== undefined) {
     if (updateData.image === '') {
       imageData = {
@@ -191,7 +157,7 @@ export const updatePackage = async (packageId, updateData, file = null) => {
       };
     } else if (updateData.image !== pkg.image.url) {
       if (pkg.image.isUploaded && pkg.image.publicId) {
-        await deleteImageFromCloudinary(pkg.image.publicId);
+        await deleteFromCloudinary(pkg.image.publicId);
       }
       imageData = {
         url: updateData.image,
@@ -238,7 +204,7 @@ export const deletePackage = async (packageId) => {
   }
 
   if (pkg.image.isUploaded && pkg.image.publicId) {
-    await deleteImageFromCloudinary(pkg.image.publicId);
+    await deleteFromCloudinary(pkg.image.publicId);
   }
 
   await Package.findByIdAndDelete(packageId);
@@ -313,7 +279,7 @@ export const permanentDeletePackage = async (packageId) => {
   }
 
   if (pkg.image.isUploaded && pkg.image.publicId) {
-    await deleteImageFromCloudinary(pkg.image.publicId);
+    await deleteFromCloudinary(pkg.image.publicId);
   }
 
   await Package.findByIdAndDelete(packageId);

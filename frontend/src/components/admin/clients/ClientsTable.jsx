@@ -4,10 +4,13 @@ import { clientService } from '../../../services/clientService';
 const ClientsTable = ({ 
   clients, 
   filters, 
+  showArchived,
   onFiltersChange, 
   onViewClient, 
   onUpdateClient, 
-  onDeleteClient, 
+  onArchiveClient,
+  onRestoreClient,
+  onPermanentDelete,
   onRefresh 
 }) => {
   const [sortField, setSortField] = useState('createdAt');
@@ -64,10 +67,10 @@ const ClientsTable = ({
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
-              All Clients ({sortedClients.length})
+              {showArchived ? 'Archived Clients' : 'Active Clients'} ({sortedClients.length})
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Manage and view all client accounts
+              {showArchived ? 'View and manage archived accounts' : 'Manage and view all client accounts'}
             </p>
           </div>
           
@@ -202,13 +205,33 @@ const ClientsTable = ({
                       <span>👁️</span>
                       View
                     </button>
-                    <button
-                      onClick={() => onDeleteClient(client.id)}
-                      className="text-red-600 hover:text-red-900 font-medium flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
-                    >
-                      <span>🗑️</span>
-                      Delete
-                    </button>
+                    
+                    {showArchived ? (
+                      <>
+                        <button
+                          onClick={() => onRestoreClient(client.id)}
+                          className="text-green-600 hover:text-green-900 font-medium flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-green-50 transition-colors"
+                        >
+                          <span>🔄</span>
+                          Restore
+                        </button>
+                        <button
+                          onClick={() => onPermanentDelete(client.id)}
+                          className="text-red-600 hover:text-red-900 font-medium flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          <span>🗑️</span>
+                          Delete Forever
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => onArchiveClient(client.id)}
+                        className="text-orange-600 hover:text-orange-900 font-medium flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-orange-50 transition-colors"
+                      >
+                        <span>📦</span>
+                        Archive
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

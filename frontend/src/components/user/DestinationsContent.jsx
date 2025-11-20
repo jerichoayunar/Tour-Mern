@@ -186,7 +186,7 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
                   {/* Location Badge */}
                   <div className="absolute top-4 left-4">
                     <div className="flex items-center gap-2 bg-white/95 px-3 py-2 rounded-xl shadow-sm">
-                      <MapPin className="w-4 h-4 text-blue-600" />
+                      <MapPin className="w-4 h-4 text-amber-600" />
                       <span className="text-sm font-medium text-gray-900">{destination.location}</span>
                     </div>
                   </div>
@@ -218,7 +218,7 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
                   {/* CTA Button */}
                   <Link
                     to="/destinations"
-                    className="block w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:from-blue-600 hover:to-blue-700 group/btn"
+                    className="block w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:from-amber-600 hover:to-orange-600 group/btn"
                   >
                     <span className="flex items-center justify-center gap-2">
                       Explore Destination
@@ -239,7 +239,7 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
               onClick={() => scrollToIndex(index * 2)}
               className={`w-2 h-2 rounded-full transition-all duration-300 ${
                 Math.floor(activeIndex / 2) === index
-                  ? 'bg-blue-500 w-6'
+                  ? 'bg-amber-500 w-6'
                   : 'bg-gray-300 hover:bg-gray-400'
               }`}
             />
@@ -250,7 +250,7 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
         <div className="text-center mt-12">
           <Link
             to="/destinations"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-200 group"
+            className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 font-semibold transition-colors duration-200 group"
           >
             View all destinations
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />

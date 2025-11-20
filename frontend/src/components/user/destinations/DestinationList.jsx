@@ -116,7 +116,7 @@ const DestinationList = ({
           <p className="text-gray-600 mb-6">There was a problem fetching the destination data.</p>
           <button 
             onClick={() => window.location.reload()}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl transition-colors font-semibold"
+            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg font-semibold"
           >
             Try Again
           </button>
@@ -137,7 +137,7 @@ const DestinationList = ({
     return (
       <div className="text-center py-16">
         <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md mx-auto border border-gray-200">
-          <Sparkles className="w-16 h-16 text-blue-400 mx-auto mb-4" />
+          <Sparkles className="w-16 h-16 text-amber-400 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-gray-900 mb-2">
             {destinations.length === 0 
               ? 'No Destinations Available' 
@@ -153,7 +153,7 @@ const DestinationList = ({
           {hasActiveFilters && (
             <button 
               onClick={clearAllFilters}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl transition-colors font-semibold"
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg font-semibold"
             >
               Clear All Filters
             </button>
@@ -188,7 +188,7 @@ const DestinationList = ({
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-lg transition-colors ${
                   viewMode === 'grid' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
+                    ? 'bg-white text-amber-600 shadow-sm' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
                 aria-label="Grid view"
@@ -199,7 +199,7 @@ const DestinationList = ({
                 onClick={() => setViewMode('list')}
                 className={`p-2 rounded-lg transition-colors ${
                   viewMode === 'list' 
-                    ? 'bg-white text-blue-600 shadow-sm' 
+                    ? 'bg-white text-amber-600 shadow-sm' 
                     : 'text-gray-600 hover:text-gray-900'
                 }`}
                 aria-label="List view"

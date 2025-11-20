@@ -216,8 +216,8 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
 
   const getRoleBadge = (role) => {
     const roleConfig = {
-      user: 'bg-blue-100 text-blue-800 border-blue-200',
-      premium: 'bg-purple-100 text-purple-800 border-purple-200',
+      user: 'bg-stone-100 text-stone-800 border-stone-200',
+      premium: 'bg-amber-100 text-amber-800 border-amber-200',
       agent: 'bg-orange-100 text-orange-800 border-orange-200'
     };
 
@@ -231,13 +231,13 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
   // Get color class safely
   const getColorClass = (color) => {
     const colorMap = {
-      blue: 'bg-blue-100 text-blue-600',
-      green: 'bg-green-100 text-green-600',
-      red: 'bg-red-100 text-red-600',
+      blue: 'bg-stone-100 text-stone-600',
+      green: 'bg-emerald-100 text-emerald-600',
+      red: 'bg-rose-100 text-rose-600',
       orange: 'bg-orange-100 text-orange-600',
-      purple: 'bg-purple-100 text-purple-600',
+      purple: 'bg-amber-100 text-amber-600',
       yellow: 'bg-yellow-100 text-yellow-600',
-      indigo: 'bg-indigo-100 text-indigo-600',
+      indigo: 'bg-stone-100 text-stone-600',
       gray: 'bg-gray-100 text-gray-600'
     };
     return colorMap[color] || 'bg-gray-100 text-gray-600';
@@ -279,7 +279,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
           <div className="flex justify-between items-start p-6 border-b border-gray-200">
             <div className="flex-1">
               <div className="flex items-center space-x-4 mb-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
                   {client.name?.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -290,7 +290,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                         name="name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                        className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-lg"
                       />
                     ) : (
                       client.name
@@ -313,7 +313,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                   <button
                     onClick={handleSave}
                     disabled={loading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2 transition-colors"
+                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 flex items-center space-x-2 transition-colors"
                   >
                     {loading ? (
                       <>
@@ -329,7 +329,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                 <>
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
                   >
                     Edit
                   </button>
@@ -351,7 +351,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                 onClick={() => setActiveTab('details')}
                 className={`flex items-center space-x-2 px-4 py-3 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
                   activeTab === 'details'
-                    ? "border-blue-500 text-blue-600 bg-blue-50"
+                    ? "border-amber-500 text-amber-600 bg-amber-50"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
               >
@@ -362,7 +362,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                 onClick={() => setActiveTab('activity')}
                 className={`flex items-center space-x-2 px-4 py-3 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
                   activeTab === 'activity'
-                    ? "border-blue-500 text-blue-600 bg-blue-50"
+                    ? "border-amber-500 text-amber-600 bg-amber-50"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
               >
@@ -373,7 +373,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                 onClick={() => setActiveTab('bookings')}
                 className={`flex items-center space-x-2 px-4 py-3 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
                   activeTab === 'bookings'
-                    ? "border-blue-500 text-blue-600 bg-blue-50"
+                    ? "border-amber-500 text-amber-600 bg-amber-50"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
               >
@@ -401,7 +401,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                           name="name"
                           value={formData.name}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                         />
                       ) : (
                         <p className="text-gray-900">{client.name}</p>
@@ -416,7 +416,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                           name="email"
                           value={formData.email}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                         />
                       ) : (
                         <p className="text-gray-900">{client.email}</p>
@@ -431,7 +431,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                           name="phone"
                           value={formData.phone}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                         />
                       ) : (
                         <p className="text-gray-900">{client.phone || 'Not provided'}</p>
@@ -452,7 +452,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                           name="status"
                           value={formData.status}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                         >
                           <option value="active">Active</option>
                           <option value="inactive">Inactive</option>
@@ -470,7 +470,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                           name="role"
                           value={formData.role}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                         >
                           <option value="user">User</option>
                           <option value="premium">Premium User</option>
@@ -487,7 +487,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                         <span className={`px-3 py-1 rounded-full text-sm ${
                           client.loginMethod === 'google' 
                             ? 'bg-red-100 text-red-800 border border-red-200' 
-                            : 'bg-blue-100 text-blue-800 border border-blue-200'
+                            : 'bg-stone-100 text-stone-800 border border-stone-200'
                         }`}>
                           {client.loginMethod === 'google' ? 'Google' : 'Email'}
                         </span>
@@ -540,7 +540,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                     <select 
                       value={activityFilters.type}
                       onChange={(e) => handleFilterChange('type', e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                     >
                       <option value="">All Activities</option>
                       <option value="login">Login Only</option>
@@ -554,7 +554,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                     <button 
                       onClick={fetchUserActivities}
                       disabled={activityLoading}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2 transition-colors"
+                      className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 disabled:opacity-50 flex items-center space-x-2 transition-colors"
                     >
                       <span>Refresh</span>
                     </button>

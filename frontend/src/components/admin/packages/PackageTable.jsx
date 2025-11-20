@@ -2,7 +2,15 @@
 import React from "react";
 import Button from "../../ui/Button";
 
-const PackageTable = ({ data, onEdit, onDelete }) => {
+const PackageTable = ({ 
+  data, 
+  onEdit, 
+  onDelete,
+  isArchived = false,
+  onArchive,
+  onRestore,
+  onDeletePermanent
+}) => {
   // Helper to get image URL
   const getImageUrl = (packageItem) => {
     if (!packageItem) return 'https://via.placeholder.com/80x60?text=No+Image';
@@ -246,23 +254,48 @@ const PackageTable = ({ data, onEdit, onDelete }) => {
                   {/* Actions */}
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end space-x-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => onEdit(pkg)}
-                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                        title="Edit package and day-specific inclusions"
-                      >
-                        ✏️ Edit
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="danger" 
-                        onClick={() => onDelete(pkg._id)}
-                        title="Delete package"
-                      >
-                        🗑️ Delete
-                      </Button>
+                      {isArchived ? (
+                        <>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => onRestore(pkg)}
+                            className="text-green-600 border-green-200 hover:bg-green-50"
+                            title="Restore package"
+                          >
+                            ♻️ Restore
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="danger" 
+                            onClick={() => onDeletePermanent(pkg)}
+                            title="Delete permanently"
+                          >
+                            🗑️ Delete
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => onEdit(pkg)}
+                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            title="Edit package and day-specific inclusions"
+                          >
+                            ✏️ Edit
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => onArchive(pkg)}
+                            className="text-gray-600 border-gray-200 hover:bg-gray-50"
+                            title="Archive package"
+                          >
+                            📦 Archive
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

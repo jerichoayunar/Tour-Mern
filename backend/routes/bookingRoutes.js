@@ -8,6 +8,9 @@ import {
   deleteBooking,
   cancelBooking,
   processRefund,
+  archiveBooking,
+  restoreBooking,
+  permanentDeleteBooking
 } from '../controllers/bookingController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { validateRequest } from '../middleware/validateMiddleware.js';
@@ -52,6 +55,15 @@ router.put('/:id/status', validateRequest(updateStatusSchema), updateBookingStat
 
 // PUT /api/bookings/:id/refund - Process refund approval/rejection
 router.put('/:id/refund', processRefund);
+
+// PUT /api/bookings/:id/archive - Archive booking
+router.put('/:id/archive', archiveBooking);
+
+// PUT /api/bookings/:id/restore - Restore archived booking
+router.put('/:id/restore', restoreBooking);
+
+// DELETE /api/bookings/:id/permanent - Permanently delete archived booking
+router.delete('/:id/permanent', permanentDeleteBooking);
 
 // Export the router for use in main Express app
 export { router as bookingRoutes };

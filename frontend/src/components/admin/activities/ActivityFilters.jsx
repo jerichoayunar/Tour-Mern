@@ -122,7 +122,7 @@ const ActivityFilters = ({ activities = [], onFilterChange }) => {
           <select 
             value={filters.activityType}
             onChange={(e) => handleFilterChange('activityType', e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm bg-white"
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors text-sm bg-white"
           >
             {activityTypes.map(type => (
               <option key={type.value} value={type.value}>
@@ -142,7 +142,7 @@ const ActivityFilters = ({ activities = [], onFilterChange }) => {
             value={filters.dateFrom}
             onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
             max={filters.dateTo || today}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm bg-white" 
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors text-sm bg-white" 
           />
         </div>
         
@@ -157,7 +157,7 @@ const ActivityFilters = ({ activities = [], onFilterChange }) => {
             onChange={(e) => handleFilterChange('dateTo', e.target.value)}
             min={filters.dateFrom}
             max={today}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm bg-white" 
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors text-sm bg-white" 
           />
         </div>
       </div>
@@ -177,7 +177,7 @@ const ActivityFilters = ({ activities = [], onFilterChange }) => {
               dateTo: today.toISOString().split('T')[0]
             }));
           }}
-          className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+          className="px-3 py-1 text-xs bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition-colors"
         >
           Last 7 Days
         </button>
@@ -256,11 +256,11 @@ const ActivityFilters = ({ activities = [], onFilterChange }) => {
           <span className="text-sm font-medium text-gray-700">Active filters:</span>
           <div className="flex flex-wrap gap-2">
             {filters.activityType && (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 border border-amber-200">
                 Type: {activityTypes.find(t => t.value === filters.activityType)?.label}
                 <button 
                   onClick={() => handleFilterChange('activityType', '')}
-                  className="ml-2 hover:text-blue-600 transition-colors"
+                  className="ml-2 hover:text-amber-600 transition-colors"
                 >
                   ×
                 </button>
@@ -294,8 +294,8 @@ const ActivityFilters = ({ activities = [], onFilterChange }) => {
 
       {/* Filter Results Summary */}
       {hasActiveFilters && (
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
+        <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-sm text-amber-800">
             <strong>Filter Results:</strong> Found {filteredActivities.length} activities matching your criteria
             {filters.activityType && ` • Type: ${activityTypes.find(t => t.value === filters.activityType)?.label}`}
             {filters.dateFrom && filters.dateTo && ` • Date Range: ${filters.dateFrom} to ${filters.dateTo}`}

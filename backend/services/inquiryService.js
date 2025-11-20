@@ -54,13 +54,13 @@ export const getInquiries = async (query = {}) => {
 
   // Sort options
   let sortOptions = {};
-  // sort parameter (debug removed)
+  
   switch (query.sort) {
     case 'oldest':
-      sortOptions = { createdAt: 1 };
+      sortOptions = { _id: 1 };
       break;
     case 'newest':
-      sortOptions = { createdAt: -1 };
+      sortOptions = { _id: -1 };
       break;
     case 'name':
       sortOptions = { name: 1 };
@@ -69,13 +69,13 @@ export const getInquiries = async (query = {}) => {
       sortOptions = { email: 1 };
       break;
     case 'status':
-      sortOptions = { status: 1 };
+      sortOptions = { status: 1, _id: -1 };
       break;
     case 'priority':
-      sortOptions = { priority: -1 }; // High priority first
+      sortOptions = { priority: -1, _id: -1 }; // High priority first
       break;
     default: // newest first (default)
-      sortOptions = { createdAt: -1 };
+      sortOptions = { _id: -1 };
   }
   // sort options applied (debug removed)
 

@@ -1,8 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { ToastProvider } from "./context/ToastContext.jsx";
+import { BookingProvider } from "./context/BookingContext.jsx";
+import { SettingsProvider } from "./context/SettingsContext.jsx";
 
 import ToastContainer from "./components/common/ToastContainer.jsx"; // 🧩 lowercase 'common' for consistency
+import LoadingSpinner from "./components/common/LoadingSpinner.jsx";
+import ScrollToTop from "./components/common/ScrollToTop.jsx";
 
 // Layouts
 import UserLayout from "./components/layout/user/UserLayout.jsx";
@@ -21,27 +26,31 @@ import ForgotPassword from "./pages/user/ForgotPassword.jsx";
 import ResetPassword from "./pages/user/ResetPassword.jsx";
 import AuthSuccess from "./pages/user/AuthSuccess.jsx";
 
-// Admin Pages
-import Dashboard from "./pages/admin/Dashboard.jsx";
-import ManagePackages from "./pages/admin/ManagePackages.jsx";
-import ManageBookings from "./pages/admin/ManageBookings.jsx";
-import ManageDestinations from "./pages/admin/ManageDestinations.jsx";
-import ManageUsers from "./pages/admin/ManageUsers.jsx";
-import ManageActivities from "./pages/admin/ManageActivities.jsx";
-import ManageInquiries from "./pages/admin/ManageInquiries.jsx";
-import Analytics from "./pages/admin/Analytics.jsx";
+// Admin Pages (Lazy Loaded)
+const Dashboard = lazy(() => import("./pages/admin/Dashboard.jsx"));
+const ManagePackages = lazy(() => import("./pages/admin/ManagePackages.jsx"));
+const ManageBookings = lazy(() => import("./pages/admin/ManageBookings.jsx"));
+const ManageDestinations = lazy(() => import("./pages/admin/ManageDestinations.jsx"));
+const ManageUsers = lazy(() => import("./pages/admin/ManageUsers.jsx"));
+const ManageActivities = lazy(() => import("./pages/admin/ManageActivities.jsx"));
+const ManageInquiries = lazy(() => import("./pages/admin/ManageInquiries.jsx"));
+const Analytics = lazy(() => import("./pages/admin/Analytics.jsx"));
+const Settings = lazy(() => import("./pages/admin/Settings.jsx"));
 
 // Protected Route
 import ProtectedRoute from "./components/common/ProtectedRoute.jsx"; 
 
 function App() {
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <Router>
-          <ToastContainer />
+    <SettingsProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <BookingProvider>
+            <Router>
+              <ToastContainer />
+              <ScrollToTop />
 
-          <Routes>
+              <Routes>
             {/* ================= USER FRONTEND ================= */}
             <Route path="/*" element={<UserLayout />}>
               <Route index element={<Home />} />
@@ -74,23 +83,66 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Dashboard />} /> 
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="packages" element={<ManagePackages />} /> 
-              <Route path="bookings" element={<ManageBookings />} />
-              <Route path="destinations" element={<ManageDestinations />} />
-              <Route path="clients" element={<ManageUsers />} /> 
-              <Route path="activities" element={<ManageActivities />} />
-              <Route path="inquiries" element={<ManageInquiries />} />
-              <Route path="analytics" element={<Analytics />} />
+              <Route index element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Dashboard />
+                </Suspense>
+              } /> 
+              <Route path="dashboard" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Dashboard />
+                </Suspense>
+              } />
+              <Route path="packages" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ManagePackages />
+                </Suspense>
+              } /> 
+              <Route path="bookings" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ManageBookings />
+                </Suspense>
+              } />
+              <Route path="destinations" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ManageDestinations />
+                </Suspense>
+              } />
+              <Route path="clients" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ManageUsers />
+                </Suspense>
+              } /> 
+              <Route path="activities" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ManageActivities />
+                </Suspense>
+              } />
+              <Route path="inquiries" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <ManageInquiries />
+                </Suspense>
+              } />
+              <Route path="analytics" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Analytics />
+                </Suspense>
+              } />
+              <Route path="settings" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Settings />
+                </Suspense>
+              } />
             </Route>
 
             {/* ================= FALLBACK ================= */}
             <Route path="*" element={<h2 className="text-center mt-20">404 | Page Not Found</h2>} />
           </Routes>
-        </Router>
-      </AuthProvider>
-    </ToastProvider>
+            </Router>
+          </BookingProvider>
+        </AuthProvider>
+      </ToastProvider>
+    </SettingsProvider>
   );
 }
 

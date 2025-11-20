@@ -30,7 +30,7 @@ const PackageList = ({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-xl font-medium transition-colors duration-200"
+            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-6 py-2 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg"
           >
             Explore All Packages
           </button>
@@ -58,7 +58,7 @@ const PackageList = ({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-xl font-medium transition-colors duration-200"
+            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-6 py-2 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg"
           >
             Try Again
           </button>
@@ -162,7 +162,7 @@ const PackageList = ({
                   <select 
                     value={sortBy}
                     onChange={(e) => onSortChange(e.target.value)}
-                    className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                   >
                     <option value="featured">Featured</option>
                     <option value="price-low">Price: Low to High</option>
@@ -180,7 +180,7 @@ const PackageList = ({
                     onClick={() => onViewModeChange('grid')}
                     className={`p-2 rounded transition-colors ${
                       viewMode === 'grid' 
-                        ? 'bg-white text-blue-600 shadow-sm' 
+                        ? 'bg-white text-amber-600 shadow-sm' 
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                     title="Grid View"
@@ -191,7 +191,7 @@ const PackageList = ({
                     onClick={() => onViewModeChange('list')}
                     className={`p-2 rounded transition-colors ${
                       viewMode === 'list' 
-                        ? 'bg-white text-blue-600 shadow-sm' 
+                        ? 'bg-white text-amber-600 shadow-sm' 
                         : 'text-gray-600 hover:text-gray-900'
                     }`}
                     title="List View"

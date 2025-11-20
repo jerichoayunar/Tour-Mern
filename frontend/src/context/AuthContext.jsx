@@ -17,7 +17,7 @@
  * - ToastContext (for user notifications)
  */
 
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { authService } from '../services/authService';
 import { useToast } from './ToastContext';
 
@@ -290,23 +290,23 @@ export const AuthProvider = ({ children }) => {
    * CLEAR ERRORS
    * - Manually clear error messages
    */
-  const clearError = () => setError(null);
+  const clearError = useCallback(() => setError(null), []);
 
   /**
    * UPDATE USER PROFILE
    * - Updates user data in context and localStorage
    */
-  const updateUser = (updatedUserData) => {
+  const updateUser = useCallback((updatedUserData) => {
     setUser(prev => {
       const newUser = { ...prev, ...updatedUserData };
       // Update localStorage
       localStorage.setItem('user', JSON.stringify(newUser));
       return newUser;
     });
-  };
+  }, []);
 
   // Value provided to all components using this context
-  const value = {
+  const value = useMemo(() => ({
     // State
     user,
     setUser,
@@ -330,7 +330,20 @@ export const AuthProvider = ({ children }) => {
     // Utility methods
     clearError,
     updateUser,
-  };
+  }), [
+    user, 
+    loading, 
+    error, 
+    operationLoading, 
+    login, 
+    register, 
+    logout, 
+    googleLogin, 
+    handleGoogleCallback, 
+    initiateGoogleLogin, 
+    clearError, 
+    updateUser
+  ]);
 
   return (
     <AuthContext.Provider value={value}>

@@ -70,6 +70,36 @@ export const deletePackage = async (packageId) => {
   }
 };
 
+// ADMIN: Archive package
+export const archivePackage = async (packageId, reason) => {
+  try {
+    const response = await api.put(`/packages/${packageId}/archive`, { reason });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// ADMIN: Restore package
+export const restorePackage = async (packageId) => {
+  try {
+    const response = await api.put(`/packages/${packageId}/restore`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// ADMIN: Permanently delete package
+export const deletePackagePermanent = async (packageId) => {
+  try {
+    const response = await api.delete(`/packages/${packageId}/permanent`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
 // REGULAR USER: Get single package
 export const getPackage = async (packageId) => {
   try {
@@ -85,5 +115,8 @@ export default {
   createPackage,
   updatePackage,
   deletePackage,
+  archivePackage,
+  restorePackage,
+  deletePackagePermanent,
   getPackage
 };
