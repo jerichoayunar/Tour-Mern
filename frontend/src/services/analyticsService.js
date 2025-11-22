@@ -1,6 +1,16 @@
 // src/services/analyticsService.js - FOLLOWING YOUR EXACT PATTERNS
 import api from './api';
 
+const normalizeResponse = (response) => {
+  const payload = response?.data || {};
+  return {
+    success: payload.success,
+    data: payload.data ?? payload,
+    message: payload.message,
+    token: payload.data?.token ?? payload.token
+  };
+};
+
 export const analyticsService = {
   /**
    * Get analytics metrics overview
@@ -10,8 +20,7 @@ export const analyticsService = {
     try {
       console.log('📊 Fetching analytics metrics...', filters);
       const response = await api.get('/admin/analytics/metrics', { params: filters });
-      console.log('✅ Analytics metrics received:', response.data);
-      return response.data.data; // ✅ Return just the data array like packageService
+      return normalizeResponse(response);
     } catch (error) {
       console.error('❌ Error fetching analytics metrics:', error);
       throw error.response?.data || error.message;
@@ -26,8 +35,7 @@ export const analyticsService = {
     try {
       console.log('📈 Fetching booking trends...', filters);
       const response = await api.get('/admin/analytics/booking-trends', { params: filters });
-      console.log('✅ Booking trends received:', response.data);
-      return response.data.data; // ✅ Return just the data array
+      return normalizeResponse(response);
     } catch (error) {
       console.error('❌ Error fetching booking trends:', error);
       throw error.response?.data || error.message;
@@ -42,8 +50,7 @@ export const analyticsService = {
     try {
       console.log('🏆 Fetching top performers...', filters);
       const response = await api.get('/admin/analytics/top-performers', { params: filters });
-      console.log('✅ Top performers received:', response.data);
-      return response.data.data; // ✅ Return just the data array
+      return normalizeResponse(response);
     } catch (error) {
       console.error('❌ Error fetching top performers:', error);
       throw error.response?.data || error.message;
@@ -58,8 +65,7 @@ export const analyticsService = {
     try {
       console.log('👥 Fetching user stats...', filters);
       const response = await api.get('/admin/analytics/user-stats', { params: filters });
-      console.log('✅ User stats received:', response.data);
-      return response.data.data; // ✅ Return just the data array
+      return normalizeResponse(response);
     } catch (error) {
       console.error('❌ Error fetching user stats:', error);
       throw error.response?.data || error.message;
@@ -74,8 +80,7 @@ export const analyticsService = {
     try {
       console.log('💰 Fetching revenue breakdown...', filters);
       const response = await api.get('/admin/analytics/revenue-breakdown', { params: filters });
-      console.log('✅ Revenue breakdown received:', response.data);
-      return response.data.data; // ✅ Return just the data array
+      return normalizeResponse(response);
     } catch (error) {
       console.error('❌ Error fetching revenue breakdown:', error);
       throw error.response?.data || error.message;
@@ -98,14 +103,16 @@ export const analyticsService = {
         analyticsService.getRevenueBreakdown(filters)
       ]);
 
-      console.log('✅ All analytics data received');
-      
+      // Return aggregated normalized data
       return {
-        metrics,
-        bookingTrends,
-        topPerformers,
-        userStats,
-        revenueBreakdown
+        success: true,
+        data: {
+          metrics: metrics.data,
+          bookingTrends: bookingTrends.data,
+          topPerformers: topPerformers.data,
+          userStats: userStats.data,
+          revenueBreakdown: revenueBreakdown.data
+        }
       };
     } catch (error) {
       console.error('❌ Error fetching all analytics data:', error);

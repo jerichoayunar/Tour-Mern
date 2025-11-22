@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 function AuthSuccess() {
-  const { setUser, user } = useAuth(); // ✅ Add user to check role
+  const { setUser } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const hasProcessed = useRef(false);

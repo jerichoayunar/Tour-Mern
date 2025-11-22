@@ -4,6 +4,29 @@ import Booking from '../models/Booking.js';
 import Package from '../models/Package.js';
 import ApiError from '../utils/ApiError.js';
 
+// Helper: Detect whether the connected MongoDB deployment supports transactions
+const supportsTransactions = async () => {
+  try {
+    const admin = mongoose.connection.db.admin();
+    // 'hello' is preferred; fall back to 'ismaster' for older servers
+    let info;
+    try {
+      info = await admin.command({ hello: 1 });
+    } catch (e) {
+      info = await admin.command({ ismaster: 1 });
+    }
+
+    // logicalSessionTimeoutMinutes is present when sessions are supported
+    const hasLogicalSession = info && info.logicalSessionTimeoutMinutes != null;
+    // Replica set presence or mongos also indicates support for transactions
+    const isReplicaSet = !!(info && (info.setName || info.msg === 'isdbgrid'));
+
+    return hasLogicalSession && isReplicaSet;
+  } catch (err) {
+    console.warn('Could not determine MongoDB transaction support:', err.message);
+    return false;
+  }
+};
 // Get all bookings (admin)
 export const getBookings = async (query) => {
   const { status, startDate, endDate, userId, onlyArchived, includeArchived } = query;
@@ -57,23 +80,121 @@ export const getBooking = async (bookingId, user) => {
   return booking;
 };
 
+// Get refund estimate without modifying booking (used by frontend before cancellation)
+export const getRefundEstimate = async (bookingId, user) => {
+  const booking = await Booking.findById(bookingId).populate('package', 'title price');
+  if (!booking) throw new ApiError(404, 'Booking not found');
+
+  // Authorization: owner or admin
+  const isOwner = booking.user.toString() === user.id;
+  const isAdmin = user.role === 'admin';
+  if (!isOwner && !isAdmin) throw new ApiError(403, 'Not authorized to view this booking');
+
+  const now = new Date();
+  const tourDate = new Date(booking.bookingDate);
+  const daysUntil = Math.ceil((tourDate - now) / (1000 * 60 * 60 * 24));
+
+  let refundAmount = 0;
+  let refundPercentage = 0;
+  const total = booking.totalPrice || booking.totalAmount || 0;
+
+  if (daysUntil >= 14) {
+    refundAmount = total;
+    refundPercentage = 100;
+  } else if (daysUntil >= 7) {
+    refundAmount = Math.floor(total * 0.5);
+    refundPercentage = 50;
+  } else {
+    refundAmount = 0;
+    refundPercentage = 0;
+  }
+
+  return {
+    refundAmount,
+    refundPercentage,
+    daysUntil,
+    total,
+    bookingId: booking._id,
+    packageTitle: booking.package?.title || null,
+    bookingDate: booking.bookingDate
+  };
+};
+
 // Create booking
 export const createBooking = async (userId, data) => {
   const { packageId, clientName, clientEmail, clientPhone, bookingDate, guests, specialRequests } = data;
 
   if (!packageId || !clientName || !clientEmail || !clientPhone || !bookingDate || !guests)
     throw new ApiError(400, 'All fields are required');
-
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  let session;
+  let useTransaction = false;
 
   try {
-    const tourPackage = await Package.findById(packageId).session(session);
-    if (!tourPackage) throw new ApiError(404, 'Package not found');
+    // Check whether the current deployment supports transactions
+    useTransaction = await supportsTransactions();
+
+    if (useTransaction) {
+      session = await mongoose.startSession();
+      try {
+        session.startTransaction();
+      } catch (startErr) {
+        // If starting a transaction fails, disable transactional flow
+        console.warn('Failed to start transaction; falling back to non-transactional create:', startErr.message);
+        useTransaction = false;
+      }
+    } else {
+      console.info('MongoDB does not support transactions in this environment; using non-transactional booking create.');
+    }
+
+    // Fetch package (use session only if transactions are enabled)
+    const tourPackage = useTransaction && session
+      ? await Package.findById(packageId).session(session)
+      : await Package.findById(packageId);
+
+    if (!tourPackage) {
+      if (useTransaction && session) await session.abortTransaction();
+      throw new ApiError(404, 'Package not found');
+    }
 
     const totalPrice = tourPackage.price * Number(guests);
 
-    const booking = await Booking.create([{
+    let booking;
+    if (useTransaction && session) {
+      booking = await Booking.create([
+        {
+          user: userId,
+          package: packageId,
+          clientName,
+          clientEmail,
+          clientPhone,
+          bookingDate: new Date(bookingDate),
+          guests: Number(guests),
+          totalPrice,
+          specialRequests: specialRequests || '',
+        }
+      ], { session });
+
+      // Only commit if a transaction was actually started
+      try {
+        if (session.inTransaction && session.inTransaction()) {
+          await session.commitTransaction();
+        }
+      } catch (commitErr) {
+        console.error('Error committing transaction, aborting and falling back:', commitErr.message);
+        try {
+          if (session.inTransaction && session.inTransaction()) await session.abortTransaction();
+        } catch (e) {
+          console.error('Failed to abort transaction after commit failure:', e.message);
+        }
+        throw commitErr;
+      }
+
+      // Return populated booking
+      return await Booking.findById(booking[0]._id).populate('package', 'title price');
+    }
+
+    // Non-transactional create (fallback)
+    const created = await Booking.create({
       user: userId,
       package: packageId,
       clientName,
@@ -83,18 +204,33 @@ export const createBooking = async (userId, data) => {
       guests: Number(guests),
       totalPrice,
       specialRequests: specialRequests || '',
-    }], { session });
+    });
 
-    await session.commitTransaction();
-    
-    // Return populated booking (need to fetch again outside transaction or populate inside)
-    return await Booking.findById(booking[0]._id).populate('package', 'title price');
+    return await Booking.findById(created._id).populate('package', 'title price');
   } catch (error) {
-    await session.abortTransaction();
+    // If a transaction was started, attempt to abort it
+    try {
+      if (session && useTransaction) await session.abortTransaction();
+    } catch (abortErr) {
+      console.error('Failed to abort transaction after error:', abortErr.message);
+    }
     throw error;
   } finally {
-    session.endSession();
+    if (session) session.endSession();
   }
+};
+
+export const updateAdminNotes = async (bookingId, notes) => {
+  const booking = await Booking.findByIdAndUpdate(
+    bookingId,
+    { adminNotes: notes },
+    { new: true }
+  );
+  if (!booking) {
+    const ApiError = require('../utils/ApiError');
+    throw new ApiError(404, 'Booking not found');
+  }
+  return booking;
 };
 
 // Update booking status (admin)

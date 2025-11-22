@@ -17,10 +17,12 @@ const ConfirmationModal = ({
     <Modal isOpen={isOpen} onClose={onClose} title="" size="sm">
       <div className="text-center">
         <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 ${
-          type === 'danger' ? 'bg-red-100' : 'bg-amber-100'
+          type === 'danger' ? 'bg-red-100' : 
+          type === 'warning' ? 'bg-amber-100' : 'bg-blue-100'
         }`}>
           <AlertTriangle className={`h-6 w-6 ${
-            type === 'danger' ? 'text-red-600' : 'text-amber-600'
+            type === 'danger' ? 'text-red-600' : 
+            type === 'warning' ? 'text-amber-600' : 'text-blue-600'
           }`} />
         </div>
         
@@ -32,7 +34,7 @@ const ConfirmationModal = ({
             {cancelText}
           </Button>
           <Button 
-            variant={type === 'danger' ? 'danger' : 'primary'} 
+            variant={type === 'danger' ? 'danger' : type === 'warning' ? 'warning' : 'primary'} 
             onClick={() => {
               onConfirm();
               onClose();

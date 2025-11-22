@@ -73,8 +73,9 @@ const InquiryForm = ({ onSuccess = null }) => {
 
     try {
       const response = await inquiryService.createInquiry(formData);
+      const resp = response?.data ?? response;
 
-      if (response.success) {
+      if (resp && (resp.success || resp._id || resp.id)) {
         showToast('Inquiry submitted successfully! We\'ll get back to you soon.', 'success');
         setSubmitted(true);
         setFormData({ name: '', email: '', subject: '', message: '' });
@@ -85,7 +86,7 @@ const InquiryForm = ({ onSuccess = null }) => {
           if (onSuccess) onSuccess();
         }, 3000);
       } else {
-        showToast(response.message || 'Failed to submit inquiry', 'error');
+        showToast(resp?.message || 'Failed to submit inquiry', 'error');
       }
     } catch (error) {
       console.error('Inquiry submission error:', error);
@@ -113,7 +114,7 @@ const InquiryForm = ({ onSuccess = null }) => {
 
   return (
     <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-2xl w-full mx-auto">
-      <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 text-white">
+      <div className="bg-gradient-to-r from-primary-600 to-blue-600 p-6 text-white">
         <h2 className="text-2xl font-bold">Send Us an Inquiry</h2>
         <p className="text-white/90 text-sm mt-1">Have a question? We'd love to hear from you.</p>
       </div>
@@ -122,7 +123,7 @@ const InquiryForm = ({ onSuccess = null }) => {
         {/* Name Field */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <User size={16} className="text-amber-500" />
+            <User size={16} className="text-primary-500" />
             Full Name *
           </label>
           <input
@@ -132,7 +133,7 @@ const InquiryForm = ({ onSuccess = null }) => {
             onChange={handleChange}
             placeholder="Enter your full name"
             disabled={loading}
-            className={`w-full px-4 py-2.5 rounded-xl border ${errors.name ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-amber-200'} focus:border-amber-500 focus:ring-4 transition-all outline-none`}
+            className={`w-full px-4 py-2.5 rounded-xl border ${errors.name ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none`}
           />
           {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
         </div>
@@ -140,7 +141,7 @@ const InquiryForm = ({ onSuccess = null }) => {
         {/* Email Field */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <Mail size={16} className="text-amber-500" />
+            <Mail size={16} className="text-primary-500" />
             Email Address *
           </label>
           <input
@@ -150,7 +151,7 @@ const InquiryForm = ({ onSuccess = null }) => {
             onChange={handleChange}
             placeholder="Enter your email address"
             disabled={loading}
-            className={`w-full px-4 py-2.5 rounded-xl border ${errors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-amber-200'} focus:border-amber-500 focus:ring-4 transition-all outline-none`}
+            className={`w-full px-4 py-2.5 rounded-xl border ${errors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none`}
           />
           {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
         </div>
@@ -158,7 +159,7 @@ const InquiryForm = ({ onSuccess = null }) => {
         {/* Subject Field */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <AlertCircle size={16} className="text-amber-500" />
+            <AlertCircle size={16} className="text-primary-500" />
             Subject
           </label>
           <input
@@ -168,14 +169,14 @@ const InquiryForm = ({ onSuccess = null }) => {
             onChange={handleChange}
             placeholder="What is your inquiry about? (optional)"
             disabled={loading}
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-amber-200 focus:border-amber-500 focus:ring-4 transition-all outline-none"
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-primary-200 focus:border-primary-500 focus:ring-4 transition-all outline-none"
           />
         </div>
 
         {/* Message Field */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <MessageSquare size={16} className="text-amber-500" />
+            <MessageSquare size={16} className="text-primary-500" />
             Message *
           </label>
           <textarea
@@ -186,7 +187,7 @@ const InquiryForm = ({ onSuccess = null }) => {
             rows="5"
             maxLength={1000}
             disabled={loading}
-            className={`w-full px-4 py-2.5 rounded-xl border ${errors.message ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-amber-200'} focus:border-amber-500 focus:ring-4 transition-all outline-none resize-none`}
+            className={`w-full px-4 py-2.5 rounded-xl border ${errors.message ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none resize-none`}
           />
           <div className="flex justify-between items-center mt-1">
             {errors.message ? (
@@ -196,7 +197,7 @@ const InquiryForm = ({ onSuccess = null }) => {
             )}
             <span className={`text-xs font-medium transition-colors ${
               formData.message.length >= 900 ? 'text-red-500' : 
-              formData.message.length >= 800 ? 'text-orange-500' : 'text-gray-400'
+              formData.message.length >= 800 ? 'text-amber-500' : 'text-gray-400'
             }`}>
               {formData.message.length} / 1000
             </span>
@@ -207,7 +208,7 @@ const InquiryForm = ({ onSuccess = null }) => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-amber-500/25 transform hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+          className="w-full px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-primary-600 to-blue-600 hover:from-primary-700 hover:to-blue-700 shadow-lg hover:shadow-primary-500/25 transform hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
         >
           {loading ? (
             <>

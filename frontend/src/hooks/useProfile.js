@@ -15,11 +15,17 @@ export const useProfile = () => {
 
     try {
       const response = await updateProfile(profileData);
-      if (response.user) {
-        setUser(response.user);
+      // Normalize axios/legacy responses: prefer response.data when present
+      const resp = response?.data ?? response;
+      // Backend/services normalized to: { success, data: <user>, message }
+      if (resp?.success) {
+        const updatedUser = resp.data ?? resp;
+        setUser(updatedUser);
         setSuccess(true);
-        return { success: true, user: response.user };
+        return { success: true, user: updatedUser };
       }
+      // In case of non-success, forward message
+      return { success: false, error: resp?.message || 'Update failed' };
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Failed to update profile';
       setError(errorMessage);

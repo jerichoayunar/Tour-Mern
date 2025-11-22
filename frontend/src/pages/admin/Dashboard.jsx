@@ -35,9 +35,11 @@ const Dashboard = () => {
         ]);
 
         if (isMounted) {
+          const statsResp = statsResponse?.data ?? statsResponse;
+          const recentResp = recentBookingsResponse?.data ?? recentBookingsResponse;
           setDashboardData({
-            stats: statsResponse.data.data,
-            recentBookings: recentBookingsResponse.data.data,
+            stats: statsResp?.data ?? statsResp ?? null,
+            recentBookings: recentResp?.data ?? recentResp ?? null,
           });
           setLastUpdate(new Date().toLocaleTimeString());
         }
@@ -60,9 +62,11 @@ const Dashboard = () => {
         adminService.getRecentBookings(),
       ]);
 
+      const statsResp = statsResponse?.data ?? statsResponse;
+      const recentResp = recentBookingsResponse?.data ?? recentBookingsResponse;
       setDashboardData({
-        stats: statsResponse.data.data,
-        recentBookings: recentBookingsResponse.data.data,
+        stats: statsResp?.data ?? statsResp ?? null,
+        recentBookings: recentResp?.data ?? recentResp ?? null,
       });
       setLastUpdate(new Date().toLocaleTimeString());
       showToast("Dashboard updated", "success");

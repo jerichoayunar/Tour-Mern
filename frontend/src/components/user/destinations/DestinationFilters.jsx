@@ -7,7 +7,7 @@ const DestinationFilters = ({
   availableLocations = [],
   className = '' 
 }) => {
-  const [selectedLocations, setSelectedLocations] = useState([]);
+  const [_selectedLocations, setSelectedLocations] = useState([]);
 
   // Define getSortLabel first
   const getSortLabel = (sortBy) => {
@@ -103,7 +103,7 @@ const DestinationFilters = ({
               placeholder="Search destinations, locations..."
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 bg-gray-50 placeholder-gray-400"
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-gray-50 placeholder-gray-400"
             />
           </div>
         </div>
@@ -115,7 +115,7 @@ const DestinationFilters = ({
             <select
               value={filters.location || ''}
               onChange={(e) => handleLocationSelect(e.target.value)}
-              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[180px]"
+              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[180px]"
             >
               <option value="">All Locations</option>
               {availableLocations.map(location => (
@@ -150,7 +150,7 @@ const DestinationFilters = ({
             <select
               value={filters.sortBy}
               onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[160px]"
+              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[160px]"
             >
               <option value="name">Sort: A-Z</option>
               <option value="nameDesc">Sort: Z-A</option>
@@ -170,17 +170,17 @@ const DestinationFilters = ({
               Active filters:
             </span>
             <div className="flex flex-wrap gap-2">
-              {activeFilters.map((filter, index) => (
+              {activeFilters.map((filter, _index) => (
                 <button
-                  key={`${filter.type}-${index}`}
+                  key={`${filter.type}-${_index}`}
                   onClick={() => clearFilter(filter.type)}
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 group border ${
                     filter.type === 'search' 
-                      ? 'bg-amber-50 text-amber-700 border-amber-100 hover:bg-amber-100'
+                      ? 'bg-primary-50 text-primary-700 border-primary-100 hover:bg-primary-100'
                       : filter.type === 'location'
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
                       : filter.type === 'status'
-                      ? 'bg-orange-50 text-orange-700 border-orange-100 hover:bg-orange-100'
+                      ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
                       : 'bg-yellow-50 text-yellow-700 border-yellow-100 hover:bg-yellow-100'
                   }`}
                 >

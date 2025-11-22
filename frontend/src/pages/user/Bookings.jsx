@@ -1,6 +1,7 @@
 // src/pages/user/Bookings.jsx
 import React, { useState, useContext, useEffect } from 'react';
 import { useBookings } from '../../hooks/useBookings';
+import * as bookingService from '../../services/bookingService';
 import { AuthContext } from "../../context/AuthContext";
 import BookingFilters from '../../components/user/bookings/BookingFilters';
 import BookingList from '../../components/user/bookings/BookingList';
@@ -30,6 +31,7 @@ const Bookings = () => {
   const [bookingToDelete, setBookingToDelete] = useState(null);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState(null);
+  const [refundEstimate, setRefundEstimate] = useState(null);
 
   // Load appropriate bookings based on view
   useEffect(() => {
@@ -38,7 +40,7 @@ const Bookings = () => {
     } else {
       fetchMyBookings();
     }
-  }, [view, isAdmin]);
+  }, [view, isAdmin, fetchBookings, fetchMyBookings]);
 
   const handleStatusUpdate = async (bookingId, status) => {
     try {
@@ -59,9 +61,21 @@ const Bookings = () => {
     setDeleteModalOpen(true);
   };
 
-  const handleCancelClick = (bookingId) => {
-    setBookingToCancel(bookingId);
+  // bookingObj: full booking object from BookingCard
+  const handleCancelClick = (bookingObj) => {
+    setBookingToCancel(bookingObj);
     setCancelModalOpen(true);
+    setRefundEstimate(null);
+    // Fetch server estimate (non-blocking)
+    (async () => {
+      try {
+        const res = await bookingService.getRefundEstimate(bookingObj._id);
+        setRefundEstimate(res.data);
+      } catch (err) {
+        console.error('Failed to fetch refund estimate:', err);
+        setRefundEstimate(null);
+      }
+    })();
   };
 
   const confirmDelete = async () => {
@@ -78,7 +92,7 @@ const Bookings = () => {
   const confirmCancel = async () => {
     if (bookingToCancel) {
       try {
-        await cancelBooking(bookingToCancel);
+        await cancelBooking(bookingToCancel._id || bookingToCancel);
         setBookingToCancel(null);
       } catch (error) {
         console.error('Failed to cancel booking:', error);
@@ -200,10 +214,67 @@ const Bookings = () => {
 
       <ConfirmationModal
         isOpen={cancelModalOpen}
-        onClose={() => setCancelModalOpen(false)}
+        onClose={() => { setCancelModalOpen(false); setRefundEstimate(null); }}
         onConfirm={confirmCancel}
         title="Cancel Booking"
-        message="Are you sure you want to cancel this booking? Cancellation fees may apply."
+        message={(() => {
+          if (!bookingToCancel) return 'Are you sure you want to cancel this booking? Cancellation fees may apply.';
+
+          const estimate = refundEstimate;
+
+          if (!estimate) {
+            // fallback to client-side computation like before while server responds
+            const now = new Date();
+            const tourDate = new Date(bookingToCancel.bookingDate || bookingToCancel.createdAt);
+            const daysUntil = Math.ceil((tourDate - now) / (1000 * 60 * 60 * 24));
+            let refundAmount = 0;
+            let refundPercentage = 0;
+            const total = bookingToCancel.totalPrice || bookingToCancel.totalAmount || 0;
+
+            if (daysUntil >= 14) {
+              refundAmount = total;
+              refundPercentage = 100;
+            } else if (daysUntil >= 7) {
+              refundAmount = Math.floor(total * 0.5);
+              refundPercentage = 50;
+            } else {
+              refundAmount = 0;
+              refundPercentage = 0;
+            }
+
+            return (
+              <div className="text-left">
+                <p className="mb-2">Are you sure you want to cancel this booking?</p>
+                <div className="bg-gray-50 p-3 rounded mb-2">
+                  <p className="text-sm text-gray-600">Booking: <strong>{bookingToCancel.package?.title || bookingToCancel.destinationName || 'Selected package'}</strong></p>
+                  <p className="text-sm text-gray-600">Date: <strong>{new Date(bookingToCancel.bookingDate || bookingToCancel.createdAt).toLocaleDateString()}</strong></p>
+                  <p className="text-sm text-gray-600">Guests: <strong>{bookingToCancel.guests || 1}</strong></p>
+                </div>
+                <div className="bg-yellow-50 p-3 rounded">
+                  <p className="text-sm text-gray-700">Estimated Refund: <strong>₱{(refundAmount || 0).toLocaleString()}</strong> ({refundPercentage}%)</p>
+                  <p className="text-xs text-gray-500 mt-2">Refund policy: Full refund if cancelled ≥14 days before; 50% if 7–13 days; no refund if &lt;7 days.</p>
+                </div>
+              </div>
+            );
+          }
+
+          // Server-provided estimate
+          return (
+            <div className="text-left">
+              <p className="mb-2">Are you sure you want to cancel this booking?</p>
+              <div className="bg-gray-50 p-3 rounded mb-2">
+                <p className="text-sm text-gray-600">Booking: <strong>{estimate.packageTitle || bookingToCancel.package?.title || 'Selected package'}</strong></p>
+                <p className="text-sm text-gray-600">Date: <strong>{new Date(estimate.bookingDate || bookingToCancel.bookingDate || bookingToCancel.createdAt).toLocaleDateString()}</strong></p>
+                <p className="text-sm text-gray-600">Guests: <strong>{bookingToCancel.guests || 1}</strong></p>
+              </div>
+              <div className="bg-yellow-50 p-3 rounded">
+                <p className="text-sm text-gray-700">Estimated Refund: <strong>₱{(estimate.refundAmount || 0).toLocaleString()}</strong> ({estimate.refundPercentage}%)</p>
+                <p className="text-xs text-gray-500 mt-2">Refund policy: Full refund if cancelled ≥14 days before; 50% if 7–13 days; no refund if &lt;7 days.</p>
+                <p className="text-xs text-gray-500 mt-1">This estimate comes from the server and is authoritative.</p>
+              </div>
+            </div>
+          );
+        })()}
         confirmText="Cancel Booking"
         type="warning"
       />

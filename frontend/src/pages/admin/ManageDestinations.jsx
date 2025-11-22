@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../../context/ToastContext.jsx';
 import destinationService from '../../services/destinationService.js';
 import DestinationsTable from '../../components/admin/destinations/DestinationsTable.jsx';
@@ -20,15 +20,16 @@ const ManageDestinations = () => {
   const { showToast } = useToast();
 
   // Fetch destinations
-  useEffect(() => {
-    fetchDestinations();
-  }, [filters]);
-
-  const fetchDestinations = async () => {
+  const fetchDestinations = useCallback(async () => {
     try {
       setLoading(true);
       const response = await destinationService.getAll();
-      const allDestinations = response.data || [];
+      const resp = response?.data ?? response;
+      const allDestinations = Array.isArray(resp)
+        ? resp
+        : (resp && resp.success !== undefined)
+          ? (Array.isArray(resp.data) ? resp.data : [])
+          : (Array.isArray(resp?.data) ? resp.data : []);
       
       // Apply filters
       let filtered = allDestinations;
@@ -50,11 +51,16 @@ const ManageDestinations = () => {
       
       setDestinations(filtered);
     } catch (error) {
+      console.debug('fetchDestinations error:', error);
       showToast('Failed to load destinations', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, showToast]);
+
+  useEffect(() => {
+    fetchDestinations();
+  }, [fetchDestinations]);
 
   // Form handlers
   const handleFormSubmit = async (formData) => {
@@ -71,6 +77,7 @@ const ManageDestinations = () => {
       setEditingDestination(null);
       fetchDestinations();
     } catch (error) {
+      console.debug('handleFormSubmit error:', error);
       showToast(error.message || 'Failed to save destination', 'error');
     } finally {
       setFormLoading(false);
@@ -89,6 +96,7 @@ const ManageDestinations = () => {
       setSelectedDestinations([]);
       fetchDestinations();
     } catch (error) {
+      console.debug('handleBulkStatusChange error:', error);
       showToast('Failed to update destinations', 'error');
     }
   };
@@ -104,6 +112,7 @@ const ManageDestinations = () => {
       setSelectedDestinations([]);
       fetchDestinations();
     } catch (error) {
+      console.debug('handleBulkDelete error:', error);
       showToast('Failed to delete destinations', 'error');
     }
   };
@@ -171,6 +180,7 @@ const ManageDestinations = () => {
                 showToast('Destination deleted!', 'success');
                 fetchDestinations();
               } catch (error) {
+                console.debug('delete destination error:', error);
                 showToast('Delete failed', 'error');
               }
             }
@@ -191,6 +201,7 @@ const ManageDestinations = () => {
                     showToast('Destination deleted!', 'success');
                     fetchDestinations();
                   } catch (error) {
+                    console.debug('delete destination (card) error:', error);
                     showToast('Delete failed', 'error');
                   }
                 }

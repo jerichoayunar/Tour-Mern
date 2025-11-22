@@ -4,6 +4,7 @@ import {
   getDashboardStats,
   getRecentBookings,
   getRevenueStats,
+  exportDashboardData,
   getAnalyticsMetrics,
   getBookingTrends,
   getTopPerformers,
@@ -21,6 +22,7 @@ router.use(authorize('admin'));
 router.get('/dashboard/stats', getDashboardStats);
 router.get('/dashboard/recent-bookings', getRecentBookings);
 router.get('/dashboard/revenue-stats', getRevenueStats);
+router.get('/dashboard/export', exportDashboardData);
 
 // Analytics routes
 router.get('/analytics/metrics', getAnalyticsMetrics);

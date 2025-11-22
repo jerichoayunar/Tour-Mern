@@ -1,11 +1,21 @@
 // src/services/bookingService.js - CORRECTED
 import api from './api';
 
+const normalizeResponse = (response) => {
+  const payload = response?.data || {};
+  return {
+    success: payload.success,
+    data: payload.data ?? payload,
+    message: payload.message,
+    token: payload.data?.token ?? payload.token
+  };
+};
+
 // ADMIN: Get all bookings
 export const getBookings = async (filters = {}) => {
   try {
     const response = await api.get('/bookings', { params: filters });
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
     throw error.response?.data || error.message;
   }
@@ -15,7 +25,7 @@ export const getBookings = async (filters = {}) => {
 export const updateBookingStatus = async (bookingId, status) => {
   try {
     const response = await api.put(`/bookings/${bookingId}/status`, { status });
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
     throw error.response?.data || error.message;
   }
@@ -25,7 +35,7 @@ export const updateBookingStatus = async (bookingId, status) => {
 export const getMyBookings = async () => {
   try {
     const response = await api.get('/bookings/mybookings');
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
     throw error.response?.data || error.message;
   }
@@ -35,7 +45,7 @@ export const getMyBookings = async () => {
 export const createBooking = async (bookingData) => {
   try {
     const response = await api.post('/bookings', bookingData);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
     throw error.response?.data || error.message;
   }
@@ -45,7 +55,7 @@ export const createBooking = async (bookingData) => {
 export const getBooking = async (bookingId) => {
   try {
     const response = await api.get(`/bookings/${bookingId}`);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
     throw error.response?.data || error.message;
   }
@@ -55,7 +65,7 @@ export const getBooking = async (bookingId) => {
 export const deleteBooking = async (bookingId) => {
   try {
     const response = await api.delete(`/bookings/${bookingId}`);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
     throw error.response?.data || error.message;
   }
@@ -65,7 +75,37 @@ export const deleteBooking = async (bookingId) => {
 export const cancelBooking = async (bookingId) => {
   try {
     const response = await api.put(`/bookings/${bookingId}/cancel`);
-    return response.data;
+    return normalizeResponse(response);
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// Get refund estimate (server-provided)
+export const getRefundEstimate = async (bookingId) => {
+  try {
+    const response = await api.get(`/bookings/${bookingId}/refund-estimate`);
+    return normalizeResponse(response);
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// ADMIN: Save internal admin notes for a booking
+export const saveAdminNotes = async (bookingId, notes) => {
+  try {
+    const response = await api.put(`/bookings/${bookingId}/notes`, { notes });
+    return normalizeResponse(response);
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
+// ADMIN: Resend booking confirmation email
+export const resendConfirmation = async (bookingId) => {
+  try {
+    const response = await api.post(`/bookings/${bookingId}/resend-confirmation`);
+    return normalizeResponse(response);
   } catch (error) {
     throw error.response?.data || error.message;
   }
@@ -75,7 +115,7 @@ export const cancelBooking = async (bookingId) => {
 export const archiveBooking = async (bookingId, reason) => {
   try {
     const response = await api.put(`/bookings/${bookingId}/archive`, { reason });
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
     throw error.response?.data || error.message;
   }
@@ -85,7 +125,7 @@ export const archiveBooking = async (bookingId, reason) => {
 export const restoreBooking = async (bookingId) => {
   try {
     const response = await api.put(`/bookings/${bookingId}/restore`);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
     throw error.response?.data || error.message;
   }
@@ -95,7 +135,7 @@ export const restoreBooking = async (bookingId) => {
 export const deleteBookingPermanent = async (bookingId) => {
   try {
     const response = await api.delete(`/bookings/${bookingId}/permanent`);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
     throw error.response?.data || error.message;
   }
@@ -113,5 +153,9 @@ export default {
   createBooking,
   getBooking,
   deleteBooking,
-  cancelBooking // Export new function
+  cancelBooking, // Export new function
+  // Extras
+  getRefundEstimate,
+  saveAdminNotes,
+  resendConfirmation
 };

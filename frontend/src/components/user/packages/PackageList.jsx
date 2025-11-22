@@ -119,8 +119,8 @@ const PackageList = ({
 
                 {/* Simple Inclusion Summary Skeleton */}
                 <div className="flex justify-between px-2">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="text-center">
+                  {[...Array(3)].map((_, _i) => (
+                            <div key={_i} className="text-center">
                       <div className="w-8 h-8 bg-gray-200 rounded-full mx-auto mb-1 animate-pulse"></div>
                       <div className="h-2 bg-gray-200 rounded w-6 mx-auto animate-pulse"></div>
                     </div>
@@ -210,7 +210,7 @@ const PackageList = ({
         ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' 
         : 'flex flex-col gap-4'
       }>
-        {packages.map((pkg, index) => (
+        {packages.map((pkg, _index) => (
           <div
             key={pkg._id}
             className="transition-all duration-300 hover:shadow-lg"

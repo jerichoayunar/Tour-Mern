@@ -42,7 +42,7 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
 
   return (
     <div 
-      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200/60 hover:border-amber-200"
+      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200/60 hover:border-primary-200"
       onClick={() => onViewDetails(pkg._id)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -69,7 +69,7 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
         {/* Simple Badges */}
         <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
           {/* Duration Badge */}
-          <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 backdrop-blur-sm shadow-md">
+          <div className="bg-gradient-to-r from-primary-600 to-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 backdrop-blur-sm shadow-md">
             <Clock size={14} />
             {pkg.duration} Day{pkg.duration !== 1 ? 's' : ''}
           </div>
@@ -94,11 +94,11 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
       <div className="p-5">
         {/* Title and Price */}
         <div className="flex items-start justify-between mb-3">
-          <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-amber-600 transition-colors flex-1 mr-3">
+          <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-primary-600 transition-colors flex-1 mr-3">
             {pkg.title}
           </h3>
           <div className="text-right flex-shrink-0">
-            <div className="text-xl font-bold text-amber-600">
+            <div className="text-xl font-bold text-primary-600">
               {formatPrice(pkg.price)}
             </div>
             <div className="text-gray-500 text-xs">per person</div>
@@ -108,7 +108,7 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
         {/* Simple Inclusion Summary */}
         <div className="flex items-center justify-between mb-4 px-2">
           <div className="text-center">
-            <Car size={16} className="mx-auto mb-1 text-amber-600" />
+            <Car size={16} className="mx-auto mb-1 text-primary-600" />
             <div className="text-xs font-semibold text-gray-900">{inclusionSummary.transport}</div>
             <div className="text-xs text-gray-500">Transport</div>
           </div>
@@ -118,15 +118,16 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
             <div className="text-xs text-gray-500">Meals</div>
           </div>
           <div className="text-center">
-            <Home size={16} className="mx-auto mb-1 text-indigo-600" />
+            <Home size={16} className="mx-auto mb-1 text-cyan-600" />
             <div className="text-xs font-semibold text-gray-900">{inclusionSummary.stay}</div>
             <div className="text-xs text-gray-500">Stay</div>
           </div>
         </div>
 
         {/* Simple CTA - FIXED CURSOR ISSUE */}
-        <button 
-          className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold py-2 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-md hover:shadow-lg cursor-pointer"
+        <Button 
+          variant="primary"
+          className="w-full rounded-xl shadow-md hover:shadow-lg gap-2"
           onClick={(e) => {
             e.stopPropagation(); // Prevent card click when button is clicked
             onViewDetails(pkg._id);
@@ -134,7 +135,7 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
         >
           View Details
           <ExternalLink className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -62,7 +62,7 @@ const InquiryModal = ({ inquiry, isOpen, onClose, onUpdate }) => {
             minute: '2-digit'
           });
          }
-       } catch (e) {
+       } catch {
          // Ignore error
        }
     }

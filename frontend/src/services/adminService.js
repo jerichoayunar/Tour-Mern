@@ -1,55 +1,55 @@
 // src/services/adminService.js - ENHANCED VERSION
 import api from './api';
 
+const normalizeResponse = (response) => {
+  const payload = response?.data || {};
+  return {
+    success: payload.success,
+    data: payload.data ?? payload,
+    message: payload.message,
+    token: payload.data?.token ?? payload.token
+  };
+};
+
 export const adminService = {
   getDashboardStats: async () => {
     try {
-      console.log('📊 Fetching dashboard stats...');
       const response = await api.get('/admin/dashboard/stats');
-      console.log('✅ Dashboard stats received:', response.data);
-      return response;
+      return normalizeResponse(response);
     } catch (error) {
-      console.error('❌ Error fetching dashboard stats:', error);
-      throw error;
+      throw error.response?.data || error;
     }
   },
 
   getRecentBookings: async () => {
     try {
-      console.log('📋 Fetching recent bookings...');
       const response = await api.get('/admin/dashboard/recent-bookings');
-      console.log('✅ Recent bookings received:', response.data);
-      return response;
+      return normalizeResponse(response);
     } catch (error) {
-      console.error('❌ Error fetching recent bookings:', error);
-      throw error;
+      throw error.response?.data || error;
     }
   },
 
   getRevenueStats: async () => {
     try {
-      console.log('💰 Fetching revenue stats...');
       const response = await api.get('/admin/dashboard/revenue-stats');
-      console.log('✅ Revenue stats received:', response.data);
-      return response;
+      return normalizeResponse(response);
     } catch (error) {
-      console.error('❌ Error fetching revenue stats:', error);
-      throw error;
+      throw error.response?.data || error;
     }
   },
 
-  // NEW: Export dashboard data
+  // Export dashboard data (returns blob in data when responseType=blob)
   exportDashboardData: async (format = 'csv') => {
     try {
-      console.log(`📤 Exporting dashboard data as ${format}...`);
       const response = await api.get(`/admin/dashboard/export?format=${format}`, {
         responseType: 'blob'
       });
-      console.log('✅ Export completed');
-      return response;
+      // Wrap blob in canonical shape using resolved payload
+      const resp = response?.data ?? response;
+      return { success: true, data: resp, message: 'Export ready' };
     } catch (error) {
-      console.error('❌ Error exporting data:', error);
-      throw error;
+      throw error.response?.data || error;
     }
   }
 };

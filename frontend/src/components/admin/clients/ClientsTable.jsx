@@ -7,7 +7,7 @@ const ClientsTable = ({
   showArchived,
   onFiltersChange, 
   onViewClient, 
-  onUpdateClient, 
+  onUpdateClient: _onUpdateClient, 
   onArchiveClient,
   onRestoreClient,
   onPermanentDelete,

@@ -81,8 +81,8 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
             <div className="h-4 bg-gray-200 rounded w-96 mx-auto animate-pulse"></div>
           </div>
           <div className="flex gap-6 overflow-hidden">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-80 bg-white rounded-2xl shadow-lg p-6 animate-pulse border">
+              {[...Array(4)].map((_, _i) => (
+                <div key={_i} className="flex-shrink-0 w-80 bg-white rounded-2xl shadow-lg p-6 animate-pulse border">
                 <div className="h-48 bg-gray-200 rounded-xl mb-4"></div>
                 <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
                 <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
@@ -186,7 +186,7 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
                   {/* Location Badge */}
                   <div className="absolute top-4 left-4">
                     <div className="flex items-center gap-2 bg-white/95 px-3 py-2 rounded-xl shadow-sm">
-                      <MapPin className="w-4 h-4 text-amber-600" />
+                      <MapPin className="w-4 h-4 text-primary-600" />
                       <span className="text-sm font-medium text-gray-900">{destination.location}</span>
                     </div>
                   </div>
@@ -218,7 +218,7 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
                   {/* CTA Button */}
                   <Link
                     to="/destinations"
-                    className="block w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:from-amber-600 hover:to-orange-600 group/btn"
+                    className="block w-full bg-gradient-to-r from-primary-600 to-primary-500 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:from-primary-500 hover:to-primary-400 group/btn"
                   >
                     <span className="flex items-center justify-center gap-2">
                       Explore Destination
@@ -233,13 +233,13 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
 
         {/* Scroll Indicators */}
         <div className="flex justify-center items-center gap-2 mt-8">
-          {featuredDestinations.slice(0, 6).map((_, index) => (
+          {featuredDestinations.slice(0, 6).map((_, _i) => (
             <button
-              key={index}
-              onClick={() => scrollToIndex(index * 2)}
+              key={_i}
+              onClick={() => scrollToIndex(_i * 2)}
               className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                Math.floor(activeIndex / 2) === index
-                  ? 'bg-amber-500 w-6'
+                Math.floor(activeIndex / 2) === _i
+                  ? 'bg-primary-500 w-6'
                   : 'bg-gray-300 hover:bg-gray-400'
               }`}
             />
@@ -250,7 +250,7 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
         <div className="text-center mt-12">
           <Link
             to="/destinations"
-            className="inline-flex items-center gap-2 text-amber-600 hover:text-amber-700 font-semibold transition-colors duration-200 group"
+            className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-semibold transition-colors duration-200 group"
           >
             View all destinations
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />

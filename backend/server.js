@@ -64,7 +64,15 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com"], // Allow Google OAuth
-      imgSrc: ["'self'", "data:", "https://res.cloudinary.com"], // Allow Cloudinary images
+      // Allow images from self, data URIs, Cloudinary and Google user content (Google profile pictures)
+      imgSrc: [
+        "'self'",
+        "data:",
+        "https://res.cloudinary.com",
+        "https://*.googleusercontent.com",
+        "https://lh3.googleusercontent.com",
+        "https://lh4.googleusercontent.com"
+      ],
       connectSrc: ["'self'", "https://accounts.google.com"],
       frameSrc: ["'self'", "https://accounts.google.com"] // For Google OAuth iframe
     }

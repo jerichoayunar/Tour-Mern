@@ -120,7 +120,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
   return (
     <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-2xl w-full mx-auto relative">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 text-white relative">
+      <div className="bg-gradient-to-r from-primary-600 to-blue-600 p-6 text-white relative">
         <h2 className="text-2xl font-bold">Book Your Adventure</h2>
         <p className="text-white/90 text-sm mt-1">{tourPackage.title}</p>
         
@@ -139,7 +139,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
           {/* Name */}
           <div className="space-y-2">
             <label htmlFor="clientName" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-              <User size={16} className="text-amber-500" />
+              <User size={16} className="text-primary-500" />
               Full Name *
             </label>
             <input
@@ -149,7 +149,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
               value={formData.clientName}
               onChange={handleChange}
               placeholder="Enter your full name"
-              className={`w-full px-4 py-2.5 rounded-xl border ${errors.clientName ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-amber-200'} focus:border-amber-500 focus:ring-4 transition-all outline-none`}
+              className={`w-full px-4 py-2.5 rounded-xl border ${errors.clientName ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none`}
             />
             {errors.clientName && <p className="text-xs text-red-500 mt-1">{errors.clientName}</p>}
           </div>
@@ -157,7 +157,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
           {/* Email */}
           <div className="space-y-2">
             <label htmlFor="clientEmail" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-              <Mail size={16} className="text-amber-500" />
+              <Mail size={16} className="text-primary-500" />
               Email *
             </label>
             <input
@@ -167,7 +167,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
               value={formData.clientEmail}
               onChange={handleChange}
               placeholder="Enter your email"
-              className={`w-full px-4 py-2.5 rounded-xl border ${errors.clientEmail ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-amber-200'} focus:border-amber-500 focus:ring-4 transition-all outline-none`}
+              className={`w-full px-4 py-2.5 rounded-xl border ${errors.clientEmail ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none`}
             />
             {errors.clientEmail && <p className="text-xs text-red-500 mt-1">{errors.clientEmail}</p>}
           </div>
@@ -175,7 +175,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
           {/* Phone */}
           <div className="space-y-2">
             <label htmlFor="clientPhone" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-              <Phone size={16} className="text-amber-500" />
+              <Phone size={16} className="text-primary-500" />
               Phone *
             </label>
             <input
@@ -185,7 +185,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
               value={formData.clientPhone}
               onChange={handleChange}
               placeholder="Enter your phone number"
-              className={`w-full px-4 py-2.5 rounded-xl border ${errors.clientPhone ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-amber-200'} focus:border-amber-500 focus:ring-4 transition-all outline-none`}
+              className={`w-full px-4 py-2.5 rounded-xl border ${errors.clientPhone ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none`}
             />
             {errors.clientPhone && <p className="text-xs text-red-500 mt-1">{errors.clientPhone}</p>}
           </div>
@@ -193,7 +193,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
           {/* Guests */}
           <div className="space-y-2">
             <label htmlFor="guests" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-              <Users size={16} className="text-amber-500" />
+              <Users size={16} className="text-primary-500" />
               Number of Guests *
             </label>
             <select
@@ -201,7 +201,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
               name="guests"
               value={formData.guests}
               onChange={handleChange}
-              className={`w-full px-4 py-2.5 rounded-xl border ${errors.guests ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-amber-200'} focus:border-amber-500 focus:ring-4 transition-all outline-none bg-white`}
+              className={`w-full px-4 py-2.5 rounded-xl border ${errors.guests ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none bg-white`}
             >
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(num => (
                 <option key={num} value={num}>
@@ -216,7 +216,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
         {/* Date */}
         <div className="space-y-2">
           <label htmlFor="bookingDate" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <Calendar size={16} className="text-amber-500" />
+            <Calendar size={16} className="text-primary-500" />
             Booking Date *
           </label>
           <input
@@ -226,7 +226,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
             value={formData.bookingDate}
             onChange={handleChange}
             min={getMinDate()}
-            className={`w-full px-4 py-2.5 rounded-xl border ${errors.bookingDate ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-amber-200'} focus:border-amber-500 focus:ring-4 transition-all outline-none`}
+            className={`w-full px-4 py-2.5 rounded-xl border ${errors.bookingDate ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none`}
           />
           {errors.bookingDate && <p className="text-xs text-red-500 mt-1">{errors.bookingDate}</p>}
         </div>
@@ -234,7 +234,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
         {/* Special Requests */}
         <div className="space-y-2">
           <label htmlFor="specialRequests" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <MessageSquare size={16} className="text-amber-500" />
+            <MessageSquare size={16} className="text-primary-500" />
             Special Requests
           </label>
           <textarea
@@ -244,7 +244,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
             onChange={handleChange}
             placeholder="Any special requirements, dietary restrictions, or requests..."
             rows="3"
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-amber-200 focus:border-amber-500 focus:ring-4 transition-all outline-none resize-none"
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-primary-200 focus:border-primary-500 focus:ring-4 transition-all outline-none resize-none"
           />
         </div>
 
@@ -257,7 +257,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
           </div>
           <div className="flex justify-between items-center pt-3 border-t border-slate-200">
             <span className="font-bold text-gray-900">Total Amount:</span>
-            <span className="text-xl font-bold text-amber-600">{formatPrice(calculatedPrice)}</span>
+            <span className="text-xl font-bold text-primary-600">{formatPrice(calculatedPrice)}</span>
           </div>
         </div>
 
@@ -275,7 +275,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
           <button 
             type="submit" 
             disabled={loading}
-            className="flex-1 px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-amber-500/25 transform hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+            className="flex-1 px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-primary-600 to-blue-600 hover:from-primary-700 hover:to-blue-700 shadow-lg hover:shadow-primary-500/25 transform hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

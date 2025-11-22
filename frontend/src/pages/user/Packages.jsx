@@ -5,6 +5,8 @@ import { usePackages } from '../../hooks/usePackages';
 import PackageList from '../../components/user/packages/PackageList';
 import PackageModal from '../../components/user/packages/PackageModal';
 import PackageFilters from '../../components/user/packages/PackageFilters';
+import Modal from '../../components/ui/Modal';
+import BookingForm from '../../components/user/bookings/BookingForm';
 
 const Packages = () => {
   const { 
@@ -12,13 +14,15 @@ const Packages = () => {
     loading, 
     error, 
     fetchPackages,
-    clearFilters 
+    clearFilters: _clearFilters 
   } = usePackages();
 
   // Local state
   const [viewMode, setViewMode] = useState('grid');
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [bookingPackage, setBookingPackage] = useState(null);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     minPrice: '',
@@ -95,6 +99,12 @@ const Packages = () => {
     setIsModalOpen(true);
   };
 
+  // Handle booking action from PackageModal
+  const handleBookNow = (pkg) => {
+    setBookingPackage(pkg);
+    setIsBookingOpen(true);
+  };
+
   // Handle close modal
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -153,14 +163,14 @@ const Packages = () => {
           >
             {/* Minimal Badge */}
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 mb-6">
-              <Sparkles size={16} className="text-amber-400" />
+              <Sparkles size={16} className="text-primary-400" />
               <span className="font-medium text-xs tracking-widest uppercase">Premium Travel Experiences</span>
             </div>
 
             {/* Clean Heading */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 leading-tight">
               <span className="block text-white">Discover</span>
-              <span className="block bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent mt-2">
+              <span className="block bg-gradient-to-r from-primary-400 to-blue-400 bg-clip-text text-transparent mt-2">
                 Your Journey
               </span>
             </h1>
@@ -220,7 +230,23 @@ const Packages = () => {
         package={selectedPackage}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        onBook={handleBookNow}
       />
+
+      {/* Booking Modal */}
+      {isBookingOpen && bookingPackage && (
+        <Modal
+          isOpen={isBookingOpen}
+          onClose={() => { setIsBookingOpen(false); setBookingPackage(null); }}
+          size="lg"
+        >
+          <BookingForm
+            package={bookingPackage}
+            onSuccess={() => { setIsBookingOpen(false); setBookingPackage(null); }}
+            onCancel={() => { setIsBookingOpen(false); setBookingPackage(null); }}
+          />
+        </Modal>
+      )}
     </div>
   );
 };

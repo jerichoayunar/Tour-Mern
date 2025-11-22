@@ -32,12 +32,24 @@ export function useDestinations() {
      */
     const fetchDestinations = async () => {
       try {
-        // Get data from service layer
-        const response = await destinationService.getAll();
-        setDestinations(response.data); // Extract the array
-        setError(null); // Clear any previous errors
+          // Get data from service layer
+          const response = await destinationService.getAll();
+
+          // Normalize response shape: support array, axios response, and canonical { success, data }
+          const resp = response?.data ?? response;
+          if (Array.isArray(resp)) {
+            setDestinations(resp);
+          } else if (resp && resp.success !== undefined) {
+            setDestinations(Array.isArray(resp.data) ? resp.data : []);
+          } else if (resp && Array.isArray(resp.data)) {
+            setDestinations(resp.data);
+          } else {
+            setDestinations(resp || []);
+          }
+
+          setError(null); // Clear any previous errors
         
-      } catch (err) {
+        } catch (err) {
         // Handle any errors that occurred
         console.error('Error fetching destinations:', err);
         setError(err.message);

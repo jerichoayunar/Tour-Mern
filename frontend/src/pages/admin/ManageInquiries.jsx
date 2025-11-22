@@ -1,5 +1,5 @@
 // src/pages/admin/ManageInquiries.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import InquiriesTable from '../../components/admin/inquiries/InquiriesTable';
 import InquiryFilters from '../../components/admin/inquiries/InquiryFilters';
 import InquiryModal from '../../components/admin/inquiries/InquiryModal';
@@ -27,7 +27,7 @@ const ManageInquiries = () => {
   
   const { showToast } = useToast();
 
-  const fetchInquiries = async (params = {}) => {
+  const fetchInquiries = useCallback(async (params = {}) => {
     setLoading(true);
     try {
       const queryParams = {
@@ -36,36 +36,38 @@ const ManageInquiries = () => {
         onlyArchived: showArchived
       };
       const response = await inquiryService.getInquiries(queryParams);
-      if (response.success) {
-        setInquiries(response.inquiries || []);
+      const resp = response?.data ?? response;
+      if (resp) {
+        setInquiries(resp.inquiries || resp.data || []);
         setPagination({
-          page: response.page || 1,
-          pages: response.pages || 1,
-          total: response.total || 0
+          page: resp.page || 1,
+          pages: resp.pages || 1,
+          total: resp.total || resp.count || 0
         });
       }
     } catch (error) {
+      console.debug('fetchInquiries error:', error);
       showToast('Error fetching inquiries', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, showArchived, showToast]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await inquiryService.getInquiryStats();
-      if (response.success) {
-        setStats(response.data);
-      }
+      const resp = response?.data ?? response;
+      setStats(resp?.data ?? resp ?? null);
     } catch (error) {
+      console.debug('fetchStats error:', error);
       showToast('Error fetching stats', 'error');
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     fetchInquiries();
     fetchStats();
-  }, [filters, showArchived]);
+  }, [fetchInquiries, fetchStats]);
 
   const handleViewInquiry = async (inquiry) => {
     try {
@@ -79,11 +81,11 @@ const ManageInquiries = () => {
       
       // Then fetch the updated inquiry details
       const response = await inquiryService.getInquiryById(inquiry._id);
-      if (response.success) {
-        setSelectedInquiry(response.data);
-        setIsModalOpen(true);
-      }
+      const resp = response?.data ?? response;
+      setSelectedInquiry(resp?.data ?? resp ?? null);
+      setIsModalOpen(true);
     } catch (error) {
+      console.debug('handleViewInquiry error:', error);
       showToast('Error fetching inquiry details', 'error');
     }
   };
@@ -91,7 +93,9 @@ const ManageInquiries = () => {
   const handleUpdateInquiry = async (updateData) => {
     try {
       const response = await inquiryService.updateInquiry(selectedInquiry._id, updateData);
-      if (response.success) {
+      const resp = response?.data ?? response;
+      if (!resp) throw new Error('Failed to update inquiry');
+      if (resp.success || resp) {
         showToast('Inquiry updated successfully!', 'success');
         await fetchInquiries();
         await fetchStats();
@@ -99,6 +103,7 @@ const ManageInquiries = () => {
         setSelectedInquiry(null);
       }
     } catch (error) {
+      console.debug('handleUpdateInquiry error:', error);
       showToast('Error updating inquiry', 'error');
     }
   };
@@ -106,12 +111,14 @@ const ManageInquiries = () => {
   const handleMarkAsRead = async (inquiryId) => {
     try {
       const response = await inquiryService.markAsRead(inquiryId);
-      if (response.success) {
+      const resp = response?.data ?? response;
+      if (resp.success || resp) {
         showToast('Inquiry marked as read!', 'success');
         await fetchInquiries();
         await fetchStats();
       }
     } catch (error) {
+      console.debug('handleMarkAsRead error:', error);
       showToast('Error marking inquiry as read', 'error');
     }
   };
@@ -126,12 +133,14 @@ const ManageInquiries = () => {
       onConfirm: async () => {
         try {
           const response = await inquiryService.archiveInquiry(inquiry._id);
-          if (response.success) {
+          const resp = response?.data ?? response;
+          if (resp.success || resp) {
             showToast('Inquiry archived successfully!', 'success');
             await fetchInquiries();
             await fetchStats();
           }
         } catch (error) {
+          console.debug('archiveInquiry error:', error);
           showToast('Error archiving inquiry', 'error');
         }
       }
@@ -148,12 +157,14 @@ const ManageInquiries = () => {
       onConfirm: async () => {
         try {
           const response = await inquiryService.restoreInquiry(inquiry._id);
-          if (response.success) {
+          const resp = response?.data ?? response;
+          if (resp.success || resp) {
             showToast('Inquiry restored successfully!', 'success');
             await fetchInquiries();
             await fetchStats();
           }
         } catch (error) {
+          console.debug('restoreInquiry error:', error);
           showToast('Error restoring inquiry', 'error');
         }
       }
@@ -170,12 +181,14 @@ const ManageInquiries = () => {
       onConfirm: async () => {
         try {
           const response = await inquiryService.permanentDeleteInquiry(inquiry._id);
-          if (response.success) {
+          const resp = response?.data ?? response;
+          if (resp.success || resp) {
             showToast('Inquiry permanently deleted!', 'success');
             await fetchInquiries();
             await fetchStats();
           }
         } catch (error) {
+          console.debug('permanentDelete error:', error);
           showToast('Error deleting inquiry', 'error');
         }
       }

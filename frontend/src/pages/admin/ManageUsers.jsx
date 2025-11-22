@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { clientService } from '../../services/clientService';
 import ClientsTable from '../../components/admin/clients/ClientsTable';
 import ClientDetailsModal from '../../components/admin/clients/ClientDetailsModal';
@@ -23,17 +23,7 @@ const ManageUsers = () => {
   const { showToast } = useToast();
 
   // Fetch clients and stats on component mount
-  useEffect(() => {
-    fetchData();
-  }, [showArchived]); // Refetch when archive mode changes
-
-  // Apply filters when clients or filters change
-  useEffect(() => {
-    const filtered = clientService.filterClients(clients, filters);
-    setFilteredClients(filtered);
-  }, [clients, filters]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -44,20 +34,39 @@ const ManageUsers = () => {
         clientService.getClients(params),
         clientService.getClientStats()
       ]);
-      
-      setClients(clientsResponse.data.map(clientService.transformClientData));
-      setStats(statsResponse.data);
+
+      // clientService already returns parsed data (not axios response)
+      const respClients = clientsResponse?.data ?? clientsResponse;
+      const clientsData = Array.isArray(respClients) ? respClients : (respClients && respClients.success !== undefined ? (Array.isArray(respClients.data) ? respClients.data : []) : []);
+      setClients(clientsData.map(clientService.transformClientData));
+
+      const statsResp = statsResponse?.data ?? statsResponse;
+      const statsData = statsResp && statsResp.success !== undefined ? (statsResp.data ?? statsResp) : statsResp ?? null;
+      setStats(statsData);
     } catch (error) {
       showToast(error.message || 'Failed to fetch clients data', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [showArchived, showToast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]); // Refetch when archive mode changes
+
+  // Apply filters when clients or filters change
+  useEffect(() => {
+    const filtered = clientService.filterClients(clients, filters);
+    setFilteredClients(filtered);
+  }, [clients, filters]);
+
+  
 
   const handleViewClient = async (clientId) => {
     try {
       const response = await clientService.getClient(clientId);
-      setSelectedClient(clientService.transformClientData(response.data));
+      const clientData = response?.data ?? response;
+      setSelectedClient(clientService.transformClientData(clientData));
       setIsModalOpen(true);
     } catch (error) {
       showToast(error.message || 'Failed to fetch client details', 'error');
@@ -71,7 +80,7 @@ const ManageUsers = () => {
       // Update local state
       setClients(prev => prev.map(client => 
         client.id === clientId 
-          ? clientService.transformClientData(response.data)
+          ? clientService.transformClientData(response?.data ?? response)
           : client
       ));
       
@@ -79,9 +88,9 @@ const ManageUsers = () => {
 
       // Refresh stats
       const statsResponse = await clientService.getClientStats();
-      setStats(statsResponse.data);
+      setStats(statsResponse?.data ?? statsResponse ?? null);
 
-      return response.data;
+      return response?.data ?? response;
     } catch (error) {
       showToast(error.message || 'Failed to update client', 'error');
       throw error;
@@ -103,7 +112,7 @@ const ManageUsers = () => {
 
       // Refresh stats
       const statsResponse = await clientService.getClientStats();
-      setStats(statsResponse.data);
+      setStats(statsResponse?.data ?? statsResponse ?? null);
     } catch (error) {
       showToast(error.message || 'Failed to archive client', 'error');
     }
@@ -124,7 +133,7 @@ const ManageUsers = () => {
 
       // Refresh stats
       const statsResponse = await clientService.getClientStats();
-      setStats(statsResponse.data);
+      setStats(statsResponse?.data ?? statsResponse ?? null);
     } catch (error) {
       showToast(error.message || 'Failed to restore client', 'error');
     }
@@ -150,7 +159,7 @@ const ManageUsers = () => {
 
       // Refresh stats
       const statsResponse = await clientService.getClientStats();
-      setStats(statsResponse.data);
+      setStats(statsResponse?.data ?? statsResponse ?? null);
     } catch (error) {
       showToast(error.message || 'Failed to delete client', 'error');
     }

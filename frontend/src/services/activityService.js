@@ -1,6 +1,16 @@
 // frontend/src/services/activityService.js - FIXED
 import api from './api';
 
+const normalizeResponse = (response) => {
+  const payload = response?.data || {};
+  return {
+    success: payload.success,
+    data: payload.data ?? payload,
+    message: payload.message,
+    token: payload.data?.token ?? payload.token
+  };
+};
+
 // ✅ MOVED: Helper functions to the top to avoid circular dependency
 const getDeviceInfo = (userAgent) => {
   if (!userAgent) return 'Unknown';
@@ -133,16 +143,16 @@ const calculateStats = (activities) => {
 export const getUserActivities = async (userId, params = {}) => {
   try {
     const response = await api.get(`/activities/user/${userId}`, { params });
-    
-    // Your backend returns: { success: true, count: X, data: [] }
-    if (response.data && response.data.success) {
-      return {
-        activities: response.data.data,
-        total: response.data.count
-      };
-    }
-    
-    return response.data;
+
+    // Backend returns: { success: true, count: X, data: [] }
+    // Normalize to canonical shape: { success, data: <array>, message }
+    const payload = response?.data || {};
+    // payload.data is expected to be an array for this endpoint
+    return {
+      success: payload.success ?? true,
+      data: Array.isArray(payload.data) ? payload.data : (Array.isArray(payload) ? payload : payload.data || []),
+      message: payload.message || null
+    };
   } catch (error) {
     throw error.response?.data || error;
   }
@@ -152,14 +162,22 @@ export const getUserActivities = async (userId, params = {}) => {
 export const getAllActivities = async (params = {}) => {
   try {
     const response = await api.get('/activities', { params });
-    console.log('🔍 Activity Service - Raw Response:', response.data);
-    
-    // Your backend returns: { success: true, activities: [], total: X, pages: X }
-    if (response.data && response.data.success) {
-      return response.data; // Return the entire success object
-    }
-    
-    return response.data;
+    const payload = response?.data ?? response;
+    console.log('🔍 Activity Service - Raw Response:', payload);
+
+    // Normalize to a consistent shape: { success, data: [activities], pagination }
+    const activitiesArray = Array.isArray(payload.activities)
+      ? payload.activities
+      : Array.isArray(payload.data)
+        ? payload.data
+        : [];
+
+    return {
+      success: payload.success ?? true,
+      data: activitiesArray,
+      pagination: payload.pagination || payload.pagination || null,
+      message: payload.message || null
+    };
   } catch (error) {
     console.error('❌ Activity Service Error:', error);
     throw error.response?.data || error;
@@ -170,7 +188,7 @@ export const getAllActivities = async (params = {}) => {
 export const getActivityStats = async () => {
   try {
     const response = await api.get('/activities/stats');
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
     throw error.response?.data || error;
   }
@@ -182,7 +200,19 @@ export const getActivitiesByType = async (type, params = {}) => {
     const response = await api.get('/activities', { 
       params: { ...params, type } 
     });
-    return response.data;
+    const payload = response?.data || {};
+    const activitiesArray = Array.isArray(payload.activities)
+      ? payload.activities
+      : Array.isArray(payload.data)
+        ? payload.data
+        : [];
+
+    return {
+      success: payload.success ?? true,
+      data: activitiesArray,
+      pagination: payload.pagination || null,
+      message: payload.message || null
+    };
   } catch (error) {
     throw error.response?.data || error;
   }
@@ -194,7 +224,19 @@ export const getRecentActivities = async (limit = 10) => {
     const response = await api.get('/activities', { 
       params: { limit, sort: '-createdAt' } 
     });
-    return response.data;
+    const payload = response?.data ?? response;
+    const activitiesArray = Array.isArray(payload.activities)
+      ? payload.activities
+      : Array.isArray(payload.data)
+        ? payload.data
+        : [];
+
+    return {
+      success: payload.success ?? true,
+      data: activitiesArray,
+      pagination: payload.pagination || null,
+      message: payload.message || null
+    };
   } catch (error) {
     throw error.response?.data || error;
   }
@@ -210,7 +252,19 @@ export const searchActivities = async (query = '', filters = {}) => {
     }
     
     const response = await api.get('/activities', { params });
-    return response.data;
+    const payload = response?.data ?? response;
+    const activitiesArray = Array.isArray(payload.activities)
+      ? payload.activities
+      : Array.isArray(payload.data)
+        ? payload.data
+        : [];
+
+    return {
+      success: payload.success ?? true,
+      data: activitiesArray,
+      pagination: payload.pagination || null,
+      message: payload.message || null
+    };
   } catch (error) {
     throw error.response?.data || error;
   }
@@ -223,7 +277,7 @@ export const exportActivities = async (format = 'csv', filters = {}) => {
       params: { format, ...filters },
       responseType: 'blob'
     });
-    return response.data;
+    return { success: true, data: response?.data ?? response, message: 'Export ready' };
   } catch (error) {
     throw error.response?.data || error;
   }

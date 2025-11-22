@@ -72,6 +72,11 @@ const bookingSchema = new mongoose.Schema({
   // ============================================================================
   // 🔹 ARCHIVE SYSTEM (Soft Delete)
   // ============================================================================
+  // Admin notes for internal use
+  adminNotes: {
+    type: String,
+    default: ''
+  },
   archived: {
     type: Boolean,
     default: false,

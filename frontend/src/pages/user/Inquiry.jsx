@@ -29,7 +29,7 @@ const Inquiry = () => {
               <h3 className="text-xl font-bold text-gray-900 mb-6">Why Book With Us?</h3>
               <ul className="space-y-4">
                 <li className="flex items-start gap-3">
-                  <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                  <div className="p-2 bg-primary-100 rounded-lg text-primary-600">
                     <Headphones size={20} />
                   </div>
                   <div>
@@ -38,7 +38,7 @@ const Inquiry = () => {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                  <div className="p-2 bg-primary-100 rounded-lg text-primary-600">
                     <CreditCard size={20} />
                   </div>
                   <div>
@@ -47,7 +47,7 @@ const Inquiry = () => {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                  <div className="p-2 bg-primary-100 rounded-lg text-primary-600">
                     <Map size={20} />
                   </div>
                   <div>
@@ -56,7 +56,7 @@ const Inquiry = () => {
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                  <div className="p-2 bg-primary-100 rounded-lg text-primary-600">
                     <ShieldCheck size={20} />
                   </div>
                   <div>
@@ -68,7 +68,7 @@ const Inquiry = () => {
             </div>
 
             {/* Contact Info */}
-            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl shadow-lg p-6 text-white">
+            <div className="bg-gradient-to-br from-primary-600 to-blue-600 rounded-2xl shadow-lg p-6 text-white">
               <h3 className="text-xl font-bold mb-4">Get in Touch</h3>
               <div className="space-y-3 text-white/90">
                 <p>📍 Malaybalay City, Bukidnon</p>

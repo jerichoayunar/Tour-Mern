@@ -42,10 +42,13 @@ export const SettingsProvider = ({ children }) => {
   const fetchSettings = async () => {
     try {
       const response = await getPublicSettings();
-      if (response && response.data) {
+      const resp = response?.data ?? response;
+      // Support canonical { success, data } and direct object responses
+      const settingsData = resp && resp.success !== undefined ? (resp.data || {}) : (resp || {});
+      if (settingsData && typeof settingsData === 'object') {
         setSettings(prev => ({
           ...prev,
-          ...response.data
+          ...settingsData
         }));
       }
     } catch (error) {

@@ -5,7 +5,7 @@ import Button from "../../ui/Button";
 const PackageTable = ({ 
   data, 
   onEdit, 
-  onDelete,
+  _onDelete,
   isArchived = false,
   onArchive,
   onRestore,

@@ -14,11 +14,10 @@ import {
 } from "recharts";
 import { Calendar, TrendingUp, Users, BarChart3, MapPin } from "lucide-react";
 
-const DashboardCharts = ({ monthlyBookings, destinationPopularity }) => {
+const DashboardCharts = ({ monthlyBookings, _destinationPopularity }) => {
   const [activeChart, setActiveChart] = useState('bookings');
   
   const hasMonthlyData = monthlyBookings?.length > 0;
-  const hasPopularityData = destinationPopularity?.length > 0;
 
   // Create complete 12-month data
   const completeYearData = useMemo(() => {

@@ -45,11 +45,30 @@ export const useBookings = (initialFilters = {}) => {
       console.log('🔄 Fetching bookings with filters:', currentFilters);
       
       const response = await bookingService.getBookings(currentFilters);
-      
-      // 🛠️ FIX: Check if request was cancelled before updating state
+
+      // 🛠️ FIX: Normalize service response and check cancellation
       if (!abortControllerRef.current.signal.aborted) {
-        setBookings(response.data || []); // 🛠️ ADD: Fallback to empty array
-        console.log('✅ Bookings fetched successfully:', response.data?.length || 0);
+        const resp = response?.data ?? response;
+        let bookingsData = [];
+
+        if (Array.isArray(resp)) bookingsData = resp;
+        else if (resp && resp.success !== undefined) bookingsData = resp.data ?? resp.bookings ?? resp.items ?? [];
+        else bookingsData = resp?.bookings ?? resp?.data ?? resp?.items ?? [];
+
+        if (!Array.isArray(bookingsData)) {
+          // Fallback: pick first array value from object
+          const candidates = [];
+          if (resp && typeof resp === 'object') {
+            Object.values(resp).forEach(v => {
+              if (Array.isArray(v)) candidates.push(v);
+              if (v && typeof v === 'object') Object.values(v).forEach(nv => { if (Array.isArray(nv)) candidates.push(nv); });
+            });
+          }
+          bookingsData = candidates.length > 0 ? candidates[0] : [];
+        }
+
+        setBookings(bookingsData);
+        console.log('✅ Bookings fetched successfully:', bookingsData.length || 0);
       }
     } catch (err) {
       // 🛠️ FIX: Don't show errors for cancelled requests
@@ -87,10 +106,29 @@ export const useBookings = (initialFilters = {}) => {
     try {
       console.log('🔄 Fetching user bookings');
       const response = await bookingService.getMyBookings();
-      
+
       if (!abortControllerRef.current.signal.aborted) {
-        setBookings(response.data || []);
-        console.log('✅ User bookings fetched:', response.data?.length || 0);
+        const resp = response?.data ?? response;
+        let bookingsData = [];
+
+        if (Array.isArray(resp)) bookingsData = resp;
+        else if (resp && resp.success !== undefined) bookingsData = resp.data ?? resp.bookings ?? resp.items ?? [];
+        else bookingsData = resp?.bookings ?? resp?.data ?? resp?.items ?? [];
+
+        if (!Array.isArray(bookingsData)) {
+          const candidates = [];
+          if (resp && typeof resp === 'object') {
+            Object.values(resp).forEach(v => {
+              if (Array.isArray(v)) candidates.push(v);
+              if (v && typeof v === 'object') Object.values(v).forEach(nv => { if (Array.isArray(nv)) candidates.push(nv); });
+            });
+          }
+          bookingsData = candidates.length > 0 ? candidates[0] : [];
+        }
+
+        setBookings(bookingsData);
+        console.log('✅ User bookings fetched:', bookingsData.length || 0);
+        return bookingsData;
       }
     } catch (err) {
       if (err.name === 'AbortError' || err.message === 'Request cancelled') {
@@ -108,7 +146,13 @@ export const useBookings = (initialFilters = {}) => {
         setLoading(false);
       }
     }
+    return [];
   }, [showToast]); // 🛠️ FIX: Only depend on showToast
+
+  // Clear error helper (used by BookingContext)
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
 
   // ============================================================================
   // 🎯 FETCH SINGLE BOOKING - OPTIMIZED
@@ -125,7 +169,7 @@ export const useBookings = (initialFilters = {}) => {
       console.log('🔄 Fetching booking:', bookingId);
       const response = await bookingService.getBooking(bookingId);
       console.log('✅ Booking fetched successfully');
-      return response.data;
+      return response?.data ?? response;
     } catch (err) {
       const errorMessage = err.message || 'Failed to fetch booking';
       setError(errorMessage);
@@ -153,7 +197,7 @@ export const useBookings = (initialFilters = {}) => {
       const response = await bookingService.createBooking(bookingData);
       showToast('Booking created successfully!', 'success');
       console.log('✅ Booking created successfully');
-      return response.data;
+      return response?.data ?? response;
     } catch (err) {
       const errorMessage = err.message || 'Failed to create booking';
       setError(errorMessage);
@@ -189,7 +233,7 @@ export const useBookings = (initialFilters = {}) => {
       const response = await bookingService.updateBookingStatus(bookingId, status);
       showToast(`Booking status updated to ${status}`, 'success');
       console.log('✅ Booking status updated successfully');
-      return response.data;
+      return response?.data ?? response;
     } catch (err) {
       const errorMessage = err.message || 'Failed to update booking status';
       setError(errorMessage);
@@ -288,11 +332,16 @@ export const useBookings = (initialFilters = {}) => {
     fetchMyBookings,
     fetchBooking,
     createBooking,
+    // Aliases for backward compatibility with BookingContext
+    addBooking: createBooking,
     updateBookingStatus,
+    updateStatus: updateBookingStatus,
     deleteBooking,
+    removeBooking: deleteBooking,
     cancelBooking, // Export new function
     updateFilters,
     clearFilters,
+    clearError,
     
     // 🛠️ ADD: Utility function to cancel pending requests
     cancelRequests: () => {
@@ -302,3 +351,5 @@ export const useBookings = (initialFilters = {}) => {
     }
   };
 };
+
+export default useBookings;

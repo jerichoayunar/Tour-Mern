@@ -1,5 +1,5 @@
 // src/pages/admin/ManagePackages.jsx - REMOVED GLOBAL INCLUSIONS
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { 
   getPackages, 
   createPackage, 
@@ -36,48 +36,58 @@ const ManagePackages = () => {
     }).format(price || 0);
   };
 
+  // Ensure we always operate on an array (services may return normalized {data: []})
+  const packagesList = Array.isArray(packages) ? packages : (Array.isArray(packages?.data) ? packages.data : []);
+
   // UPDATED: Package statistics with ONLY day-specific inclusion calculations
   const packageStats = {
     // Basic counts
-    total: packages.length,
-    active: packages.filter(p => p.status === 'active').length,
+    total: packagesList.length,
+    active: packagesList.filter(p => p.status === 'active').length,
     
     // Day-specific inclusion statistics
-    daysWithTransport: packages.reduce((sum, pkg) => 
+    daysWithTransport: packagesList.reduce((sum, pkg) => 
       sum + (pkg.itinerary?.filter(day => day.inclusions?.transport).length || 0), 0),
-    daysWithMeals: packages.reduce((sum, pkg) => 
+    daysWithMeals: packagesList.reduce((sum, pkg) => 
       sum + (pkg.itinerary?.filter(day => day.inclusions?.meals).length || 0), 0),
-    daysWithStay: packages.reduce((sum, pkg) => 
+    daysWithStay: packagesList.reduce((sum, pkg) => 
       sum + (pkg.itinerary?.filter(day => day.inclusions?.stay).length || 0), 0),
     
     // Packages that have at least one day with each inclusion
-    packagesWithSomeTransport: packages.filter(pkg => 
+    packagesWithSomeTransport: packagesList.filter(pkg => 
       pkg.itinerary?.some(day => day.inclusions?.transport)).length,
-    packagesWithSomeMeals: packages.filter(pkg => 
+    packagesWithSomeMeals: packagesList.filter(pkg => 
       pkg.itinerary?.some(day => day.inclusions?.meals)).length,
-    packagesWithSomeStay: packages.filter(pkg => 
+    packagesWithSomeStay: packagesList.filter(pkg => 
       pkg.itinerary?.some(day => day.inclusions?.stay)).length,
     
     // Financial statistics
-    totalValue: packages.reduce((sum, pkg) => sum + (pkg.price || 0), 0),
-    averagePrice: packages.length > 0 ? 
-      packages.reduce((sum, pkg) => sum + (pkg.price || 0), 0) / packages.length : 0,
+    totalValue: packagesList.reduce((sum, pkg) => sum + (pkg.price || 0), 0),
+    averagePrice: packagesList.length > 0 ? 
+      packagesList.reduce((sum, pkg) => sum + (pkg.price || 0), 0) / packagesList.length : 0,
     
     // Itinerary statistics
-    totalItineraryDays: packages.reduce((sum, pkg) => sum + (pkg.itinerary?.length || 0), 0),
-    averageDaysPerPackage: packages.length > 0 ? 
-      packages.reduce((sum, pkg) => sum + (pkg.itinerary?.length || 0), 0) / packages.length : 0
+    totalItineraryDays: packagesList.reduce((sum, pkg) => sum + (pkg.itinerary?.length || 0), 0),
+    averageDaysPerPackage: packagesList.length > 0 ? 
+      packagesList.reduce((sum, pkg) => sum + (pkg.itinerary?.length || 0), 0) / packagesList.length : 0
   };
 
   // ------------------ DATA FETCHING ------------------
-  const fetchPackages = async () => {
+  const fetchPackages = useCallback(async () => {
     try {
       setLoading(true);
       console.log(`🔄 Fetching ${showArchived ? 'archived' : 'active'} packages...`);
       // Pass archived filter
       const response = await getPackages({ onlyArchived: showArchived });
-      console.log('✅ Packages data:', response);
-      setPackages(response || []);
+      const resp = response?.data ?? response;
+      console.log('✅ Packages data:', resp);
+      // Normalize to array: support raw array, { success, data } or axios response
+      const packagesData = Array.isArray(resp)
+        ? resp
+        : (resp && resp.success !== undefined)
+          ? (Array.isArray(resp.data) ? resp.data : [])
+          : (Array.isArray(resp?.data) ? resp.data : []);
+      setPackages(packagesData);
     } catch (error) {
       console.error('❌ Packages error:', error);
       showToast(error.message || "Failed to fetch packages", "error");
@@ -85,12 +95,12 @@ const ManagePackages = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showArchived, showToast]);
 
   // Fetch packages on component mount or when archive mode changes
   useEffect(() => {
     fetchPackages();
-  }, [showArchived]);
+  }, [fetchPackages]);
 
   // ------------------ CRUD OPERATIONS ------------------
   const handleSave = async (formData) => {
@@ -359,7 +369,7 @@ const ManagePackages = () => {
         </div>
       ) : (
         <PackageTable 
-          data={packages} 
+          data={packagesList} 
           onEdit={handleEdit} 
           onDelete={handleDelete} 
           isArchived={showArchived}

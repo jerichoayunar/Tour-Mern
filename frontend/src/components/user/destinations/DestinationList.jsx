@@ -10,7 +10,7 @@ const DestinationList = ({
   error,
   filters,
   onFiltersChange,
-  availableLocations,
+   _availableLocations,
   onCardClick // Optional prop for external modal control
 }) => {
   const [selectedDestination, setSelectedDestination] = useState(null);

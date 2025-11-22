@@ -1,5 +1,5 @@
-// src/pages/admin/ManageBookings.jsx - UPDATED FOR BACKEND COMPATIBILITY
-import React, { useState, useEffect, useCallback } from "react"; // 🛠️ ADD: useCallback
+// src/pages/admin/ManageBookings.jsx - REFACTORED UI
+import React, { useState, useEffect, useCallback } from "react";
 import { 
   getBookings, 
   updateBookingStatus,
@@ -14,6 +14,18 @@ import BookingsTable from "../../components/admin/bookings/BookingsTable";
 import BookingDetailsModal from "../../components/admin/bookings/BookingDetailsModal";
 import Loader from "../../components/ui/Loader";
 import Button from "../../components/ui/Button";
+import Card from "../../components/ui/Card"; // ✅ Import Card
+import { 
+  Package, 
+  Clock, 
+  CheckCircle, 
+  XCircle, 
+  DollarSign, 
+  RefreshCw, 
+  Download, 
+  Archive, 
+  FolderOpen 
+} from "lucide-react"; // ✅ Import Icons
 
 const ManageBookings = () => {
   const [allBookings, setAllBookings] = useState([]); // All bookings from API
@@ -34,7 +46,7 @@ const ManageBookings = () => {
   });
 
   const { showToast } = useToast();
-  const { isAdmin } = useAuth();
+  const { isAdmin: _isAdmin } = useAuth();
 
   // ============================================================================
   // 🎯 CHECK FOR ACTIVE FILTERS
@@ -60,7 +72,7 @@ const ManageBookings = () => {
   // ============================================================================
   // 🎯 FETCH BOOKINGS FROM API
   // ============================================================================
-  const fetchBookings = async (showRefreshing = false) => {
+  const fetchBookings = useCallback(async (showRefreshing = false) => {
     if (showRefreshing) {
       setRefreshing(true);
     } else {
@@ -71,12 +83,23 @@ const ManageBookings = () => {
       console.log(`🔄 Fetching ${showArchived ? 'archived' : 'active'} bookings`);
       // Pass archived flag to API
       const response = await getBookings({ onlyArchived: showArchived }); 
-      
-      if (response && response.success) {
-        setAllBookings(response.data || []);
-        console.log('✅ Bookings loaded:', response.data?.length || 0);
+
+      // Normalize service response: prefer axios-style payload, then canonical {success,data}, then raw array
+      const resp = response?.data ?? response;
+
+      if (resp && typeof resp === 'object' && resp.success !== undefined) {
+        if (resp.success) {
+          const bookingsArray = Array.isArray(resp.data) ? resp.data : (Array.isArray(resp.bookings) ? resp.bookings : []);
+          setAllBookings(bookingsArray);
+          console.log('✅ Bookings loaded:', bookingsArray.length);
+        } else {
+          throw new Error(resp.message || 'Failed to load bookings');
+        }
       } else {
-        throw new Error(response?.message || 'Failed to load bookings');
+        // Otherwise assume resp is the bookings array or contains an array in .data
+        const bookingsArray = Array.isArray(resp) ? resp : (Array.isArray(resp?.data) ? resp.data : []);
+        setAllBookings(bookingsArray);
+        console.log('✅ Bookings loaded:', bookingsArray.length);
       }
     } catch (error) {
       console.error('❌ Bookings error:', error);
@@ -87,7 +110,7 @@ const ManageBookings = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [showArchived, showToast]);
 
   // ============================================================================
   // 🎯 UPDATED APPLY FILTERS - USING CORRECT BACKEND FIELD NAMES
@@ -171,7 +194,7 @@ const ManageBookings = () => {
   // Load all bookings on component mount or when archive mode changes
   useEffect(() => {
     fetchBookings();
-  }, [showArchived]); // 🛠️ FIX: Re-fetch when showArchived changes
+  }, [fetchBookings]);
 
   // ============================================================================
   // 🎯 EVENT HANDLERS
@@ -304,31 +327,23 @@ const ManageBookings = () => {
   // 🎯 COMPONENT RENDER
   // ============================================================================
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-platinum p-6">
       {/* Header Section */}
       <div className="mb-6">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Bookings</h1>
-            <p className="text-gray-600">
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Manage Bookings</h1>
+            <p className="text-slate-500">
               View, manage, and update all tour bookings in one place
             </p>
           </div>
           <div className="flex items-center space-x-3 mt-4 lg:mt-0">
             <Button
-              variant={showArchived ? "primary" : "outline"}
-              onClick={() => setShowArchived(!showArchived)}
-              className="flex items-center space-x-2"
-            >
-              <span>{showArchived ? '📂' : '📦'}</span>
-              <span>{showArchived ? 'View Active' : 'View Archived'}</span>
-            </Button>
-            <Button
               variant="outline"
               onClick={handleExport}
               className="flex items-center space-x-2"
             >
-              <span>📊</span>
+              <Download className="w-4 h-4" />
               <span>Export</span>
             </Button>
             <Button
@@ -337,64 +352,76 @@ const ManageBookings = () => {
               disabled={refreshing}
               className="flex items-center space-x-2"
             >
-              <span>{refreshing ? '🔄' : '🔃'}</span>
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
               <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
             </Button>
           </div>
         </div>
 
+        {/* Archive Toggle */}
+        <div className="flex justify-end mb-4">
+          <Button
+            variant={showArchived ? "primary" : "outline"}
+            onClick={() => setShowArchived(!showArchived)}
+            className="flex items-center space-x-2"
+          >
+            {showArchived ? <FolderOpen className="w-4 h-4" /> : <Archive className="w-4 h-4" />}
+            <span>{showArchived ? 'View Active' : 'View Archived'}</span>
+          </Button>
+        </div>
+
         {/* Statistics Cards - Show ALL bookings stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Bookings</p>
-                <p className="text-2xl font-bold text-gray-900">{bookingStats.total}</p>
+                <p className="text-sm font-medium text-slate-500">Total Bookings</p>
+                <p className="text-2xl font-bold text-slate-900">{bookingStats.total}</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <span className="text-blue-600 text-xl">📦</span>
+              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center border border-blue-100">
+                <Package className="text-blue-600 w-6 h-6" />
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{bookingStats.pending}</p>
+                <p className="text-sm font-medium text-slate-500">Pending</p>
+                <p className="text-2xl font-bold text-amber-600">{bookingStats.pending}</p>
               </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <span className="text-yellow-600 text-xl">⏳</span>
+              <div className="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center border border-amber-100">
+                <Clock className="text-amber-600 w-6 h-6" />
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Confirmed</p>
-                <p className="text-2xl font-bold text-green-600">{bookingStats.confirmed}</p>
+                <p className="text-sm font-medium text-slate-500">Confirmed</p>
+                <p className="text-2xl font-bold text-emerald-600">{bookingStats.confirmed}</p>
               </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <span className="text-green-600 text-xl">✅</span>
+              <div className="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center border border-emerald-100">
+                <CheckCircle className="text-emerald-600 w-6 h-6" />
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+          <Card className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                <p className="text-sm font-medium text-slate-500">Total Revenue</p>
                 {/* 🛠️ FIX: Revenue calculation now uses correct totalPrice field */}
                 <p className="text-2xl font-bold text-purple-600">
                   ₱{bookingStats.revenue.toLocaleString()}
                 </p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <span className="text-purple-600 text-xl">💰</span>
+              <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center border border-purple-100">
+                <DollarSign className="text-purple-600 w-6 h-6" />
               </div>
             </div>
-          </div>
+          </Card>
         </div>
       </div>
 
@@ -407,7 +434,7 @@ const ManageBookings = () => {
 
       {/* Results Info */}
       {!loading && (
-        <div className="mb-4 text-sm text-gray-600">
+        <div className="mb-4 text-sm text-slate-600">
           Showing {filteredBookings.length} of {allBookings.length} bookings
           {hasActiveFilters && " (filtered)"}
         </div>
@@ -415,10 +442,10 @@ const ManageBookings = () => {
 
       {/* Loading State */}
       {loading ? (
-        <div className="bg-white rounded-xl shadow-sm p-12 text-center">
+        <Card className="p-12 text-center">
           <Loader size="large" />
-          <p className="text-gray-600 mt-4">Loading bookings...</p>
-        </div>
+          <p className="text-slate-500 mt-4">Loading bookings...</p>
+        </Card>
       ) : (
         <>
           {/* Bookings Table - Only show if there are FILTERED bookings */}
@@ -434,17 +461,17 @@ const ManageBookings = () => {
             />
           ) : (
             /* Empty State */
-            <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-              <div className="text-gray-400 text-6xl mb-4">
+            <Card className="p-12 text-center">
+              <div className="text-slate-300 text-6xl mb-4">
                 {showArchived ? '📦' : '📋'}
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-slate-900 mb-2">
                 {hasActiveFilters 
                   ? "No matching bookings found" 
                   : (showArchived ? "No archived bookings" : "No bookings yet")
                 }
               </h3>
-              <p className="text-gray-500 mb-6 max-w-md mx-auto">
+              <p className="text-slate-500 mb-6 max-w-md mx-auto">
                 {hasActiveFilters 
                   ? "No bookings match your current filters. Try adjusting your search criteria."
                   : (showArchived 
@@ -457,7 +484,7 @@ const ManageBookings = () => {
                   Clear All Filters
                 </Button>
               )}
-            </div>
+            </Card>
           )}
         </>
       )}
@@ -474,7 +501,7 @@ const ManageBookings = () => {
       {/* Refreshing Overlay */}
       {refreshing && (
         <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-pulse">
-          <span>🔄</span>
+          <RefreshCw className="w-4 h-4 animate-spin" />
           <span>Updating...</span>
         </div>
       )}
