@@ -6,6 +6,7 @@ import DestinationForm from '../../components/admin/destinations/DestinationForm
 import DestinationFilters from '../../components/admin/destinations/DestinationFilters.jsx';
 import DestinationActions from '../../components/admin/destinations/DestinationActions.jsx';
 import DestinationCard from '../../components/admin/destinations/DestinationCard.jsx';
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import Modal from "../../components/ui/Modal";
 
 const ManageDestinations = () => {
@@ -18,12 +19,21 @@ const ManageDestinations = () => {
   const [selectedDestinations, setSelectedDestinations] = useState([]);
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'card'
   const { showToast } = useToast();
+  const [showArchived, setShowArchived] = useState(false);
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    type: 'danger',
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    onConfirm: null
+  });
 
   // Fetch destinations
   const fetchDestinations = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await destinationService.getAll();
+      const response = await destinationService.getAll({ onlyArchived: showArchived ? 'true' : undefined });
       const resp = response?.data ?? response;
       const allDestinations = Array.isArray(resp)
         ? resp
@@ -56,11 +66,9 @@ const ManageDestinations = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters, showToast]);
+  }, [filters, showToast, showArchived]);
 
-  useEffect(() => {
-    fetchDestinations();
-  }, [fetchDestinations]);
+  useEffect(() => { fetchDestinations(); }, [fetchDestinations]);
 
   // Form handlers
   const handleFormSubmit = async (formData) => {
@@ -125,12 +133,22 @@ const ManageDestinations = () => {
           <h1 className="text-2xl font-bold text-gray-900">Manage Destinations</h1>
           <p className="text-gray-600">Create and manage tour destinations</p>
         </div>
-        <button 
-          onClick={() => { setEditingDestination(null); setShowForm(true); }}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          + Add Destination
-        </button>
+        <div className="flex flex-col items-end">
+          <button 
+            onClick={() => { setEditingDestination(null); setShowForm(true); }}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            + Add Destination
+          </button>
+          <div className="mt-2">
+            <button
+              onClick={() => setShowArchived(prev => !prev)}
+              className={`px-3 py-2 rounded-lg ${showArchived ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 border border-gray-300'}`}
+            >
+              {showArchived ? 'View Active' : 'View Archived'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Advanced Filters */}
@@ -142,6 +160,21 @@ const ManageDestinations = () => {
           selectedDestinations={selectedDestinations}
           onBulkStatusChange={handleBulkStatusChange}
           onBulkDelete={handleBulkDelete}
+          onBulkDeleteRequest={(selected) => setConfirmationModal({
+            isOpen: true,
+            type: 'danger',
+            title: 'Delete Selected Destinations',
+            message: `Permanently delete ${selected.length} destination(s)? This cannot be undone.`,
+            confirmText: 'Delete',
+            onConfirm: async () => {
+              try {
+                await handleBulkDelete(selected);
+              } catch (err) {
+                console.debug('bulk delete error:', err);
+                showToast('Failed to delete selected destinations', 'error');
+              }
+            }
+          })}
         />
         
         <div className="flex space-x-2">
@@ -173,18 +206,58 @@ const ManageDestinations = () => {
         <DestinationsTable
           destinations={destinations}
           onEdit={(dest) => { setEditingDestination(dest); setShowForm(true); }}
-          onDelete={async (dest) => {
-            if (window.confirm(`Delete "${dest.name}"?`)) {
+          isArchived={showArchived}
+          onArchive={(dest) => setConfirmationModal({
+            isOpen: true,
+            type: 'warning',
+            title: 'Archive Destination',
+            message: `Are you sure you want to archive "${dest.name}"?`,
+            confirmText: 'Archive',
+            onConfirm: async () => {
               try {
-                await destinationService.deleteDestination(dest._id);
-                showToast('Destination deleted!', 'success');
+                await destinationService.archiveDestination(dest._id);
+                showToast('Destination archived', 'success');
                 fetchDestinations();
-              } catch (error) {
-                console.debug('delete destination error:', error);
-                showToast('Delete failed', 'error');
+              } catch (err) {
+                console.debug('archive error (table):', err);
+                showToast(err?.message || 'Failed to archive destination', 'error');
               }
             }
-          }}
+          })}
+          onRestore={(dest) => setConfirmationModal({
+            isOpen: true,
+            type: 'info',
+            title: 'Restore Destination',
+            message: `Restore "${dest.name}" back to active destinations?`,
+            confirmText: 'Restore',
+            onConfirm: async () => {
+              try {
+                await destinationService.restoreDestination(dest._id);
+                showToast('Destination restored', 'success');
+                fetchDestinations();
+              } catch (err) {
+                console.debug('restore error (table):', err);
+                showToast(err?.message || 'Failed to restore destination', 'error');
+              }
+            }
+          })}
+          onDeletePermanent={(dest) => setConfirmationModal({
+            isOpen: true,
+            type: 'danger',
+            title: 'Permanently Delete Destination',
+            message: `This will permanently delete "${dest.name}" and cannot be undone. Continue?`,
+            confirmText: 'Delete Forever',
+            onConfirm: async () => {
+              try {
+                await destinationService.deleteDestinationPermanent(dest._id);
+                showToast('Destination permanently deleted', 'success');
+                fetchDestinations();
+              } catch (err) {
+                console.debug('permanent delete error (table):', err);
+                showToast(err?.message || 'Failed to delete destination', 'error');
+              }
+            }
+          })}
           loading={loading}
         />
       ) : (
@@ -194,24 +267,73 @@ const ManageDestinations = () => {
               key={destination._id}
               destination={destination}
               onEdit={(dest) => { setEditingDestination(dest); setShowForm(true); }}
-              onDelete={async (dest) => {
-                if (window.confirm(`Delete "${dest.name}"?`)) {
+              isArchived={showArchived}
+              onArchive={(dest) => setConfirmationModal({
+                isOpen: true,
+                type: 'warning',
+                title: 'Archive Destination',
+                message: `Are you sure you want to archive "${dest.name}"?`,
+                confirmText: 'Archive',
+                onConfirm: async () => {
                   try {
-                    await destinationService.deleteDestination(dest._id);
-                    showToast('Destination deleted!', 'success');
+                    await destinationService.archiveDestination(dest._id);
+                    showToast('Destination archived', 'success');
                     fetchDestinations();
-                  } catch (error) {
-                    console.debug('delete destination (card) error:', error);
-                    showToast('Delete failed', 'error');
+                  } catch (err) {
+                    console.debug('archive error (card):', err);
+                    showToast('Failed to archive destination', 'error');
                   }
                 }
-              }}
+              })}
+              onRestore={(dest) => setConfirmationModal({
+                isOpen: true,
+                type: 'info',
+                title: 'Restore Destination',
+                message: `Restore "${dest.name}" back to active destinations?`,
+                confirmText: 'Restore',
+                onConfirm: async () => {
+                  try {
+                    await destinationService.restoreDestination(dest._id);
+                    showToast('Destination restored', 'success');
+                    fetchDestinations();
+                  } catch (err) {
+                    console.debug('restore error (card):', err);
+                    showToast('Failed to restore destination', 'error');
+                  }
+                }
+              })}
+              onDeletePermanent={(dest) => setConfirmationModal({
+                isOpen: true,
+                type: 'danger',
+                title: 'Permanently Delete Destination',
+                message: `This will permanently delete "${dest.name}" and cannot be undone. Continue?`,
+                confirmText: 'Delete Forever',
+                onConfirm: async () => {
+                  try {
+                    await destinationService.deleteDestinationPermanent(dest._id);
+                    showToast('Destination permanently deleted', 'success');
+                    fetchDestinations();
+                  } catch (err) {
+                    console.debug('permanent delete error (card):', err);
+                    showToast('Failed to delete destination', 'error');
+                  }
+                }
+              })}
             />
           ))}
         </div>
       )}
 
     {/* Form Modal */}
+        <ConfirmationModal
+          isOpen={confirmationModal.isOpen}
+          onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={confirmationModal.onConfirm}
+          title={confirmationModal.title}
+          message={confirmationModal.message}
+          type={confirmationModal.type}
+          confirmText={confirmationModal.confirmText}
+        />
     <Modal 
       isOpen={showForm} 
       onClose={() => { setShowForm(false); setEditingDestination(null); }} 

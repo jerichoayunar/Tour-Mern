@@ -20,22 +20,23 @@ const normalizeResponse = (response) => {
 export const destinationService = {
   /**
    * REGULAR USER: Get all destinations
+   * Accepts optional params object, e.g. { onlyArchived: 'true' }
    */
-  getAll: async () => {
-    // Return cached data if still fresh
-    if (Date.now() < _destinationsCacheExpires && Array.isArray(_destinationsCache)) {
+  getAll: async (params) => {
+    // Only use cache when no params passed
+    if ((!params || Object.keys(params).length === 0) && Date.now() < _destinationsCacheExpires && Array.isArray(_destinationsCache)) {
       return { success: true, data: _destinationsCache };
     }
 
-    // If a request is already pending, return the same promise to coalesce
-    if (_destinationsPending) return _destinationsPending;
+    // If a request is already pending and no params, return the same promise to coalesce
+    if ((!params || Object.keys(params).length === 0) && _destinationsPending) return _destinationsPending;
 
-    _destinationsPending = (async () => {
+    const fetcher = (async () => {
       try {
-        const response = await api.get('/destinations');
+        const response = await api.get('/destinations', { params });
         const normalized = normalizeResponse(response);
-        // cache array payloads
-        if (normalized && Array.isArray(normalized.data)) {
+        // cache array payloads only when no params
+        if ((!params || Object.keys(params).length === 0) && normalized && Array.isArray(normalized.data)) {
           _destinationsCache = normalized.data;
           _destinationsCacheExpires = Date.now() + DEST_CACHE_TTL;
         }
@@ -48,7 +49,8 @@ export const destinationService = {
       }
     })();
 
-    return _destinationsPending;
+    if (!params || Object.keys(params).length === 0) _destinationsPending = fetcher;
+    return fetcher;
   },
 
   /**
@@ -114,6 +116,46 @@ export const destinationService = {
   deleteDestination: async (destinationId) => {
     try {
       const response = await api.delete(`/destinations/${destinationId}`);
+      return normalizeResponse(response);
+    } catch (error) {
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
+    }
+  }
+  ,
+
+  /**
+   * ADMIN: Archive (soft-delete) a destination
+   */
+  archiveDestination: async (destinationId) => {
+    try {
+      const response = await api.put(`/destinations/${destinationId}/archive`);
+      return normalizeResponse(response);
+    } catch (error) {
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
+    }
+  },
+
+  /**
+   * ADMIN: Restore an archived destination
+   */
+  restoreDestination: async (destinationId) => {
+    try {
+      const response = await api.put(`/destinations/${destinationId}/restore`);
+      return normalizeResponse(response);
+    } catch (error) {
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
+    }
+  },
+
+  /**
+   * ADMIN: Permanently delete a destination
+   */
+  deleteDestinationPermanent: async (destinationId) => {
+    try {
+      const response = await api.delete(`/destinations/${destinationId}/permanent`);
       return normalizeResponse(response);
     } catch (error) {
       const message = error?.response?.data?.message || error?.message || String(error);

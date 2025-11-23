@@ -2,7 +2,7 @@
 import React from 'react';
 import MapPreview from '../../Common/MapPreview';
 
-const DestinationCard = ({ destination, onEdit, onDelete }) => {
+const DestinationCard = ({ destination, onEdit, onDelete, isArchived, onArchive, onRestore, onDeletePermanent }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
       {/* Image */}
@@ -66,12 +66,29 @@ const DestinationCard = ({ destination, onEdit, onDelete }) => {
           >
             Edit
           </button>
-          <button
-            onClick={() => onDelete(destination)}
-            className="flex-1 bg-red-600 text-white py-2 px-3 rounded text-sm font-medium hover:bg-red-700 transition-colors"
-          >
-            Delete
-          </button>
+          {isArchived ? (
+            <>
+              <button
+                onClick={() => onRestore && onRestore(destination)}
+                className="flex-1 bg-amber-400 text-white py-2 px-3 rounded text-sm font-medium hover:bg-amber-500 transition-colors"
+              >
+                Restore
+              </button>
+              <button
+                onClick={() => onDeletePermanent && onDeletePermanent(destination)}
+                className="flex-1 bg-red-600 text-white py-2 px-3 rounded text-sm font-medium hover:bg-red-700 transition-colors"
+              >
+                Delete Forever
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => onArchive && onArchive(destination)}
+              className="flex-1 bg-yellow-500 text-white py-2 px-3 rounded text-sm font-medium hover:bg-yellow-600 transition-colors"
+            >
+              Archive
+            </button>
+          )}
         </div>
       </div>
     </div>

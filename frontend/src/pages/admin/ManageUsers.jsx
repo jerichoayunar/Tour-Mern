@@ -4,6 +4,7 @@ import ClientsTable from '../../components/admin/clients/ClientsTable';
 import ClientDetailsModal from '../../components/admin/clients/ClientDetailsModal';
 import AdminStatsCard from '../../components/admin/AdminStatsCard';
 import Loader from "../../components/ui/Loader";
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import { useToast } from '../../context/ToastContext';
 
 const ManageUsers = () => {
@@ -21,6 +22,14 @@ const ManageUsers = () => {
     loginMethod: 'all'
   });
   const { showToast } = useToast();
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    type: 'danger',
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    onConfirm: null
+  });
 
   // Fetch clients and stats on component mount
   const fetchData = useCallback(async () => {
@@ -98,71 +107,66 @@ const ManageUsers = () => {
   };
 
   const handleArchiveClient = async (clientId) => {
-    if (!window.confirm('Are you sure you want to archive this client? They will be hidden from the main list but can be restored later.')) {
-      return;
-    }
-
-    try {
-      await clientService.archiveClient(clientId);
-      
-      // Update local state
-      setClients(prev => prev.filter(client => client.id !== clientId));
-      
-      showToast('Client archived successfully', 'success');
-
-      // Refresh stats
-      const statsResponse = await clientService.getClientStats();
-      setStats(statsResponse?.data ?? statsResponse ?? null);
-    } catch (error) {
-      showToast(error.message || 'Failed to archive client', 'error');
-    }
+    setConfirmationModal({
+      isOpen: true,
+      type: 'warning',
+      title: 'Archive Client',
+      message: 'Are you sure you want to archive this client? They will be hidden from the main list but can be restored later.',
+      confirmText: 'Archive',
+      onConfirm: async () => {
+        try {
+          await clientService.archiveClient(clientId);
+          setClients(prev => prev.filter(client => client.id !== clientId));
+          showToast('Client archived successfully', 'success');
+          const statsResponse = await clientService.getClientStats();
+          setStats(statsResponse?.data ?? statsResponse ?? null);
+        } catch (error) {
+          showToast(error.message || 'Failed to archive client', 'error');
+        }
+      }
+    });
   };
 
   const handleRestoreClient = async (clientId) => {
-    if (!window.confirm('Are you sure you want to restore this client? They will become active again.')) {
-      return;
-    }
-
-    try {
-      await clientService.restoreClient(clientId);
-      
-      // Update local state
-      setClients(prev => prev.filter(client => client.id !== clientId));
-      
-      showToast('Client restored successfully', 'success');
-
-      // Refresh stats
-      const statsResponse = await clientService.getClientStats();
-      setStats(statsResponse?.data ?? statsResponse ?? null);
-    } catch (error) {
-      showToast(error.message || 'Failed to restore client', 'error');
-    }
+    setConfirmationModal({
+      isOpen: true,
+      type: 'info',
+      title: 'Restore Client',
+      message: 'Are you sure you want to restore this client? They will become active again.',
+      confirmText: 'Restore',
+      onConfirm: async () => {
+        try {
+          await clientService.restoreClient(clientId);
+          setClients(prev => prev.filter(client => client.id !== clientId));
+          showToast('Client restored successfully', 'success');
+          const statsResponse = await clientService.getClientStats();
+          setStats(statsResponse?.data ?? statsResponse ?? null);
+        } catch (error) {
+          showToast(error.message || 'Failed to restore client', 'error');
+        }
+      }
+    });
   };
 
   const handlePermanentDelete = async (clientId) => {
-    const confirmText = prompt('WARNING: This action cannot be undone. Type "DELETE" to confirm permanent deletion:');
-    
-    if (confirmText !== 'DELETE') {
-      if (confirmText !== null) {
-        showToast('Deletion cancelled. You must type DELETE to confirm.', 'info');
+    setConfirmationModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Permanently Delete Client',
+      message: 'This will permanently delete the client and cannot be undone. Continue?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          await clientService.permanentDeleteClient(clientId);
+          setClients(prev => prev.filter(client => client.id !== clientId));
+          showToast('Client permanently deleted', 'success');
+          const statsResponse = await clientService.getClientStats();
+          setStats(statsResponse?.data ?? statsResponse ?? null);
+        } catch (error) {
+          showToast(error.message || 'Failed to delete client', 'error');
+        }
       }
-      return;
-    }
-
-    try {
-      await clientService.permanentDeleteClient(clientId);
-      
-      // Update local state
-      setClients(prev => prev.filter(client => client.id !== clientId));
-      
-      showToast('Client permanently deleted', 'success');
-
-      // Refresh stats
-      const statsResponse = await clientService.getClientStats();
-      setStats(statsResponse?.data ?? statsResponse ?? null);
-    } catch (error) {
-      showToast(error.message || 'Failed to delete client', 'error');
-    }
+    });
   };
 
   const handleFiltersChange = (newFilters) => {
@@ -257,6 +261,16 @@ const ManageUsers = () => {
             onRefresh={fetchData}
           />
         </div>
+
+        <ConfirmationModal
+          isOpen={confirmationModal.isOpen}
+          onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={confirmationModal.onConfirm}
+          title={confirmationModal.title}
+          message={confirmationModal.message}
+          type={confirmationModal.type}
+          confirmText={confirmationModal.confirmText}
+        />
 
         {/* Client Details Modal */}
         {isModalOpen && selectedClient && (

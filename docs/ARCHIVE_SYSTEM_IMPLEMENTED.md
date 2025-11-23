@@ -107,6 +107,48 @@ Current Status: **ALL MODULES COMPLETE** (Clients, Inquiries, Bookings, Packages
 
 ---
 
+## 🎯 Module 5: Destination Management (✅ COMPLETE)
+
+### **Backend Changes**
+- **Destination Model**: Added `archived`, `archivedAt`, `archivedBy`, `archivedReason`.
+- **Service**: 
+  - Updated `getDestinations` to support an `onlyArchived` filter.
+  - Added `archiveDestination`, `restoreDestination`, `permanentDeleteDestination`.
+- **Controller/Routes**: Exposed endpoints:
+  - `PUT /api/destinations/:id/archive`
+  - `PUT /api/destinations/:id/restore`
+  - `DELETE /api/destinations/:id/permanent`
+
+### **Frontend Changes**
+- **ManageDestinations**: 
+  - Added `View Archived` toggle placed beneath the `+ Add Destination` button for parity with other modules.
+  - `showArchived` state drives requesting archived resources from the backend using `onlyArchived=true`.
+  - Archive / Restore / Delete Forever flows use the centralized `ConfirmationModal` for consistent UX.
+  - Bulk actions delegate to the page-level confirmation modal (`DestinationActions` provides `onBulkDeleteRequest`).
+- **DestinationsTable / DestinationCard**: Updated to render Archive or Restore + Delete Forever buttons depending on archive state.
+
+### **Notes & Decisions**
+- Activity logging for destinations was intentionally left out (the activity system remains focused on bookings in this project).
+
+### **How to Smoke Test (Admin)**
+1. Start backend and frontend dev servers.
+2. Login as Admin in the frontend.
+3. Go to **Manage Destinations**.
+4. Archive a destination via the Archive button (confirm in modal).
+5. Toggle **View Archived** (beneath `+ Add Destination`) to verify the archived item is visible.
+6. Restore the archived destination (confirm in modal) and verify it disappears from archived view.
+7. Archive again and use **Delete Forever** to permanently remove the destination (confirm in modal). Verify it is removed from database.
+
+### **Files Touched (Representative)**
+- `backend/models/Destination.js`
+- `backend/services/destinationService.js`
+- `backend/controllers/destinationController.js`
+- `frontend/src/services/destinationService.js`
+- `frontend/src/pages/admin/ManageDestinations.jsx`
+- `frontend/src/components/admin/destinations/DestinationsTable.jsx`
+- `frontend/src/components/admin/destinations/DestinationCard.jsx`
+- `frontend/src/components/admin/destinations/DestinationActions.jsx`
+
 ## 📝 Summary
 
 **Modules Completed:** 4/4 (ALL COMPLETE)

@@ -8,6 +8,7 @@ import {
   deleteBookingPermanent
 } from "../../services/bookingService";
 import { useToast } from "../../context/ToastContext";
+import ConfirmationModal from "../../components/ui/ConfirmationModal";
 import { useAuth } from "../../context/AuthContext";
 import BookingFilters from "../../components/admin/bookings/BookingFilters";
 import BookingsTable from "../../components/admin/bookings/BookingsTable";
@@ -46,6 +47,14 @@ const ManageBookings = () => {
   });
 
   const { showToast } = useToast();
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    type: 'danger',
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    onConfirm: null
+  });
   const { isAdmin: _isAdmin } = useAuth();
 
   // ============================================================================
@@ -207,19 +216,24 @@ const ManageBookings = () => {
 
   // Archive Booking
   const handleArchive = async (booking) => {
-    if (!window.confirm(`Are you sure you want to archive the booking for ${booking.clientName || 'this client'}?`)) {
-      return;
-    }
-
-    try {
-      const response = await archiveBooking(booking._id);
-      if (response.success) {
-        showToast("Booking archived successfully", "success");
-        fetchBookings(true);
+    setConfirmationModal({
+      isOpen: true,
+      type: 'warning',
+      title: 'Archive Booking',
+      message: `Are you sure you want to archive the booking for ${booking.clientName || 'this client'}?`,
+      confirmText: 'Archive',
+      onConfirm: async () => {
+        try {
+          const response = await archiveBooking(booking._id);
+          if (response && response.success) {
+            showToast("Booking archived successfully", "success");
+            fetchBookings(true);
+          }
+        } catch (error) {
+          showToast(error.message || "Failed to archive booking", "error");
+        }
       }
-    } catch (error) {
-      showToast(error.message || "Failed to archive booking", "error");
-    }
+    });
   };
 
   // Restore Booking
@@ -237,19 +251,24 @@ const ManageBookings = () => {
 
   // Permanent Delete
   const handleDeletePermanent = async (booking) => {
-    if (!window.confirm(`⚠️ WARNING: This will PERMANENTLY delete the booking for ${booking.clientName || 'this client'}. This action CANNOT be undone. Are you sure?`)) {
-      return;
-    }
-
-    try {
-      const response = await deleteBookingPermanent(booking._id);
-      if (response.success) {
-        showToast("Booking permanently deleted", "success");
-        fetchBookings(true);
+    setConfirmationModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Permanently Delete Booking',
+      message: `⚠️ WARNING: This will PERMANENTLY delete the booking for ${booking.clientName || 'this client'}. This action CANNOT be undone. Continue?`,
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          const response = await deleteBookingPermanent(booking._id);
+          if (response && response.success) {
+            showToast("Booking permanently deleted", "success");
+            fetchBookings(true);
+          }
+        } catch (error) {
+          showToast(error.message || "Failed to delete booking", "error");
+        }
       }
-    } catch (error) {
-      showToast(error.message || "Failed to delete booking", "error");
-    }
+    });
   };
 
   // Enhanced status update with optimistic UI
@@ -496,6 +515,16 @@ const ManageBookings = () => {
         onStatusUpdate={handleStatusUpdate}
         isOpen={isModalOpen}
         
+      />
+
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmationModal.onConfirm}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        type={confirmationModal.type}
+        confirmText={confirmationModal.confirmText}
       />
 
       {/* Refreshing Overlay */}

@@ -4,7 +4,11 @@ import React from 'react';
 const DestinationsTable = ({ 
   destinations, 
   onEdit, 
-  onDelete, 
+  onDelete,
+  isArchived,
+  onArchive,
+  onRestore,
+  onDeletePermanent,
   loading 
 }) => {
   if (loading) {
@@ -84,12 +88,29 @@ const DestinationsTable = ({
                   >
                     Edit
                   </button>
-                  <button 
-                    onClick={() => onDelete(destination)}
-                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                  >
-                    Delete
-                  </button>
+                  {isArchived ? (
+                    <>
+                      <button
+                        onClick={() => onRestore && onRestore(destination)}
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-amber-700 bg-amber-100 hover:bg-amber-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
+                      >
+                        Restore
+                      </button>
+                      <button
+                        onClick={() => onDeletePermanent && onDeletePermanent(destination)}
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                      >
+                        Delete Forever
+                      </button>
+                    </>
+                  ) : (
+                    <button 
+                      onClick={() => onArchive && onArchive(destination)}
+                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-yellow-800 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors"
+                    >
+                      Archive
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

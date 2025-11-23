@@ -12,6 +12,7 @@ import {
 import { useToast } from "../../context/ToastContext";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import Loader from "../../components/ui/Loader";
 import PackageTable from "../../components/admin/packages/PackageTable";
 import PackageForm from "../../components/admin/packages/PackageForm";
@@ -25,6 +26,14 @@ const ManagePackages = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPackage, setEditingPackage] = useState(null);
   const [showArchived, setShowArchived] = useState(false); // 📦 ARCHIVE STATE
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    type: 'danger',
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    onConfirm: null
+  });
 
   // Format currency function for Philippine Peso
   const formatPrice = (price) => {
@@ -130,17 +139,25 @@ const ManagePackages = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this package? This action cannot be undone.")) return;
-    try {
-      setLoading(true);
-      await deletePackage(id);
-      showToast("Package deleted successfully", "success");
-      fetchPackages();
-    } catch (error) {
-      showToast(error.message || "Error deleting package", "error");
-    } finally {
-      setLoading(false);
-    }
+    setConfirmationModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Delete Package',
+      message: 'Are you sure you want to delete this package? This action cannot be undone.',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          await deletePackage(id);
+          showToast("Package deleted successfully", "success");
+          fetchPackages();
+        } catch (error) {
+          showToast(error.message || "Error deleting package", "error");
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   const handleEdit = (pkg) => {
@@ -155,20 +172,25 @@ const ManagePackages = () => {
 
   // Archive Package
   const handleArchive = async (pkg) => {
-    if (!window.confirm(`Are you sure you want to archive "${pkg.title}"?`)) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await archivePackage(pkg._id);
-      showToast("Package archived successfully", "success");
-      fetchPackages();
-    } catch (error) {
-      showToast(error.message || "Failed to archive package", "error");
-    } finally {
-      setLoading(false);
-    }
+    setConfirmationModal({
+      isOpen: true,
+      type: 'warning',
+      title: 'Archive Package',
+      message: `Are you sure you want to archive "${pkg.title}"?`,
+      confirmText: 'Archive',
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          await archivePackage(pkg._id);
+          showToast("Package archived successfully", "success");
+          fetchPackages();
+        } catch (error) {
+          showToast(error.message || "Failed to archive package", "error");
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   // Restore Package
@@ -187,20 +209,25 @@ const ManagePackages = () => {
 
   // Permanent Delete
   const handleDeletePermanent = async (pkg) => {
-    if (!window.confirm(`⚠️ WARNING: This will PERMANENTLY delete "${pkg.title}". This action CANNOT be undone. Are you sure?`)) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await deletePackagePermanent(pkg._id);
-      showToast("Package permanently deleted", "success");
-      fetchPackages();
-    } catch (error) {
-      showToast(error.message || "Failed to delete package", "error");
-    } finally {
-      setLoading(false);
-    }
+    setConfirmationModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Permanently Delete Package',
+      message: `⚠️ WARNING: This will PERMANENTLY delete "${pkg.title}". This action CANNOT be undone. Continue?`,
+      confirmText: 'Delete Forever',
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          await deletePackagePermanent(pkg._id);
+          showToast("Package permanently deleted", "success");
+          fetchPackages();
+        } catch (error) {
+          showToast(error.message || "Failed to delete package", "error");
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   // ------------------ RENDER COMPONENT ------------------
@@ -392,6 +419,15 @@ const ManagePackages = () => {
           onCancel={() => setModalOpen(false)}
         />
       </Modal>
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmationModal.onConfirm}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        type={confirmationModal.type}
+        confirmText={confirmationModal.confirmText}
+      />
     </div>
   );
 };
