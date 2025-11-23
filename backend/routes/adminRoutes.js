@@ -4,12 +4,7 @@ import {
   getDashboardStats,
   getRecentBookings,
   getRevenueStats,
-  exportDashboardData,
-  getAnalyticsMetrics,
-  getBookingTrends,
-  getTopPerformers,
-  getUserStats,
-  getRevenueBreakdown
+  exportDashboardData
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -24,11 +19,6 @@ router.get('/dashboard/recent-bookings', getRecentBookings);
 router.get('/dashboard/revenue-stats', getRevenueStats);
 router.get('/dashboard/export', exportDashboardData);
 
-// Analytics routes
-router.get('/analytics/metrics', getAnalyticsMetrics);
-router.get('/analytics/booking-trends', getBookingTrends);
-router.get('/analytics/top-performers', getTopPerformers);
-router.get('/analytics/user-stats', getUserStats);
-router.get('/analytics/revenue-breakdown', getRevenueBreakdown);
+// Note: Analytics routes removed (frontend-only analytics UI removed).
 
 export { router as adminRoutes };

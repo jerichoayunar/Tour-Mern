@@ -10,8 +10,8 @@ Implement robust performance monitoring, improve User Experience (UX) with small
   - Check Homepage `Hero` section for smooth Framer Motion animations.
 - [ ] **Verify Backend API**
   - Perform Login/Register flow to ensure `app.js` refactor is stable.
-- [ ] **Verify Analytics**
-  - Check Admin Analytics page to ensure `recharts` is rendering correctly.
+- [ ] **Verify Analytics** (ARCHIVED)
+-  - The project analytics module has been removed. Any verification steps for `/admin/analytics` are now N/A; dashboard charts remain functional and use `DashboardCharts`.
 
 ### 🛠️ PART 2: UX ENHANCEMENTS (From Todo List)
 - [ ] **Task 4.1: Character Counter**

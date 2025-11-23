@@ -36,7 +36,6 @@ const ManageDestinations = lazy(() => import("./pages/admin/ManageDestinations.j
 const ManageUsers = lazy(() => import("./pages/admin/ManageUsers.jsx"));
 const ManageActivities = lazy(() => import("./pages/admin/ManageActivities.jsx"));
 const ManageInquiries = lazy(() => import("./pages/admin/ManageInquiries.jsx"));
-const Analytics = lazy(() => import("./pages/admin/Analytics.jsx"));
 const Settings = lazy(() => import("./pages/admin/Settings.jsx"));
 
 // Protected Route
@@ -127,11 +126,7 @@ function App() {
                   <ManageInquiries />
                 </Suspense>
               } />
-              <Route path="analytics" element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Analytics />
-                </Suspense>
-              } />
+              
               <Route path="settings" element={
                 <Suspense fallback={<LoadingSpinner />}>
                   <Settings />

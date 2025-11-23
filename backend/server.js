@@ -27,7 +27,6 @@ import { apiLimiter, authLimiter } from './middleware/rateLimit.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
 // 🧩 Import all route modules (The different sections of the API)
-import analyticsRoutes from './routes/analyticsRoutes.js';
 import { authRoutes } from './routes/authRoutes.js';
 import { destinationRoutes } from './routes/destinationRoutes.js';
 import { packageRoutes } from './routes/packageRoutes.js';
@@ -194,7 +193,6 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/admin/settings', adminSettingsRoutes);
-app.use('/admin/analytics', analyticsRoutes);
 
 // ======================================================
 // 🔹 STEP 6: Global Error Handler

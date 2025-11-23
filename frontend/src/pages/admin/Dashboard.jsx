@@ -187,7 +187,7 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <div className="font-medium text-gray-900">Generate Report</div>
-                  <div className="text-xs text-gray-600">Export analytics</div>
+                  <div className="text-xs text-gray-600">Export dashboard data</div>
                 </div>
               </button>
               

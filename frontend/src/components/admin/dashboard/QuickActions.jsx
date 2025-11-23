@@ -6,7 +6,6 @@ import {
   Settings, 
   Users, 
   Calendar,
-  Download,
   BarChart3
 } from "lucide-react";
 
@@ -22,7 +21,7 @@ const QuickActions = () => {
     {
       icon: FileText,
       title: "Generate Report",
-      description: "Export analytics data",
+      description: "Generate system report",
       color: "green",
       onClick: () => console.log("Generate report clicked"),
     },
@@ -47,13 +46,7 @@ const QuickActions = () => {
       color: "pink",
       onClick: () => console.log("View calendar clicked"),
     },
-    {
-      icon: Download,
-      title: "Export Data",
-      description: "Download all data",
-      color: "indigo",
-      onClick: () => console.log("Export data clicked"),
-    },
+    // Export/analytics action removed as part of frontend-only analytics UI removal
   ];
 
   const colorClasses = {

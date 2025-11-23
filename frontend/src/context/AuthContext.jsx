@@ -396,8 +396,8 @@ export const AuthProvider = ({ children }) => {
       if (user) return true;
       try {
         showToast('Please login to continue', 'info');
-      } catch (e) {
-        // ignore
+      } catch {
+        // ignore errors from toast in non-browser environments
       }
       const encoded = encodeURIComponent(target);
       // Using window.href to ensure redirect works outside of router hooks
@@ -416,7 +416,8 @@ export const AuthProvider = ({ children }) => {
     handleGoogleCallback, 
     initiateGoogleLogin, 
     clearError, 
-    updateUser
+    updateUser,
+    showToast
   ]);
 
   return (

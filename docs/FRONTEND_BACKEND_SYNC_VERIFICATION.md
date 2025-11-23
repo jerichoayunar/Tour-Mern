@@ -19,7 +19,7 @@ WHAT I CHECKED (automated searches)
   - `clientService.js` — normalized, maps to `/clients` admin endpoints.
   - `settingsService.js` — normalized, uses `/settings/public` and `/admin/settings` endpoints and includes caching for public settings.
   - `adminService.js` — normalized, covers `/admin/dashboard/*` and export route (returns blob wrapped in canonical object).
-  - `analyticsService.js` — normalized, calls `/admin/analytics/*` routes.
+  - `analyticsService.js` — REMOVED: analytics module deleted; references to `/admin/analytics/*` are no longer present in source. (Kept listed here for historical traceability.)
   - `activityService.js` — normalized, calls `/activities` routes.
   - `api.js` — axios instance configured with `baseURL` and auth interceptor.
 
@@ -38,6 +38,7 @@ NOTED INCONSISTENCIES / POINTS TO REVIEW
 
 FILES/TOP AREAS I SAMPLED (not exhaustive line-level audit)
 - Services: all files under `frontend/src/services/*` were searched for `normalizeResponse` and `/api` usage — normalized patterns exist in: `authService.js`, `bookingService.js`, `userService.js`, `destinationService.js`, `packageService.js`, `inquiryService.js`, `clientService.js`, `settingsService.js`, `adminService.js`, `analyticsService.js`, `activityService.js`, `api.js`.
+ - Services: all files under `frontend/src/services/*` were searched for `normalizeResponse` and `/api` usage — normalized patterns exist in: `authService.js`, `bookingService.js`, `userService.js`, `destinationService.js`, `packageService.js`, `inquiryService.js`, `clientService.js`, `settingsService.js`, `adminService.js`, `activityService.js`, `api.js`. (The analytics service was removed from source.)
 
 - Components: key auth components and many admin pages/hooks were scanned for `response.` and error patterns. No major mismatches found in automated scans.
 
