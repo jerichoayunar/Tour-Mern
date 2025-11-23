@@ -17,7 +17,8 @@ export const getBookings = async (filters = {}) => {
     const response = await api.get('/bookings', { params: filters });
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -27,7 +28,8 @@ export const updateBookingStatus = async (bookingId, status) => {
     const response = await api.put(`/bookings/${bookingId}/status`, { status });
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -37,7 +39,8 @@ export const getMyBookings = async () => {
     const response = await api.get('/bookings/mybookings');
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -47,7 +50,8 @@ export const createBooking = async (bookingData) => {
     const response = await api.post('/bookings', bookingData);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -57,7 +61,8 @@ export const getBooking = async (bookingId) => {
     const response = await api.get(`/bookings/${bookingId}`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -67,7 +72,8 @@ export const deleteBooking = async (bookingId) => {
     const response = await api.delete(`/bookings/${bookingId}`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -77,7 +83,8 @@ export const cancelBooking = async (bookingId) => {
     const response = await api.put(`/bookings/${bookingId}/cancel`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -87,7 +94,8 @@ export const getRefundEstimate = async (bookingId) => {
     const response = await api.get(`/bookings/${bookingId}/refund-estimate`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -97,7 +105,8 @@ export const saveAdminNotes = async (bookingId, notes) => {
     const response = await api.put(`/bookings/${bookingId}/notes`, { notes });
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -107,7 +116,8 @@ export const resendConfirmation = async (bookingId) => {
     const response = await api.post(`/bookings/${bookingId}/resend-confirmation`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -117,7 +127,8 @@ export const archiveBooking = async (bookingId, reason) => {
     const response = await api.put(`/bookings/${bookingId}/archive`, { reason });
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -127,7 +138,8 @@ export const restoreBooking = async (bookingId) => {
     const response = await api.put(`/bookings/${bookingId}/restore`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -137,7 +149,8 @@ export const deleteBookingPermanent = async (bookingId) => {
     const response = await api.delete(`/bookings/${bookingId}/permanent`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 

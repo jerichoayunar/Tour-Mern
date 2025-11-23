@@ -156,7 +156,7 @@ const DashboardCharts = ({ monthlyBookings, _destinationPopularity }) => {
         </div>
 
         {/* Chart */}
-        <div className="h-80">
+        <div className="h-80" style={{ minHeight: 320, minWidth: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={completeYearData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />

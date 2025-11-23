@@ -23,7 +23,8 @@ export const analyticsService = {
       return normalizeResponse(response);
     } catch (error) {
       console.error('❌ Error fetching analytics metrics:', error);
-      throw error.response?.data || error.message;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -38,7 +39,8 @@ export const analyticsService = {
       return normalizeResponse(response);
     } catch (error) {
       console.error('❌ Error fetching booking trends:', error);
-      throw error.response?.data || error.message;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -53,7 +55,8 @@ export const analyticsService = {
       return normalizeResponse(response);
     } catch (error) {
       console.error('❌ Error fetching top performers:', error);
-      throw error.response?.data || error.message;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -68,7 +71,8 @@ export const analyticsService = {
       return normalizeResponse(response);
     } catch (error) {
       console.error('❌ Error fetching user stats:', error);
-      throw error.response?.data || error.message;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -83,7 +87,8 @@ export const analyticsService = {
       return normalizeResponse(response);
     } catch (error) {
       console.error('❌ Error fetching revenue breakdown:', error);
-      throw error.response?.data || error.message;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -116,7 +121,8 @@ export const analyticsService = {
       };
     } catch (error) {
       console.error('❌ Error fetching all analytics data:', error);
-      throw error;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   }
 };

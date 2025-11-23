@@ -17,7 +17,8 @@ export const adminService = {
       const response = await api.get('/admin/dashboard/stats');
       return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -26,7 +27,8 @@ export const adminService = {
       const response = await api.get('/admin/dashboard/recent-bookings');
       return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -35,7 +37,8 @@ export const adminService = {
       const response = await api.get('/admin/dashboard/revenue-stats');
       return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -49,7 +52,8 @@ export const adminService = {
       const resp = response?.data ?? response;
       return { success: true, data: resp, message: 'Export ready' };
     } catch (error) {
-      throw error.response?.data || error;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   }
 };

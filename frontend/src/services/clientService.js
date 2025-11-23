@@ -16,7 +16,8 @@ export const getClients = async (params = {}) => {
     const response = await api.get('/clients', { params });
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -26,7 +27,8 @@ export const getClient = async (clientId) => {
     const response = await api.get(`/clients/${clientId}`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -36,7 +38,8 @@ export const updateClient = async (clientId, clientData) => {
     const response = await api.put(`/clients/${clientId}`, clientData);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -46,7 +49,8 @@ export const deleteClient = async (clientId) => {
     const response = await api.delete(`/clients/${clientId}`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -56,7 +60,8 @@ export const archiveClient = async (clientId, reason = null) => {
     const response = await api.put(`/clients/${clientId}/archive`, { reason });
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -66,7 +71,8 @@ export const restoreClient = async (clientId) => {
     const response = await api.put(`/clients/${clientId}/restore`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -76,7 +82,8 @@ export const permanentDeleteClient = async (clientId) => {
     const response = await api.delete(`/clients/${clientId}/permanent`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -86,7 +93,8 @@ export const getClientStats = async () => {
     const response = await api.get('/clients/stats');
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 

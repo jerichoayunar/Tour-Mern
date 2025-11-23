@@ -20,6 +20,18 @@ export const useAnalytics = (initialFilters = {}) => {
   const abortControllerRef = useRef(null);
 
   // ============================================================================
+  // 🗄️ MODULE-LEVEL CACHE: Keep analytics data between mounts
+  // - Simple in-memory cache avoids refetching when navigating between pages
+  // - TTL (ms) prevents stale data
+  // ============================================================================
+  const CACHE_TTL = 60 * 1000; // 60 seconds
+  // Use module-level cache so it's shared across hook instances
+  if (typeof window !== 'undefined' && !window.__ANALYTICS_CACHE) {
+    window.__ANALYTICS_CACHE = { data: null, filters: null, ts: 0 };
+  }
+  const cache = typeof window !== 'undefined' ? window.__ANALYTICS_CACHE : { data: null, filters: null, ts: 0 };
+
+  // ============================================================================
   // 🎯 REQUEST CLEANUP - PREVENT MEMORY LEAKS (like useBookings)
   // ============================================================================
   useEffect(() => {
@@ -48,6 +60,15 @@ export const useAnalytics = (initialFilters = {}) => {
     
     try {
       const currentFilters = customFilters || filters;
+      // Check cache first (simple shallow equality on filters)
+      const now = Date.now();
+      const cacheValid = cache.data && (now - cache.ts) < CACHE_TTL && JSON.stringify(cache.filters) === JSON.stringify(currentFilters);
+      if (cacheValid) {
+        setData(cache.data);
+        setLoading(false);
+        console.log('✅ Using cached analytics data');
+        return cache.data;
+      }
       console.log('🔄 Fetching analytics data with filters:', currentFilters);
       
       // Use the batch method to fetch all analytics data at once
@@ -56,6 +77,14 @@ export const useAnalytics = (initialFilters = {}) => {
       // 🛠️ FIX: Check if request was cancelled before updating state
       if (!abortControllerRef.current.signal.aborted) {
         setData(analyticsData);
+        // Save to cache
+        try {
+          cache.data = analyticsData;
+          cache.filters = currentFilters;
+          cache.ts = Date.now();
+        } catch (e) {
+          console.debug('Failed to write analytics cache', e);
+        }
         console.log('✅ Analytics data fetched successfully');
       }
     } catch (err) {

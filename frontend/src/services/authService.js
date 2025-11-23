@@ -71,7 +71,8 @@ export const authService = {
     } catch (err) {
       // If fetching profile fails, clear token and rethrow
       localStorage.removeItem('token');
-      throw err;
+      const message = err?.response?.data?.message || err?.message || String(err);
+      throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -90,7 +91,8 @@ logout: async () => {
     return normalizeResponse(response);
   } catch (error) {
     console.log('Backend logout call failed:', error);
-    throw error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 },
 
@@ -118,7 +120,8 @@ clearLocalAuth: () => {
       return normalizeResponse(response);
     } catch (error) {
       console.error('🔍 authService error:', error.response?.data || error.message);
-      throw error;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
 },
 

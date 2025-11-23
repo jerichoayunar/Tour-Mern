@@ -154,7 +154,8 @@ export const getUserActivities = async (userId, params = {}) => {
       message: payload.message || null
     };
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -180,7 +181,8 @@ export const getAllActivities = async (params = {}) => {
     };
   } catch (error) {
     console.error('❌ Activity Service Error:', error);
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -190,7 +192,8 @@ export const getActivityStats = async () => {
     const response = await api.get('/activities/stats');
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -214,7 +217,8 @@ export const getActivitiesByType = async (type, params = {}) => {
       message: payload.message || null
     };
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -238,7 +242,8 @@ export const getRecentActivities = async (limit = 10) => {
       message: payload.message || null
     };
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -266,7 +271,8 @@ export const searchActivities = async (query = '', filters = {}) => {
       message: payload.message || null
     };
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -279,7 +285,8 @@ export const exportActivities = async (format = 'csv', filters = {}) => {
     });
     return { success: true, data: response?.data ?? response, message: 'Export ready' };
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 

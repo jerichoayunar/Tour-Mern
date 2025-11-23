@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useToast } from '../../../context/ToastContext';
 import inquiryService from '../../../services/inquiryService';
+import { useAuth } from '../../../context/AuthContext';
 import Loader from '../../ui/Loader';
 import { Mail, User, MessageSquare, AlertCircle, CheckCircle } from 'lucide-react';
 
@@ -9,6 +10,7 @@ const InquiryForm = ({ onSuccess = null }) => {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { isAuthenticated, requireAuthRedirect } = useAuth();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -63,6 +65,12 @@ const InquiryForm = ({ onSuccess = null }) => {
   // ============================================================================
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Require authentication before submitting an inquiry
+    if (!isAuthenticated) {
+      requireAuthRedirect(window.location.pathname + window.location.search);
+      return;
+    }
 
     if (!validateForm()) {
       showToast('Please fix the errors in the form', 'error');

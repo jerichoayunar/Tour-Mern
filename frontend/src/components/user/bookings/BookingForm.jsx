@@ -1,6 +1,7 @@
 // src/components/booking/BookingForm.jsx
 import React, { useState, useEffect } from 'react';
 import { useBooking } from '../../../context/BookingContext';
+import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
 import Loader from "../../ui/Loader";
 import { X, Calendar, Users, Phone, Mail, User, MessageSquare } from 'lucide-react';
@@ -9,6 +10,7 @@ import { formatPrice } from '../../../utils/formatters';
 const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
   const { createNewBooking, loading } = useBooking();
   const { showToast } = useToast();
+  const { isAuthenticated, requireAuthRedirect } = useAuth();
 
   const [formData, setFormData] = useState({
     packageId: tourPackage?._id || '',
@@ -87,6 +89,12 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Require authentication before booking
+    if (!isAuthenticated) {
+      requireAuthRedirect(window.location.pathname + window.location.search);
+      return;
+    }
+
     if (!validateForm()) {
       showToast('Please fix the errors in the form', 'error');
       return;

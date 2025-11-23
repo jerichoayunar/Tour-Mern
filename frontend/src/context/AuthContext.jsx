@@ -59,6 +59,23 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
+      // If a token exists, try to set a cached user immediately to avoid
+      // UI logout flash on reload. We'll still verify the token with the
+      // backend in the background and only clear auth if the token is
+      // explicitly rejected (401).
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            setUser(JSON.parse(storedUser));
+          } catch (e) {
+            console.debug('Failed to parse stored user', e);
+          }
+        }
+      } catch (e) {
+        console.debug('Error reading stored user', e);
+      }
+
       try {
         // Verify token with backend and get user data
         const response = await authService.getMe();
@@ -74,11 +91,20 @@ export const AuthProvider = ({ children }) => {
           }
         }
       } catch (err) {
-        console.debug(err);
-        const errorMessage = 'Failed to process Google sign in';
-        setError(errorMessage);
-        showToast(errorMessage, 'error');
-        return { success: false, message: errorMessage };
+        console.debug('Auth check error:', err);
+        // If token is invalid/expired (401), clear local auth to avoid
+        // keeping an invalid session. For other errors, keep the cached
+        // user (if any) to avoid logging the user out on transient issues.
+        const status = err?.response?.status;
+        if (status === 401) {
+          authService.clearLocalAuth();
+          setUser(null);
+        } else {
+          const errorMessage = 'Failed to verify session — please check your connection';
+          setError(errorMessage);
+          // Don't loudly toast on every reload verification failure
+          console.debug(errorMessage, err);
+        }
       } finally {
         // Always stop loading regardless of success/error
         setLoading(false);
@@ -364,6 +390,20 @@ export const AuthProvider = ({ children }) => {
     // Utility methods
     clearError,
     updateUser,
+    // Utility: require authentication and redirect to login when missing
+    requireAuthRedirect: (returnPath = null) => {
+      const target = returnPath || (typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/');
+      if (user) return true;
+      try {
+        showToast('Please login to continue', 'info');
+      } catch (e) {
+        // ignore
+      }
+      const encoded = encodeURIComponent(target);
+      // Using window.href to ensure redirect works outside of router hooks
+      window.location.href = `/login?return=${encoded}`;
+      return false;
+    }
   }), [
     user, 
     loading, 

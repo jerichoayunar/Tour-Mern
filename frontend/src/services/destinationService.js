@@ -41,7 +41,8 @@ export const destinationService = {
         }
         return normalized;
       } catch (error) {
-        throw error.response?.data || error.message;
+        const message = error?.response?.data?.message || error?.message || String(error);
+        throw { success: false, message, response: { data: { message } } };
       } finally {
         _destinationsPending = null;
       }
@@ -58,7 +59,8 @@ export const destinationService = {
       const response = await api.get(`/destinations/${id}`);
       return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -79,7 +81,8 @@ export const destinationService = {
       const response = await api.post('/destinations', destinationData, config);
       return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -100,7 +103,8 @@ export const destinationService = {
       const response = await api.put(`/destinations/${destinationId}`, destinationData, config);
       return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -112,7 +116,8 @@ export const destinationService = {
       const response = await api.delete(`/destinations/${destinationId}`);
       return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     }
   }
 };

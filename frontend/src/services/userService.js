@@ -19,7 +19,8 @@ export const userService = {
       const response = await api.get('/clients', { params });
       return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+        const message = error?.response?.data?.message || error?.message || String(error);
+        throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -31,7 +32,8 @@ export const userService = {
       const response = await api.get(`/clients/${userId}`);
       return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+        const message = error?.response?.data?.message || error?.message || String(error);
+        throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -43,7 +45,8 @@ export const userService = {
       const response = await api.put(`/clients/${userId}`, userData);
       return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+        const message = error?.response?.data?.message || error?.message || String(error);
+        throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -55,7 +58,8 @@ export const userService = {
       const response = await api.delete(`/clients/${userId}`);
       return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+        const message = error?.response?.data?.message || error?.message || String(error);
+        throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -67,7 +71,8 @@ export const userService = {
       const response = await api.get('/clients/stats');
       return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+        const message = error?.response?.data?.message || error?.message || String(error);
+        throw { success: false, message, response: { data: { message } } };
     }
   }
 };

@@ -20,7 +20,8 @@ export const getPackages = async (filters = {}) => {
     return normalizeResponse(response);
   } catch (error) {
     console.error('📦 Packages API Error:', error);
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -42,7 +43,8 @@ export const createPackage = async (packageData) => {
     return normalizeResponse(response);
   } catch (error) {
     console.error('❌ Create Package Error:', error);
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -64,7 +66,8 @@ export const updatePackage = async (packageId, packageData) => {
     return normalizeResponse(response);
   } catch (error) {
     console.error('❌ Update Package Error:', error);
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -78,7 +81,8 @@ export const deletePackage = async (packageId) => {
     return normalizeResponse(response);
   } catch (error) {
     console.error('❌ Delete Package Error:', error);
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -88,7 +92,8 @@ export const archivePackage = async (packageId, reason) => {
     const response = await api.put(`/packages/${packageId}/archive`, { reason });
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -98,7 +103,8 @@ export const restorePackage = async (packageId) => {
     const response = await api.put(`/packages/${packageId}/restore`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -108,7 +114,8 @@ export const deletePackagePermanent = async (packageId) => {
     const response = await api.delete(`/packages/${packageId}/permanent`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -118,7 +125,8 @@ export const getPackage = async (packageId) => {
     const response = await api.get(`/packages/${packageId}`);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 

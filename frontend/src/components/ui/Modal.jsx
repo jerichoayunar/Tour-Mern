@@ -1,6 +1,6 @@
 // src/components/ui/Modal.jsx
 import React from "react";
-import * as Motion from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 const Modal = ({ isOpen, onClose, title, children, size = "lg" }) => {
   if (!isOpen) return null;
@@ -13,14 +13,14 @@ const Modal = ({ isOpen, onClose, title, children, size = "lg" }) => {
   };
 
   return (
-    <Motion.AnimatePresence>
-      <Motion.div
+    <AnimatePresence>
+      <motion.div
         className="fixed inset-0 bg-black/40 flex justify-center items-center z-50"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
       >
-        <Motion.div
+        <motion.div
           className={`bg-white rounded-2xl shadow-xl p-6 w-full mx-4 relative ${sizeClasses[size]}`}
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -39,9 +39,9 @@ const Modal = ({ isOpen, onClose, title, children, size = "lg" }) => {
 
           {/* Content */}
           <div className="overflow-y-auto max-h-[70vh]">{children}</div>
-        </Motion.div>
-      </Motion.div>
-    </Motion.AnimatePresence>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 

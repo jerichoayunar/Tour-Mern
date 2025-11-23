@@ -34,7 +34,8 @@ export const getPublicSettings = async () => {
       }
       return normalized;
     } catch (error) {
-      throw error.response?.data || error;
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
     } finally {
       _settingsPending = null;
     }
@@ -49,7 +50,8 @@ export const getAllSettings = async () => {
     const response = await api.get('/admin/settings');
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -59,7 +61,8 @@ export const updateSettings = async (settingsData) => {
     const response = await api.put('/admin/settings', settingsData);
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -69,6 +72,7 @@ export const sendTestEmail = async (email) => {
     const response = await api.post('/admin/settings/test-email', { email });
     return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
