@@ -3,6 +3,9 @@ info:
   title: Tour-Mern API
   version: 1.0.0
   description: Basic OpenAPI skeleton for core endpoints
+  contact:
+    name: API Support
+    email: support@example.com
 tags:
   - name: Auth
   - name: Packages
@@ -17,6 +20,8 @@ paths:
   /auth/register:
     post:
       summary: Register a new user
+      description: Register a new user account; returns user profile and token.
+      operationId: registerUser
       requestBody:
         required: true
         content:
@@ -36,12 +41,16 @@ paths:
   /health:
     get:
       summary: Health check
+      description: Simple health check endpoint.
+      operationId: healthCheck
       responses:
         '200':
           description: OK
   /auth/login:
     post:
       summary: Login user
+      description: Authenticate user and return access token and profile.
+      operationId: loginUser
       requestBody:
         required: true
         content:
@@ -56,9 +65,111 @@ paths:
       responses:
         '200':
           description: OK
+  /auth/logout:
+    post:
+      summary: Logout current user
+      description: Invalidate current session/token for the authenticated user.
+      operationId: logoutUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/me:
+    get:
+      summary: Get current authenticated user (alias)
+      description: Returns the current authenticated user's profile. Alias for `/users/me`.
+      operationId: getAuthMe
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/forgot-password:
+    post:
+      summary: Request password reset
+      description: Initiate a password reset flow by providing the user's email. Sends reset instructions via email.
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /auth/reset-password:
+    post:
+      summary: Reset password
+      description: Complete the password reset using the token sent via email.
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+  /auth/change-password:
+    put:
+      summary: Change password (authenticated)
+      description: Change the authenticated user's password. Expects `currentPassword` and `newPassword`.
+      operationId: changePassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/test-email:
+    get:
+      summary: Test email service
+      description: Sends a test email and returns success status.
+      operationId: testEmail
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '500':
+          description: Internal Server Error
   /packages:
     get:
       summary: List packages
+      description: List available packages with pagination and filters.
+      operationId: getPackages
       parameters:
         - in: query
           name: page
@@ -71,69 +182,116 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/Success'
-          content:
-            application/json:
-              examples:
-                packageList:
-                  $ref: '#/components/examples/PackageExample'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       summary: Create package (Admin)
+      description: Create a new travel package (admin only).
+      operationId: createPackage
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Package'
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                itinerary:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ItineraryItem'
+                image:
+                  type: string
+                  format: binary
+                price:
+                  type: number
+                duration:
+                  type: integer
+                status:
+                  type: string
+                  enum: [active, inactive]
       responses:
         '201':
           $ref: '#/components/responses/Success'
-          content:
-            application/json:
-              examples:
-                createdPackage:
-                  $ref: '#/components/examples/PackageExample'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /destinations:
     get:
       summary: List destinations
+      description: List available destinations with optional filters and pagination.
+      operationId: getDestinations
       responses:
         '200':
           description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/Success'
     post:
       summary: Create destination (Admin)
+      description: Create a new destination (admin only).
+      operationId: createDestination
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Destination'
+              $ref: '#/components/schemas/DestinationCreate'
       responses:
         '201':
-          description: Created
+          $ref: '#/components/responses/Success'
   /bookings:
     get:
       summary: List bookings (Admin)
+      description: Returns paginated list of bookings with optional filters for admin users.
+      operationId: getBookings
+      security:
+        - bearerAuth: []
       responses:
         '200':
-          $ref: '#/components/responses/Success'
+          $ref: '#/components/responses/PaginatedBookings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       summary: Create booking (User)
+      description: Create a new booking for the authenticated user. Sends confirmation email asynchronously.
+      operationId: createBooking
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Booking'
+              $ref: '#/components/schemas/BookingCreate'
       responses:
         '201':
-          $ref: '#/components/responses/Success'
-          content:
-            application/json:
-              examples:
-                bookingCreated:
-                  $ref: '#/components/examples/BookingExample'
+          $ref: '#/components/responses/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /packages/{id}:
     get:
       summary: Get package by ID
+      description: Retrieve package details by ID.
+      operationId: getPackageById
       parameters:
         - in: path
           name: id
@@ -143,15 +301,16 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/Success'
-          content:
-            application/json:
-              examples:
-                packageDetail:
-                  $ref: '#/components/examples/PackageExample'
         '404':
           $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     put:
       summary: Update package (Admin)
+      description: Update package details (admin only).
+      operationId: updatePackage
       security:
         - bearerAuth: []
       parameters:
@@ -166,11 +325,39 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Package'
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                itinerary:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ItineraryItem'
+                image:
+                  type: string
+                  format: binary
+                price:
+                  type: number
+                duration:
+                  type: integer
+                status:
+                  type: string
+                  enum: [active, inactive]
       responses:
         '200':
-          description: Updated
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     delete:
       summary: Delete package (Admin)
+      description: Delete a package (admin only).
+      operationId: deletePackage
       security:
         - bearerAuth: []
       parameters:
@@ -181,10 +368,47 @@ paths:
             type: string
       responses:
         '200':
-          description: Deleted
-  /destinations/{id}:
-    get:
-      summary: Get destination by ID
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /packages/{id}/archive:
+    put:
+      summary: Archive package (Admin)
+      description: Soft-archive a package; returns the updated package object in `data`.
+      operationId: archivePackage
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /packages/{id}/restore:
+    put:
+      summary: Restore package (Admin)
+      description: Restore a previously archived package and return the package object in `data`.
+      operationId: restorePackage
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -193,11 +417,51 @@ paths:
             type: string
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /packages/{id}/permanent:
+    delete:
+      summary: Permanently delete package (Admin)
+      description: Permanently remove a package from the system; returns operation success in `data`.
+      operationId: permanentDeletePackage
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /destinations/{id}:
+    get:
+      summary: Get destination by ID
+      description: Retrieve destination details by ID.
+      operationId: getDestinationById
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
         '404':
-          description: Not Found
+          $ref: '#/components/responses/NotFound'
     put:
       summary: Update destination (Admin)
+      description: Update destination details (admin only).
+      operationId: updateDestination
       security:
         - bearerAuth: []
       parameters:
@@ -211,12 +475,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Destination'
+              $ref: '#/components/schemas/DestinationCreate'
       responses:
         '200':
           description: Updated
     delete:
       summary: Delete destination (Admin)
+      description: Delete a destination (admin only).
+      operationId: deleteDestination
       security:
         - bearerAuth: []
       parameters:
@@ -231,14 +497,18 @@ paths:
   /bookings/mybookings:
     get:
       summary: Get current user's bookings
+      description: Retrieve bookings for the authenticated user; returns a paginated list of booking objects under the `data` field.
+      operationId: getMyBookings
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/PaginatedBookings'
   /bookings/{id}:
     get:
       summary: Get booking by ID
+      description: Retrieve a single booking by its ID. Accessible by booking owner or admin.
+      operationId: getBooking
       security:
         - bearerAuth: []
       parameters:
@@ -249,11 +519,17 @@ paths:
             type: string
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Booking'
         '404':
-          description: Not Found
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     delete:
       summary: Delete booking
+      description: Delete a booking (soft delete for archiveable bookings). Only owner or admin can delete.
+      operationId: deleteBooking
       security:
         - bearerAuth: []
       parameters:
@@ -264,10 +540,16 @@ paths:
             type: string
       responses:
         '200':
-          description: Deleted
+          $ref: '#/components/responses/Booking'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /bookings/{id}/refund-estimate:
     get:
       summary: Get refund estimate for booking
+      description: Calculate refund estimate for a booking based on cancellation policy.
+      operationId: getRefundEstimate
       security:
         - bearerAuth: []
       parameters:
@@ -278,10 +560,16 @@ paths:
             type: string
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /bookings/{id}/cancel:
     put:
       summary: Cancel a booking
+      description: Cancel a booking (user or admin). Returns refund details when applicable.
+      operationId: cancelBooking
       security:
         - bearerAuth: []
       parameters:
@@ -292,10 +580,16 @@ paths:
             type: string
       responses:
         '200':
-          description: Cancelled
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /bookings/{id}/status:
     put:
       summary: Update booking status (Admin)
+      description: Admin endpoint to change booking status (pending, confirmed, cancelled).
+      operationId: updateBookingStatus
       security:
         - bearerAuth: []
       parameters:
@@ -309,16 +603,21 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                status:
-                  type: string
+              $ref: '#/components/schemas/BookingUpdateStatus'
       responses:
         '200':
-          description: Updated
+          $ref: '#/components/responses/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /bookings/{id}/refund:
     put:
       summary: Process refund (Admin)
+      description: Process a refund for the specified booking and return refund details inside `data`.
+      operationId: processRefundBooking
       security:
         - bearerAuth: []
       parameters:
@@ -329,10 +628,16 @@ paths:
             type: string
       responses:
         '200':
-          description: Refund processed
+          $ref: '#/components/responses/Booking'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /bookings/{id}/notes:
     put:
       summary: Update admin notes for booking (Admin)
+      description: Update administrative notes for a booking; expects an object with `notes` string and returns the updated booking in `data`.
+      operationId: updateBookingNotes
       security:
         - bearerAuth: []
       parameters:
@@ -352,10 +657,18 @@ paths:
                   type: string
       responses:
         '200':
-          description: Notes updated
+          $ref: '#/components/responses/Booking'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /bookings/{id}/resend-confirmation:
     post:
       summary: Resend booking confirmation (Admin)
+      description: Resend the booking confirmation email for the specified booking; returns success status in `data`.
+      operationId: resendBookingConfirmation
       security:
         - bearerAuth: []
       parameters:
@@ -366,10 +679,16 @@ paths:
             type: string
       responses:
         '200':
-          description: Confirmation resent
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /bookings/{id}/archive:
     put:
       summary: Archive booking (Admin)
+      description: Soft-archive a booking; the API returns the archive status in `data`.
+      operationId: archiveBooking
       security:
         - bearerAuth: []
       parameters:
@@ -380,10 +699,16 @@ paths:
             type: string
       responses:
         '200':
-          description: Archived
+          $ref: '#/components/responses/Booking'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /bookings/{id}/restore:
     put:
       summary: Restore archived booking (Admin)
+      description: Restore a previously archived booking and return the restored booking under `data`.
+      operationId: restoreBooking
       security:
         - bearerAuth: []
       parameters:
@@ -394,10 +719,16 @@ paths:
             type: string
       responses:
         '200':
-          description: Restored
+          $ref: '#/components/responses/Booking'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /bookings/{id}/permanent:
     delete:
       summary: Permanently delete archived booking (Admin)
+      description: Permanently remove an archived booking from the system; returns operation success in `data`.
+      operationId: permanentDeleteBooking
       security:
         - bearerAuth: []
       parameters:
@@ -408,17 +739,29 @@ paths:
             type: string
       responses:
         '200':
-          description: Permanently deleted
+          $ref: '#/components/responses/Booking'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /inquiries:
     get:
       summary: List inquiries (Admin)
+      description: Return list of inquiries with optional pagination and filters.
+      operationId: getInquiries
       security:
         - bearerAuth: []
       responses:
         '200':
           $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       summary: Create inquiry (Public)
+      description: Public endpoint for site visitors to submit inquiries.
+      operationId: createInquiry
       requestBody:
         required: true
         content:
@@ -428,17 +771,27 @@ paths:
       responses:
         '201':
           $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /inquiries/stats:
     get:
       summary: Get inquiry stats (Admin)
+      description: Aggregated inquiry statistics for admin dashboards.
+      operationId: getInquiryStats
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /inquiries/{id}:
     get:
       summary: Get inquiry by ID (Admin)
+      description: Retrieve a single inquiry by ID.
+      operationId: getInquiryById
       security:
         - bearerAuth: []
       parameters:
@@ -449,9 +802,17 @@ paths:
             type: string
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     put:
       summary: Update inquiry (Admin)
+      description: Admin can update inquiry status, add response, or change priority.
+      operationId: updateInquiry
       security:
         - bearerAuth: []
       parameters:
@@ -465,12 +826,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Inquiry'
+              $ref: '#/components/schemas/InquiryUpdate'
       responses:
         '200':
-          description: Updated
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     delete:
       summary: Delete inquiry (Admin)
+      description: Permanently delete an inquiry (admin only).
+      operationId: deleteInquiry
       security:
         - bearerAuth: []
       parameters:
@@ -481,10 +850,16 @@ paths:
             type: string
       responses:
         '200':
-          description: Deleted
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /inquiries/{id}/read:
     put:
       summary: Mark inquiry as read (Admin)
+      description: Mark the inquiry as read and return the updated inquiry object in `data`.
+      operationId: markAsRead
       security:
         - bearerAuth: []
       parameters:
@@ -495,10 +870,12 @@ paths:
             type: string
       responses:
         '200':
-          description: Marked as read
+          $ref: '#/components/responses/Success'
   /inquiries/{id}/archive:
     put:
       summary: Archive inquiry (Admin)
+      description: Soft-archive the inquiry; returns the updated inquiry object in `data`.
+      operationId: archiveInquiry
       security:
         - bearerAuth: []
       parameters:
@@ -509,10 +886,12 @@ paths:
             type: string
       responses:
         '200':
-          description: Archived
+          $ref: '#/components/responses/Success'
   /inquiries/{id}/restore:
     put:
       summary: Restore inquiry (Admin)
+      description: Restore a previously archived inquiry and return the restored object in `data`.
+      operationId: restoreInquiry
       security:
         - bearerAuth: []
       parameters:
@@ -523,10 +902,12 @@ paths:
             type: string
       responses:
         '200':
-          description: Restored
+          $ref: '#/components/responses/Success'
   /inquiries/{id}/permanent:
     delete:
       summary: Permanently delete inquiry (Admin)
+      description: Permanently remove an inquiry from the system; returns operation success in `data`.
+      operationId: permanentDeleteInquiry
       security:
         - bearerAuth: []
       parameters:
@@ -537,26 +918,38 @@ paths:
             type: string
       responses:
         '200':
-          description: Permanently deleted
+          $ref: '#/components/responses/Success'
   /clients:
     get:
       summary: List clients (Admin)
+      description: Returns list of clients/users with pagination and filters for admin.
+      operationId: getClients
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /clients/stats:
     get:
       summary: Get client stats (Admin)
+      description: Aggregated client statistics for admin dashboards.
+      operationId: getClientStats
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
   /clients/{id}:
     get:
       summary: Get client by ID (Admin)
+      description: Retrieve a single client/user by ID (admin-only).
+      operationId: getClient
       security:
         - bearerAuth: []
       parameters:
@@ -567,9 +960,17 @@ paths:
             type: string
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     put:
       summary: Update client (Admin)
+      description: Update client profile or metadata.
+      operationId: updateClient
       security:
         - bearerAuth: []
       parameters:
@@ -583,12 +984,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/ClientUpdate'
       responses:
         '200':
-          description: Updated
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     delete:
       summary: Delete client (Admin)
+      description: Permanently delete a client (admin-only).
+      operationId: deleteClient
       security:
         - bearerAuth: []
       parameters:
@@ -599,10 +1008,16 @@ paths:
             type: string
       responses:
         '200':
-          description: Deleted
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /clients/{id}/archive:
     put:
       summary: Archive client (Admin)
+      description: Soft-archive a client account; returns updated client state in `data`.
+      operationId: archiveClient
       security:
         - bearerAuth: []
       parameters:
@@ -613,10 +1028,12 @@ paths:
             type: string
       responses:
         '200':
-          description: Archived
+          $ref: '#/components/responses/Success'
   /clients/{id}/restore:
     put:
       summary: Restore client (Admin)
+      description: Restore a previously archived client account and return the client object in `data`.
+      operationId: restoreClient
       security:
         - bearerAuth: []
       parameters:
@@ -627,10 +1044,12 @@ paths:
             type: string
       responses:
         '200':
-          description: Restored
+          $ref: '#/components/responses/Success'
   /clients/{id}/permanent:
     delete:
       summary: Permanently delete client (Admin)
+      description: Permanently remove a client and their data; returns operation success in `data`.
+      operationId: permanentDeleteClient
       security:
         - bearerAuth: []
       parameters:
@@ -641,49 +1060,67 @@ paths:
             type: string
       responses:
         '200':
-          description: Permanently deleted
+          $ref: '#/components/responses/Success'
   /admin/dashboard/stats:
     get:
       summary: Get admin dashboard stats
+      description: Return aggregated dashboard statistics for admins (bookings, inquiries, clients); returns an object in `data` suitable for charting.
+      operationId: getAdminDashboardStats
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
   /admin/dashboard/recent-bookings:
     get:
       summary: Get recent bookings for admin dashboard
+      description: Returns a list of recent bookings for display in admin dashboards under `data`.
+      operationId: getAdminDashboardRecentBookings
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
   /admin/dashboard/revenue-stats:
     get:
       summary: Get revenue stats for admin dashboard
+      description: Returns revenue-related aggregate metrics for admin reporting in `data`.
+      operationId: getAdminDashboardRevenueStats
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
   /admin/dashboard/export:
     get:
       summary: Export admin dashboard data
+      description: Export dashboard data to CSV/JSON; returns an object with export metadata in `data` and a download URL when applicable.
+      operationId: exportAdminDashboardData
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /admin/settings:
     get:
       summary: Get admin settings
+      description: Retrieve all admin-configurable settings.
+      operationId: getAdminSettings
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     put:
       summary: Update admin settings
+      description: Update settings (admin-only). Returns updated settings object.
+      operationId: updateAdminSettings
       security:
         - bearerAuth: []
       requestBody:
@@ -694,24 +1131,102 @@ paths:
               $ref: '#/components/schemas/Settings'
       responses:
         '200':
-          description: Updated
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       summary: Send test email (Admin)
+      description: Sends a test email using configured email settings.
+      operationId: sendAdminTestEmail
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/google:
+    get:
+      summary: Redirect to Google OAuth
+      description: Initiate Google OAuth flow by redirecting to Google's auth page.
+      operationId: googleLogin
+      responses:
+        '302':
+          description: Redirect to Google
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /auth/google/callback:
+    get:
+      summary: Google OAuth callback
+      description: Callback endpoint for Google OAuth that redirects back to the frontend with tokens.
+      operationId: googleCallback
+      responses:
+        '302':
+          description: Redirect to frontend with token
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /auth/google/profile:
+    get:
+      summary: Get Google profile for authenticated user
+      description: Returns Google profile data for an authenticated user.
+      operationId: getGoogleProfile
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Email sent
+          $ref: '#/components/responses/Success'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /auth/google/test-config:
+    get:
+      summary: Test Google OAuth configuration
+      description: Returns current Google OAuth configuration for debugging.
+      operationId: testGoogleConfig
+      responses:
+        '200':
+          description: Configuration status
+          content:
+            application/json:
+              examples:
+                GoogleConfigExample:
+                  $ref: '#/components/examples/GoogleConfigExample'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /users/profile:
     get:
       summary: Get authenticated user's profile
+      description: Return the authenticated user's profile object in `data`.
+      operationId: getUserProfile
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
     put:
       summary: Update authenticated user's profile
+      description: Update the authenticated user's profile fields (name, email, etc.) and return the updated profile in `data`.
+      operationId: updateUserProfile
       security:
         - bearerAuth: []
       requestBody:
@@ -722,10 +1237,12 @@ paths:
               $ref: '#/components/schemas/User'
       responses:
         '200':
-          description: Updated
+          $ref: '#/components/responses/Success'
   /users/change-password:
     put:
       summary: Change password for authenticated user
+      description: Change the authenticated user's password. Expects `currentPassword` and `newPassword`; returns success status in `data`.
+      operationId: changeUserPassword
       security:
         - bearerAuth: []
       requestBody:
@@ -741,33 +1258,32 @@ paths:
                   type: string
       responses:
         '200':
-          description: Password changed
+          $ref: '#/components/responses/Success'
   /settings/public:
     get:
       summary: Get public settings
+      description: Public-facing site settings (no authentication required).
+      operationId: getPublicSettings
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
   
   /users/me:
     get:
       summary: Get current user profile
+      description: Return the current authenticated user's minimal profile (useful for client-side state). Returns profile in `data`.
+      operationId: getCurrentUser
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
 components:
   schemas:
     # Aliases for existing refs used earlier
     Package:
       $ref: '#/components/schemas/PackageCreate'
-    Booking:
-      $ref: '#/components/schemas/BookingCreate'
-    Destination:
-      $ref: '#/components/schemas/DestinationCreate'
-    Inquiry:
-      $ref: '#/components/schemas/InquiryCreate'
+    # Aliases kept minimal to avoid unused-component warnings
     User:
       type: object
       properties:
@@ -786,55 +1302,7 @@ components:
           type: string
 
     # Detailed validation-derived schemas
-    AuthRegister:
-      type: object
-      required: [name, email, password, recaptchaToken]
-      properties:
-        name:
-          type: string
-          minLength: 2
-          maxLength: 50
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          minLength: 6
-        phone:
-          type: string
-        address:
-          type: string
-        recaptchaToken:
-          type: string
-    AuthLogin:
-      type: object
-      required: [email, password, recaptchaToken]
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-        recaptchaToken:
-          type: string
-    AuthForgotPassword:
-      type: object
-      required: [email, recaptchaToken]
-      properties:
-        email:
-          type: string
-          format: email
-        recaptchaToken:
-          type: string
-    AuthResetPassword:
-      type: object
-      required: [token, newPassword]
-      properties:
-        token:
-          type: string
-        newPassword:
-          type: string
-          minLength: 6
+    # Authentication schemas defined where used to reduce unused-component warnings
     BookingCreate:
       type: object
       required: [packageId, clientName, clientEmail, clientPhone, bookingDate, guests]
@@ -998,6 +1466,36 @@ components:
         status:
           type: string
           enum: [active, inactive]
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        packageId:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled]
+        preferredDate:
+          type: string
+          format: date-time
+        guests:
+          type: integer
+          minimum: 1
+        notes:
+          type: string
+          nullable: true
+        refundEstimate:
+          type: object
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
   securitySchemes:
     bearerAuth:
       type: http
@@ -1016,6 +1514,62 @@ components:
                 type: boolean
               data:
                 type: object
+          examples:
+            GenericSuccess:
+              $ref: '#/components/examples/PackageExample'
+            PaginatedBookings:
+              $ref: '#/components/examples/PaginatedBookings'
+            PaginatedInquiries:
+              $ref: '#/components/examples/PaginatedInquiries'
+            PaginatedPackages:
+              $ref: '#/components/examples/PaginatedPackages'
+            PaginatedClients:
+              $ref: '#/components/examples/PaginatedClients'
+            InquiryExample:
+              $ref: '#/components/examples/InquiryExample'
+            AdminDashboardStats:
+              $ref: '#/components/examples/AdminDashboardStats'
+    Booking:
+      description: Single booking returned
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                $ref: '#/components/schemas/Booking'
+          examples:
+            BookingExample:
+              $ref: '#/components/examples/BookingExample'
+    PaginatedBookings:
+      description: Paginated bookings list
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              count:
+                type: integer
+              data:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Booking'
+                  page:
+                    type: integer
+                  limit:
+                    type: integer
+                  total:
+                    type: integer
+          examples:
+            PaginatedBookings:
+              $ref: '#/components/examples/PaginatedBookings'
     NotFound:
       description: Resource not found
       content:
@@ -1027,8 +1581,12 @@ components:
                 type: boolean
               message:
                 type: string
-    ValidationError:
-      description: Validation failed
+          examples:
+            NotFoundExample:
+              $ref: '#/components/examples/NotFoundExample'
+    # ValidationError response removed to avoid unused-component warnings; add back if used
+    BadRequest:
+      description: Bad request / validation failed
       content:
         application/json:
           schema:
@@ -1036,21 +1594,58 @@ components:
             properties:
               success:
                 type: boolean
-              errors:
-                type: array
-                items:
-                  type: string
+              message:
+                type: string
+          examples:
+            BadRequestExample:
+              $ref: '#/components/examples/BadRequestExample'
+            ValidationErrorExample:
+              $ref: '#/components/examples/ValidationErrorExample'
+    Unauthorized:
+      description: Authentication required or token invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              message:
+                type: string
+          examples:
+            UnauthorizedExample:
+              $ref: '#/components/examples/UnauthorizedExample'
+    Forbidden:
+      description: Insufficient permissions to access resource
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              message:
+                type: string
+          examples:
+            ForbiddenExample:
+              $ref: '#/components/examples/ForbiddenExample'
+    InternalServerError:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              message:
+                type: string
+              error:
+                type: string
+          examples:
+            ErrorWithDetailExample:
+              $ref: '#/components/examples/ErrorWithDetail'
   examples:
-    BookingExample:
-      value:
-        success: true
-        data:
-          id: "bk_123"
-          packageId: "pkg_456"
-          clientName: "Jane Doe"
-          clientEmail: "jane@example.com"
-          bookingDate: "2025-12-01T10:00:00Z"
-          guests: 2
     PackageExample:
       value:
         success: true
@@ -1067,3 +1662,133 @@ components:
           name: "Visitor"
           email: "visitor@example.com"
           message: "I have a question about pricing."
+    NotFoundExample:
+      value:
+        success: false
+        message: "Resource not found"
+    ValidationErrorExample:
+      value:
+        success: false
+        errors:
+          - "\"email\" is required"
+          - "\"message\" length must be at least 10 characters"
+    BadRequestExample:
+      value:
+        success: false
+        message: "Invalid itinerary format"
+    UnauthorizedExample:
+      value:
+        success: false
+        message: "Not authorized, token failed"
+    ForbiddenExample:
+      value:
+        success: false
+        message: "Not authorized as admin"
+    PaginatedBookings:
+      value:
+        success: true
+        count: 2
+        data:
+          items:
+            - id: "bk_123"
+              userId: "cl_101"
+              packageId: "pkg_456"
+              status: "confirmed"
+              preferredDate: "2025-12-10T09:00:00Z"
+              guests: 2
+              notes: "Window seats requested"
+              createdAt: "2025-10-01T12:00:00Z"
+              updatedAt: "2025-10-02T08:30:00Z"
+            - id: "bk_124"
+              userId: "cl_102"
+              packageId: "pkg_457"
+              status: "pending"
+              preferredDate: "2026-01-05T09:00:00Z"
+              guests: 4
+              notes: null
+              createdAt: "2025-11-05T10:00:00Z"
+              updatedAt: "2025-11-05T10:00:00Z"
+          page: 1
+          limit: 10
+          total: 2
+    BookingExample:
+      value:
+        success: true
+        data:
+          id: "bk_123"
+          userId: "cl_101"
+          packageId: "pkg_456"
+          status: "confirmed"
+          preferredDate: "2025-12-10T09:00:00Z"
+          guests: 2
+          notes: "Window seats requested"
+          createdAt: "2025-10-01T12:00:00Z"
+          updatedAt: "2025-10-02T08:30:00Z"
+    PaginatedInquiries:
+      value:
+        success: true
+        count: 2
+        data:
+          items:
+            - id: "inq_789"
+              name: "Visitor"
+              email: "visitor@example.com"
+              message: "I have a question about pricing."
+            - id: "inq_790"
+              name: "Guest"
+              email: "guest@example.com"
+              message: "Interested in group booking."
+          page: 1
+          limit: 10
+          total: 2
+    AdminDashboardStats:
+      value:
+        success: true
+        data:
+          bookingsToday: 5
+          totalRevenue: 1245.50
+          inquiriesOpen: 3
+          clientsActive: 120
+    PaginatedPackages:
+      value:
+        success: true
+        count: 2
+        data:
+          items:
+            - id: "pkg_456"
+              title: "Island Hopping"
+              price: 199.99
+            - id: "pkg_457"
+              title: "Mountain Escape"
+              price: 299.99
+          page: 1
+          limit: 10
+          total: 2
+    PaginatedClients:
+      value:
+        success: true
+        count: 2
+        data:
+          items:
+            - id: "cl_101"
+              name: "Jane Doe"
+              email: "jane@example.com"
+            - id: "cl_102"
+              name: "John Doe"
+              email: "john@example.com"
+          page: 1
+          limit: 10
+          total: 2
+    ErrorWithDetail:
+      value:
+        success: false
+        message: "Internal server error"
+        error: "Detailed error message"
+    GoogleConfigExample:
+      value:
+        success: true
+        message: "Google OAuth is configured"
+        config:
+          clientId: "GOOGLE_CLIENT_ID"
+          redirectUris:
+            - "http://localhost:5173/auth/success"
