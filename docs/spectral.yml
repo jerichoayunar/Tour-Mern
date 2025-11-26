@@ -1,0 +1,13 @@
+extends: ["spectral:oas", "spectral:asyncapi"]
+rules:
+  info-contact:
+    description: "OpenAPI `info.contact` object is missing or incomplete"
+    given: $.info
+    then:
+      field: contact
+      function: truthy
+  operation-tags:
+    description: "Each operation should have at least one tag"
+    given: $.paths[*][*]
+    then:
+      function: truthy

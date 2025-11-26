@@ -1,0 +1,1014 @@
+openapi: 3.0.3
+info:
+  title: Tour-Mern API
+  version: 1.0.0
+  description: Basic OpenAPI skeleton for core endpoints
+tags:
+  - name: Auth
+  - name: Packages
+  - name: Destinations
+  - name: Bookings
+  - name: Inquiries
+  - name: Users
+  - name: Settings
+servers:
+  - url: http://localhost:5000/api
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Created
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+  /auth/login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: OK
+  /packages:
+    get:
+      summary: List packages
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create package (Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Package'
+      responses:
+        '201':
+          description: Created
+  /destinations:
+    get:
+      summary: List destinations
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create destination (Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Destination'
+      responses:
+        '201':
+          description: Created
+  /bookings:
+    get:
+      summary: List bookings (Admin)
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create booking (User)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Booking'
+      responses:
+        '201':
+          description: Created
+  /packages/{id}:
+    get:
+      summary: Get package by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+    put:
+      summary: Update package (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Package'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      summary: Delete package (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+  /destinations/{id}:
+    get:
+      summary: Get destination by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+    put:
+      summary: Update destination (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Destination'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      summary: Delete destination (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+  /bookings/mybookings:
+    get:
+      summary: Get current user's bookings
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+  /bookings/{id}:
+    get:
+      summary: Get booking by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Not Found
+    delete:
+      summary: Delete booking
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+  /bookings/{id}/refund-estimate:
+    get:
+      summary: Get refund estimate for booking
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /bookings/{id}/cancel:
+    put:
+      summary: Cancel a booking
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cancelled
+  /bookings/{id}/status:
+    put:
+      summary: Update booking status (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+      responses:
+        '200':
+          description: Updated
+  /bookings/{id}/refund:
+    put:
+      summary: Process refund (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Refund processed
+  /bookings/{id}/notes:
+    put:
+      summary: Update admin notes for booking (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Notes updated
+  /bookings/{id}/resend-confirmation:
+    post:
+      summary: Resend booking confirmation (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Confirmation resent
+  /bookings/{id}/archive:
+    put:
+      summary: Archive booking (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Archived
+  /bookings/{id}/restore:
+    put:
+      summary: Restore archived booking (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Restored
+  /bookings/{id}/permanent:
+    delete:
+      summary: Permanently delete archived booking (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permanently deleted
+  /inquiries:
+    get:
+      summary: List inquiries (Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+  /inquiries/stats:
+    get:
+      summary: Get inquiry stats (Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+  /inquiries/{id}:
+    get:
+      summary: Get inquiry by ID (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Update inquiry (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Inquiry'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      summary: Delete inquiry (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+  /inquiries/{id}/read:
+    put:
+      summary: Mark inquiry as read (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Marked as read
+  /inquiries/{id}/archive:
+    put:
+      summary: Archive inquiry (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Archived
+  /inquiries/{id}/restore:
+    put:
+      summary: Restore inquiry (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Restored
+  /inquiries/{id}/permanent:
+    delete:
+      summary: Permanently delete inquiry (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permanently deleted
+  /clients:
+    get:
+      summary: List clients (Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+  /clients/stats:
+    get:
+      summary: Get client stats (Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+  /clients/{id}:
+    get:
+      summary: Get client by ID (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Update client (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      summary: Delete client (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Deleted
+  /clients/{id}/archive:
+    put:
+      summary: Archive client (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Archived
+  /clients/{id}/restore:
+    put:
+      summary: Restore client (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Restored
+  /clients/{id}/permanent:
+    delete:
+      summary: Permanently delete client (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permanently deleted
+  /admin/dashboard/stats:
+    get:
+      summary: Get admin dashboard stats
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+  /admin/dashboard/recent-bookings:
+    get:
+      summary: Get recent bookings for admin dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+  /admin/dashboard/revenue-stats:
+    get:
+      summary: Get revenue stats for admin dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+  /admin/dashboard/export:
+    get:
+      summary: Export admin dashboard data
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+  /admin/settings:
+    get:
+      summary: Get admin settings
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Update admin settings
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Settings'
+      responses:
+        '200':
+          description: Updated
+    post:
+      summary: Send test email (Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Email sent
+  /users/profile:
+    get:
+      summary: Get authenticated user's profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Update authenticated user's profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Updated
+  /users/change-password:
+    put:
+      summary: Change password for authenticated user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: Password changed
+  /settings/public:
+    get:
+      summary: Get public settings
+      responses:
+        '200':
+          description: OK
+  /inquiries:
+    post:
+      summary: Create inquiry (Public)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Inquiry'
+      responses:
+        '201':
+          description: Created
+  /users/me:
+    get:
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    Package:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        destinationId:
+          type: string
+    User:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+    Booking:
+      type: object
+      properties:
+        userId:
+          type: string
+        packageId:
+          type: string
+        status:
+          type: string
+    Inquiry:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        message:
+          type: string
+    Destination:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+    Settings:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+components:
+  schemas:
+    AuthRegister:
+      type: object
+      required: [name, email, password, recaptchaToken]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 50
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        phone:
+          type: string
+        address:
+          type: string
+        recaptchaToken:
+          type: string
+    AuthLogin:
+      type: object
+      required: [email, password, recaptchaToken]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        recaptchaToken:
+          type: string
+    AuthForgotPassword:
+      type: object
+      required: [email, recaptchaToken]
+      properties:
+        email:
+          type: string
+          format: email
+        recaptchaToken:
+          type: string
+    AuthResetPassword:
+      type: object
+      required: [token, newPassword]
+      properties:
+        token:
+          type: string
+        newPassword:
+          type: string
+          minLength: 6
+    BookingCreate:
+      type: object
+      required: [packageId, clientName, clientEmail, clientPhone, bookingDate, guests]
+      properties:
+        packageId:
+          type: string
+        clientName:
+          type: string
+          minLength: 2
+        clientEmail:
+          type: string
+          format: email
+        clientPhone:
+          type: string
+          minLength: 5
+        bookingDate:
+          type: string
+          format: date-time
+        guests:
+          type: integer
+          minimum: 1
+        specialRequests:
+          type: string
+          nullable: true
+    BookingUpdateStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled]
+    DestinationCreate:
+      type: object
+      required: [name, location]
+      properties:
+        name:
+          type: string
+          minLength: 2
+        location:
+          type: string
+          minLength: 2
+        description:
+          type: string
+          maxLength: 1000
+        image:
+          type: string
+          format: uri
+        embedUrl:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+    InquiryCreate:
+      type: object
+      required: [name, email, message]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 50
+        email:
+          type: string
+          format: email
+        subject:
+          type: string
+          maxLength: 100
+        message:
+          type: string
+          minLength: 10
+          maxLength: 1000
+    InquiryUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [new, read, replied, closed]
+        priority:
+          type: string
+          enum: [low, medium, high]
+        response:
+          type: string
+          maxLength: 2000
+    ClientUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        address:
+          type: object
+          properties:
+            street:
+              type: string
+            city:
+              type: string
+            state:
+              type: string
+            zipCode:
+              type: string
+            country:
+              type: string
+        status:
+          type: string
+          enum: [active, inactive]
+    ItineraryItem:
+      type: object
+      required: [day, title, description, inclusions]
+      properties:
+        day:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 2
+          maxLength: 200
+        description:
+          type: string
+          minLength: 10
+          maxLength: 1000
+        places:
+          type: array
+          items:
+            type: string
+            maxLength: 100
+          maxItems: 10
+        inclusions:
+          type: object
+          properties:
+            transport:
+              type: boolean
+            meals:
+              type: boolean
+            stay:
+              type: boolean
+    PackageCreate:
+      type: object
+      required: [title, itinerary, price, duration]
+      properties:
+        title:
+          type: string
+          minLength: 2
+          maxLength: 100
+        itinerary:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItineraryItem'
+          minItems: 1
+        image:
+          type: string
+          format: uri
+        price:
+          type: number
+          minimum: 0
+        duration:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum: [active, inactive]

@@ -1,0 +1,20 @@
+title = "gitleaks config"
+
+[[rules]]
+description = "AWS Access Key"
+regex = '''AKIA[0-9A-Z]{16}'''
+
+title = "Ignore local .env example"
+[[allowlist]]
+  description = "Allow .env.example placeholders"
+  regex = "^\w+=.*$"
+  files = ["backend/.env.example", "frontend/.env"]
+
+[[rules]]
+description = "Generic high entropy string"
+regex = '''[A-Za-z0-9_\-]{20,}'''
+allowlists = []
+
+[allowlist]
+  description = "Ignore build assets"
+  files = ["frontend/dist/*"]
