@@ -1496,6 +1496,34 @@ components:
         updatedAt:
           type: string
           format: date-time
+        refundAmount:
+          type: number
+          nullable: true
+          description: "Estimated or processed refund amount in the server currency"
+        paymentId:
+          type: string
+          nullable: true
+          description: "Payment gateway reference or transaction id"
+        adminNotes:
+          type: string
+          nullable: true
+          description: "Internal admin notes about the booking"
+        seatAssignments:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              seat:
+                type: string
+              guestName:
+                type: string
+        internalFlags:
+          type: object
+          nullable: true
+          description: "Internal boolean flags used by admin workflows"
+          additionalProperties:
+            type: boolean
   securitySchemes:
     bearerAuth:
       type: http
@@ -1697,6 +1725,14 @@ components:
               preferredDate: "2025-12-10T09:00:00Z"
               guests: 2
               notes: "Window seats requested"
+              refundAmount: 0
+              paymentId: "pay_abc123"
+              adminNotes: "VIP customer"
+              seatAssignments:
+                - seat: "A1"
+                  guestName: "Jane Doe"
+              internalFlags:
+                priority: true
               createdAt: "2025-10-01T12:00:00Z"
               updatedAt: "2025-10-02T08:30:00Z"
             - id: "bk_124"
@@ -1706,6 +1742,11 @@ components:
               preferredDate: "2026-01-05T09:00:00Z"
               guests: 4
               notes: null
+              refundAmount: null
+              paymentId: null
+              adminNotes: null
+              seatAssignments: []
+              internalFlags: {}
               createdAt: "2025-11-05T10:00:00Z"
               updatedAt: "2025-11-05T10:00:00Z"
           page: 1
@@ -1722,6 +1763,14 @@ components:
           preferredDate: "2025-12-10T09:00:00Z"
           guests: 2
           notes: "Window seats requested"
+          refundAmount: 0
+          paymentId: "pay_abc123"
+          adminNotes: "VIP customer"
+          seatAssignments:
+            - seat: "A1"
+              guestName: "Jane Doe"
+          internalFlags:
+            priority: true
           createdAt: "2025-10-01T12:00:00Z"
           updatedAt: "2025-10-02T08:30:00Z"
     PaginatedInquiries:

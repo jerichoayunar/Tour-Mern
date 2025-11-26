@@ -403,5 +403,20 @@
 ### Next automatic steps
 - Run Spectral locally and fix any remaining errors/warnings. Mark the internal TODO for "Booking schema + responses" as completed.
 
+## [2025-11-26 23:59:30] — Booking schema extended with admin/payment fields
+
+### What was done
+- Extended the canonical `Booking` schema to include additional fields returned by controllers: `refundAmount`, `paymentId`, `adminNotes`, `seatAssignments`, and `internalFlags`.
+- Updated `BookingExample` and `PaginatedBookings` example items to include the new fields with representative values.
+
+### Files changed
+- `docs/openapi.yaml` — extended `components.schemas.Booking`, updated `components.examples.BookingExample` and `PaginatedBookings`.
+
+### Reasoning
+- Making API responses explicit with admin and payment fields reduces frontend/backend drift and improves SDK type generation.
+
+### Next steps
+- Run Spectral locally to ensure zero errors, create a diff/summary for reviewers, and optionally generate TypeScript types from the updated OpenAPI.
+
 
 
