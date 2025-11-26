@@ -70,7 +70,12 @@ paths:
             type: integer
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
+          content:
+            application/json:
+              examples:
+                packageList:
+                  $ref: '#/components/examples/PackageExample'
     post:
       summary: Create package (Admin)
       requestBody:
@@ -81,7 +86,12 @@ paths:
               $ref: '#/components/schemas/Package'
       responses:
         '201':
-          description: Created
+          $ref: '#/components/responses/Success'
+          content:
+            application/json:
+              examples:
+                createdPackage:
+                  $ref: '#/components/examples/PackageExample'
   /destinations:
     get:
       summary: List destinations
@@ -104,7 +114,7 @@ paths:
       summary: List bookings (Admin)
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
     post:
       summary: Create booking (User)
       requestBody:
@@ -115,7 +125,12 @@ paths:
               $ref: '#/components/schemas/Booking'
       responses:
         '201':
-          description: Created
+          $ref: '#/components/responses/Success'
+          content:
+            application/json:
+              examples:
+                bookingCreated:
+                  $ref: '#/components/examples/BookingExample'
   /packages/{id}:
     get:
       summary: Get package by ID
@@ -127,9 +142,14 @@ paths:
             type: string
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
+          content:
+            application/json:
+              examples:
+                packageDetail:
+                  $ref: '#/components/examples/PackageExample'
         '404':
-          description: Not Found
+          $ref: '#/components/responses/NotFound'
     put:
       summary: Update package (Admin)
       security:
@@ -396,7 +416,18 @@ paths:
         - bearerAuth: []
       responses:
         '200':
-          description: OK
+          $ref: '#/components/responses/Success'
+    post:
+      summary: Create inquiry (Public)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InquiryCreate'
+      responses:
+        '201':
+          $ref: '#/components/responses/Success'
   /inquiries/stats:
     get:
       summary: Get inquiry stats (Admin)
@@ -717,18 +748,7 @@ paths:
       responses:
         '200':
           description: OK
-  /inquiries:
-    post:
-      summary: Create inquiry (Public)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Inquiry'
-      responses:
-        '201':
-          description: Created
+  
   /users/me:
     get:
       summary: Get current user profile
@@ -739,52 +759,23 @@ paths:
           description: OK
 components:
   schemas:
+    # Aliases for existing refs used earlier
     Package:
-      type: object
-      properties:
-        title:
-          type: string
-        description:
-          type: string
-        price:
-          type: number
-        destinationId:
-          type: string
+      $ref: '#/components/schemas/PackageCreate'
+    Booking:
+      $ref: '#/components/schemas/BookingCreate'
+    Destination:
+      $ref: '#/components/schemas/DestinationCreate'
+    Inquiry:
+      $ref: '#/components/schemas/InquiryCreate'
     User:
       type: object
       properties:
+        id:
+          type: string
         name:
           type: string
         email:
-          type: string
-        role:
-          type: string
-    Booking:
-      type: object
-      properties:
-        userId:
-          type: string
-        packageId:
-          type: string
-        status:
-          type: string
-    Inquiry:
-      type: object
-      properties:
-        name:
-          type: string
-        email:
-          type: string
-        message:
-          type: string
-    Destination:
-      type: object
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-        location:
           type: string
     Settings:
       type: object
@@ -793,13 +784,8 @@ components:
           type: string
         value:
           type: string
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-components:
-  schemas:
+
+    # Detailed validation-derived schemas
     AuthRegister:
       type: object
       required: [name, email, password, recaptchaToken]
@@ -1012,3 +998,72 @@ components:
         status:
           type: string
           enum: [active, inactive]
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Success:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              data:
+                type: object
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              message:
+                type: string
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+              errors:
+                type: array
+                items:
+                  type: string
+  examples:
+    BookingExample:
+      value:
+        success: true
+        data:
+          id: "bk_123"
+          packageId: "pkg_456"
+          clientName: "Jane Doe"
+          clientEmail: "jane@example.com"
+          bookingDate: "2025-12-01T10:00:00Z"
+          guests: 2
+    PackageExample:
+      value:
+        success: true
+        data:
+          id: "pkg_456"
+          title: "Island Hopping"
+          price: 199.99
+          duration: 3
+    InquiryExample:
+      value:
+        success: true
+        data:
+          id: "inq_789"
+          name: "Visitor"
+          email: "visitor@example.com"
+          message: "I have a question about pricing."
