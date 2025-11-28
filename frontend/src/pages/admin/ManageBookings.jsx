@@ -7,6 +7,7 @@ import {
   restoreBooking,
   deleteBookingPermanent
 } from "../../services/bookingService";
+import adminService from '../../services/adminService';
 import { useToast } from "../../context/ToastContext";
 import ConfirmationModal from "../../components/ui/ConfirmationModal";
 import { useAuth } from "../../context/AuthContext";
@@ -21,7 +22,6 @@ import {
   Clock, 
   CheckCircle, 
   XCircle, 
-  DollarSign, 
   RefreshCw, 
   Download, 
   Archive, 
@@ -72,6 +72,7 @@ const ManageBookings = () => {
     pending: allBookings.filter(b => b.status === 'pending').length,
     confirmed: allBookings.filter(b => b.status === 'confirmed').length,
     cancelled: allBookings.filter(b => b.status === 'cancelled').length,
+    cancellationRequested: allBookings.filter(b => b.cancellation?.requested).length,
     // 🛠️ FIX: Use 'totalPrice' from backend instead of 'totalAmount'
     revenue: allBookings
       .filter(b => b.status === 'confirmed')
@@ -134,7 +135,9 @@ const ManageBookings = () => {
         // 🛠️ FIX: Use direct backend fields (clientName, clientEmail) not nested user object
         const clientName = (booking.clientName || "").toLowerCase(); // 🛠️ FIX: booking.clientName
         const clientEmail = (booking.clientEmail || "").toLowerCase(); // 🛠️ FIX: booking.clientEmail
-        const packageName = (booking.package?.title || "").toLowerCase(); // 🛠️ FIX: package.title
+        const packageName = (booking.packages && booking.packages.length > 0)
+          ? booking.packages.map(p => p.title).join(', ').toLowerCase()
+          : (booking.package?.title || "").toLowerCase();
         
         return (
           clientName.includes(searchTerm) ||
@@ -146,7 +149,12 @@ const ManageBookings = () => {
 
     // Apply status filter
     if (filters.status) {
-      filtered = filtered.filter(booking => booking.status === filters.status);
+      // Special case: 'requested' refers to cancellation requests, not booking.status
+      if (filters.status === 'requested') {
+        filtered = filtered.filter(booking => booking.cancellation?.requested === true);
+      } else {
+        filtered = filtered.filter(booking => booking.status === filters.status);
+      }
     }
 
     // Apply date range filter
@@ -338,8 +346,25 @@ const ManageBookings = () => {
 
   // Export functionality
   const handleExport = () => {
-    // Implement CSV export
-    showToast("Export feature coming soon!", "info");
+    (async () => {
+      try {
+        showToast('Preparing export...', 'info');
+        const res = await adminService.exportBookings('csv');
+        const blob = res.data;
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `bookings_export_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        showToast('Export downloaded', 'success');
+      } catch (error) {
+        console.error('Export failed', error);
+        showToast(error?.message || 'Export failed', 'error');
+      }
+    })();
   };
 
   // ============================================================================
@@ -437,7 +462,7 @@ const ManageBookings = () => {
                 </p>
               </div>
               <div className="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center border border-purple-100">
-                <DollarSign className="text-purple-600 w-6 h-6" />
+                <span className="text-purple-600 font-bold text-lg">₱</span>
               </div>
             </div>
           </Card>

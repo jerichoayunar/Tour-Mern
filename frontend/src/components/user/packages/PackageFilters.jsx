@@ -171,7 +171,7 @@ const PackageFilters = ({
   };
 
   return (
-    <div className={`bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8 ${className}`}>
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 ${className}`}>
       {/* Main Filter Row */}
       <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
         {/* Search Bar */}
@@ -183,7 +183,7 @@ const PackageFilters = ({
               placeholder="Search packages, destinations, or activities..."
               value={localFilters.search || ''}
               onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-gray-50 placeholder-gray-400"
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 placeholder-gray-400"
             />
           </div>
         </div>
@@ -195,7 +195,7 @@ const PackageFilters = ({
             <select
               value={getCurrentPriceRange()}
               onChange={(e) => handlePriceRangeChange(e.target.value)}
-              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[160px]"
+              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[160px]"
             >
               <option value="">Any Price</option>
               <option value="5000">Under ₱5,000</option>
@@ -212,7 +212,7 @@ const PackageFilters = ({
             <select
               value={getCurrentDurationRange()}
               onChange={(e) => handleDurationRangeChange(e.target.value)}
-              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[160px]"
+              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[160px]"
             >
               <option value="">Any Duration</option>
               <option value="3">1-3 Days</option>
@@ -249,12 +249,12 @@ const PackageFilters = ({
                   key={`${filter.type}-${index}`}
                   onClick={() => clearFilter(filter.type)}
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 group border ${
-                    filter.type === 'search' 
-                      ? 'bg-primary-50 text-primary-700 border-primary-100 hover:bg-primary-100'
-                      : filter.type === 'priceRange'
-                      ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
-                      : 'bg-yellow-50 text-yellow-700 border-yellow-100 hover:bg-yellow-100'
-                  }`}
+                          filter.type === 'search' 
+                            ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
+                            : filter.type === 'priceRange'
+                            ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
+                            : 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
+                        }`}
                 >
                   <span>{filter.label}</span>
                   <X className="w-3 h-3 group-hover:scale-110 transition-transform" />

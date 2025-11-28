@@ -803,25 +803,53 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                   </div>
                 ) : bookingHistory.length > 0 ? (
                   <div className="space-y-4 max-h-80 overflow-y-auto">
-                    {bookingHistory.map((booking) => (
-                      <div key={booking.id || booking._id || booking.bookingId || Math.random()} className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 pr-4">
-                            <div className="flex items-center justify-between">
+                    {bookingHistory.map((booking) => {
+                      const titles = booking.packages && booking.packages.length > 0
+                        ? booking.packages.map(p => p.title).join(', ')
+                        : (booking.package?.title || booking.destination?.name || booking.reference || `Booking #${booking.id || booking._id || booking.bookingId}`);
+
+                      const totalDaysVal = (booking.totalDays != null)
+                        ? booking.totalDays
+                        : (booking.packages && booking.packages.length > 0
+                          ? booking.packages.reduce((a, p) => a + (p.duration || 0), 0)
+                          : booking.package?.duration);
+
+                      const pkgs = booking.packages || [];
+                      const hasPkgs = pkgs.length > 0;
+                      const transport = hasPkgs ? pkgs.some(p => p.transport) : !!booking.package?.transport;
+                      const meals = hasPkgs ? pkgs.some(p => p.meals) : !!booking.package?.meals;
+                      const stay = hasPkgs ? pkgs.some(p => p.stay) : !!booking.package?.stay;
+                      const parts = [];
+                      if (transport) parts.push('🚗 Transport');
+                      if (meals) parts.push('🍽️ Meals');
+                      if (stay) parts.push('🏨 Stay');
+
+                      return (
+                        <div key={booking.id || booking._id || booking.bookingId || Math.random()} className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 pr-4">
                               <div>
-                                <div className="font-medium text-gray-900">{booking.package?.title || booking.destination?.name || booking.reference || `Booking #${booking.id || booking._id || booking.bookingId}`}</div>
-                                <div className="text-sm text-gray-500">{booking.customerName || booking.clientName || client.name}</div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-sm text-gray-500">{booking.checkIn ? new Date(booking.checkIn).toLocaleDateString() : booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : ''}</div>
-                                <div className="mt-2">{getBookingBadge(booking.status || booking.state)}</div>
+                                <div>
+                                  <div className="font-medium text-gray-900">{titles}</div>
+                                  <div className="text-sm text-gray-500">{booking.customerName || booking.clientName || client.name}</div>
+                                  <div className="mt-2 text-xs text-gray-500">
+                                    {totalDaysVal != null && (
+                                      <span className="mr-3">⏳ {totalDaysVal} day{totalDaysVal !== 1 ? 's' : ''}</span>
+                                    )}
+                                    {parts.length > 0 && <span>{parts.join(' • ')}</span>}
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                            <div className="mt-3 text-sm text-gray-600">Total: {formatPeso(booking.totalPrice ?? booking.totalAmount ?? booking.total ?? booking.amount)}</div>
+                            <div className="text-right">
+                              <div className="text-sm text-gray-500">{booking.checkIn ? new Date(booking.checkIn).toLocaleDateString() : booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : ''}</div>
+                              <div className="mt-2">{getBookingBadge(booking.status || booking.state)}</div>
+                            </div>
                           </div>
+                          <div className="mt-3 text-sm text-gray-600">Total: {formatPeso(booking.totalPrice ?? booking.totalAmount ?? booking.total ?? booking.amount)}</div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-8 bg-white rounded-lg border border-gray-200">

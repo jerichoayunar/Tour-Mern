@@ -93,7 +93,7 @@ export const useBookings = (initialFilters = {}) => {
   // ============================================================================
   // 🎯 FETCH CURRENT USER'S BOOKINGS - OPTIMIZED
   // ============================================================================
-  const fetchMyBookings = useCallback(async () => {
+  const fetchMyBookings = useCallback(async (customFilters = null) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -126,9 +126,41 @@ export const useBookings = (initialFilters = {}) => {
           bookingsData = candidates.length > 0 ? candidates[0] : [];
         }
 
-        setBookings(bookingsData);
-        console.log('✅ User bookings fetched:', bookingsData.length || 0);
-        return bookingsData;
+        // Apply client-side filtering when requested (server does not support user-scoped filters)
+        const appliedFilters = customFilters || filters;
+        let filtered = bookingsData;
+
+        if (appliedFilters) {
+          // Status filter
+          if (appliedFilters.status) {
+            filtered = filtered.filter(b => String(b.status) === String(appliedFilters.status));
+          }
+          // Search filter (client name, email, package titles)
+          if (appliedFilters.search) {
+            const q = String(appliedFilters.search).toLowerCase();
+            filtered = filtered.filter(b => {
+              const name = (b.clientName || '').toLowerCase();
+              const email = (b.clientEmail || '').toLowerCase();
+              const pkgTitles = (b.packages && b.packages.length > 0) ? b.packages.map(p => (p.title || '').toLowerCase()).join(' ') : (b.package?.title || '').toLowerCase();
+              return name.includes(q) || email.includes(q) || pkgTitles.includes(q);
+            });
+          }
+          // Date range filter
+          if (appliedFilters.startDate) {
+            const sd = new Date(appliedFilters.startDate);
+            filtered = filtered.filter(b => new Date(b.bookingDate) >= sd);
+          }
+          if (appliedFilters.endDate) {
+            const ed = new Date(appliedFilters.endDate);
+            // include end date full day
+            ed.setHours(23,59,59,999);
+            filtered = filtered.filter(b => new Date(b.bookingDate) <= ed);
+          }
+        }
+
+        setBookings(filtered);
+        console.log('✅ User bookings fetched:', filtered.length || 0);
+        return filtered;
       }
     } catch (err) {
       if (err.name === 'AbortError' || err.message === 'Request cancelled') {
@@ -290,10 +322,18 @@ export const useBookings = (initialFilters = {}) => {
     
     try {
       console.log('🔄 Cancelling booking:', bookingId);
-      await bookingService.cancelBooking(bookingId);
-      showToast('Booking cancelled successfully!', 'success');
-      console.log('✅ Booking cancelled successfully');
-      
+      const response = await bookingService.cancelBooking(bookingId);
+      const respData = response?.data ?? response;
+
+      // If server marked a cancellation request (for confirmed bookings), show a different message
+      if (respData && respData.cancellation && respData.cancellation.requested) {
+        showToast('Cancellation request submitted — an admin will review it.', 'info');
+        console.log('ℹ️ Cancellation request submitted');
+      } else {
+        showToast('Booking cancelled successfully!', 'success');
+        console.log('✅ Booking cancelled successfully');
+      }
+
       await fetchMyBookings();
     } catch (err) {
       const errorMessage = err.message || 'Failed to cancel booking';

@@ -12,6 +12,7 @@ import {
 import Button from '../../ui/Button';
 import LazyImage from '../../ui/LazyImage';
 import { formatPrice } from '../../../utils/formatters';
+import { countInclusionDays, uniqueInclusionsFromPackage, tagToEmoji } from '../../../utils/inclusions';
 
 const PackageCard = ({ package: pkg, onViewDetails }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -25,24 +26,24 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
     return pkg.image || 'https://via.placeholder.com/300x200?text=No+Image';
   };
 
-  // Calculate day-specific inclusion summary
+  // Calculate day-specific inclusion summary (prefer array inclusions)
   const getInclusionSummary = () => {
     if (!pkg.itinerary || !Array.isArray(pkg.itinerary)) {
       return { transport: 0, meals: 0, stay: 0 };
     }
-    
-    const transportDays = pkg.itinerary.filter(day => day.inclusions?.transport).length;
-    const mealsDays = pkg.itinerary.filter(day => day.inclusions?.meals).length;
-    const stayNights = pkg.itinerary.filter(day => day.inclusions?.stay).length;
-    
-    return { transport: transportDays, meals: mealsDays, stay: stayNights };
+    return {
+      transport: countInclusionDays(pkg, 'transport'),
+      meals: countInclusionDays(pkg, 'meal'),
+      stay: countInclusionDays(pkg, 'stay'),
+    };
   };
 
   const inclusionSummary = getInclusionSummary();
+  const uniqueTags = uniqueInclusionsFromPackage(pkg);
 
   return (
     <div 
-      className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200/60 hover:border-primary-200"
+      className="group bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200/60 hover:border-blue-200"
       onClick={() => onViewDetails(pkg._id)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -69,14 +70,14 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
         {/* Simple Badges */}
         <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
           {/* Duration Badge */}
-          <div className="bg-gradient-to-r from-primary-600 to-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 backdrop-blur-sm shadow-md">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 backdrop-blur-sm shadow-sm">
             <Clock size={14} />
             {pkg.duration} Day{pkg.duration !== 1 ? 's' : ''}
           </div>
 
           {/* Itinerary Badge */}
           {pkg.itinerary && pkg.itinerary.length > 0 && (
-            <div className="bg-emerald-600 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 backdrop-blur-sm shadow-md">
+            <div className="bg-emerald-600 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1 backdrop-blur-sm shadow-sm">
               {pkg.itinerary.length} Itinerary
             </div>
           )}
@@ -91,50 +92,46 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
       </div>
 
       {/* Content Section - Clean and Simple */}
-      <div className="p-5">
+      <div className="p-6">
         {/* Title and Price */}
         <div className="flex items-start justify-between mb-3">
-          <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-primary-600 transition-colors flex-1 mr-3">
+          <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors flex-1 mr-3">
             {pkg.title}
           </h3>
           <div className="text-right flex-shrink-0">
-            <div className="text-xl font-bold text-primary-600">
+            <div className="text-xl font-bold text-blue-600">
               {formatPrice(pkg.price)}
             </div>
             <div className="text-gray-500 text-xs">per person</div>
           </div>
         </div>
         
-        {/* Simple Inclusion Summary */}
-        <div className="flex items-center justify-between mb-4 px-2">
-          <div className="text-center">
-            <Car size={16} className="mx-auto mb-1 text-primary-600" />
-            <div className="text-xs font-semibold text-gray-900">{inclusionSummary.transport}</div>
-            <div className="text-xs text-gray-500">Transport</div>
+        {/* Inclusion Tags (show up to 3) */}
+        {uniqueTags && uniqueTags.length > 0 && (
+          <div className="mb-4 px-2 flex flex-wrap gap-2">
+            {uniqueTags.slice(0,3).map((t, i) => (
+              <span key={i} className="inline-flex items-center gap-2 bg-white px-3 py-1 rounded-full border text-sm text-gray-700">
+                {tagToEmoji(t) ? <span className="mr-1">{tagToEmoji(t)}</span> : null}
+                <span className="truncate max-w-[12rem]">{t}</span>
+              </span>
+            ))}
+            {uniqueTags.length > 3 && (
+              <span className="inline-flex items-center text-xs text-gray-500">+{uniqueTags.length - 3} more</span>
+            )}
           </div>
-          <div className="text-center">
-            <Utensils size={16} className="mx-auto mb-1 text-emerald-600" />
-            <div className="text-xs font-semibold text-gray-900">{inclusionSummary.meals}</div>
-            <div className="text-xs text-gray-500">Meals</div>
-          </div>
-          <div className="text-center">
-            <Home size={16} className="mx-auto mb-1 text-cyan-600" />
-            <div className="text-xs font-semibold text-gray-900">{inclusionSummary.stay}</div>
-            <div className="text-xs text-gray-500">Stay</div>
-          </div>
-        </div>
+        )}
 
         {/* Simple CTA - FIXED CURSOR ISSUE */}
         <Button 
           variant="primary"
-          className="w-full rounded-xl shadow-md hover:shadow-lg gap-2"
+          className="w-full rounded-xl shadow-sm hover:shadow-md gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           onClick={(e) => {
             e.stopPropagation(); // Prevent card click when button is clicked
             onViewDetails(pkg._id);
           }}
         >
           View Details
-          <ExternalLink className="w-4 h-4" />
+          <ExternalLink className="w-4 h-4" aria-hidden="true" />
         </Button>
       </div>
     </div>

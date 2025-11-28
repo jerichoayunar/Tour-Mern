@@ -18,7 +18,7 @@ const BookingFilters = ({ filters, onFilterChange, onClearFilters, isAdmin = fal
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
       <div className="flex items-center gap-2 mb-6">
-        <Filter className="w-5 h-5 text-amber-500" />
+        <Filter className="w-5 h-5 text-blue-500" />
         <h3 className="text-lg font-bold text-gray-900">Filter Bookings</h3>
       </div>
       
@@ -33,7 +33,7 @@ const BookingFilters = ({ filters, onFilterChange, onClearFilters, isAdmin = fal
                 placeholder="Search by client name or email..."
                 value={filters.search || ''}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
               />
             </div>
           </div>
@@ -44,7 +44,7 @@ const BookingFilters = ({ filters, onFilterChange, onClearFilters, isAdmin = fal
           <select
             value={filters.status || ''}
             onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 bg-white"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -61,7 +61,7 @@ const BookingFilters = ({ filters, onFilterChange, onClearFilters, isAdmin = fal
               type="date"
               value={filters.startDate || ''}
               onChange={(e) => handleFilterChange('startDate', e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 bg-white"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
             />
           </div>
         </div>
@@ -74,7 +74,7 @@ const BookingFilters = ({ filters, onFilterChange, onClearFilters, isAdmin = fal
               type="date"
               value={filters.endDate || ''}
               onChange={(e) => handleFilterChange('endDate', e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all duration-200 bg-white"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
             />
           </div>
         </div>

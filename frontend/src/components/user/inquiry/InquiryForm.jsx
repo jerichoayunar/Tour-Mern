@@ -109,68 +109,75 @@ const InquiryForm = ({ onSuccess = null }) => {
   // ============================================================================
   if (submitted) {
     return (
-      <div className="bg-white rounded-2xl shadow-xl p-8 text-center max-w-lg mx-auto">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle className="w-8 h-8 text-green-500" />
+      <div className="bg-white rounded-2xl shadow-sm p-6 text-center max-w-lg mx-auto border border-gray-100">
+        <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="w-7 h-7 text-emerald-600" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Thank You!</h2>
-        <p className="text-gray-600 mb-4">Your inquiry has been submitted successfully.</p>
+        <h2 className="text-xl font-semibold text-gray-900 mb-1">Thank You!</h2>
+        <p className="text-gray-600 mb-2">Your inquiry has been submitted successfully.</p>
         <p className="text-sm text-gray-500">We'll review your message and get back to you within 24 hours.</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-2xl w-full mx-auto">
-      <div className="bg-gradient-to-r from-primary-600 to-blue-600 p-6 text-white">
-        <h2 className="text-2xl font-bold">Send Us an Inquiry</h2>
-        <p className="text-white/90 text-sm mt-1">Have a question? We'd love to hear from you.</p>
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden max-w-2xl w-full mx-auto border border-gray-100">
+      <div className="p-6 bg-white">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-900">Send Us an Inquiry</h2>
+        <p className="text-gray-600 text-sm mt-1">Have a question? We'd love to hear from you.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
         {/* Name Field */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <User size={16} className="text-primary-500" />
+          <label htmlFor="name" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <User size={16} className="text-blue-600" />
             Full Name *
           </label>
           <input
+            id="name"
+            aria-invalid={errors.name ? 'true' : 'false'}
+            aria-describedby={errors.name ? 'name-error' : undefined}
             type="text"
             name="name"
             value={formData.name}
             onChange={handleChange}
             placeholder="Enter your full name"
             disabled={loading}
-            className={`w-full px-4 py-2.5 rounded-xl border ${errors.name ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none`}
+            className={`w-full px-4 py-2.5 rounded-xl border ${errors.name ? 'border-red-600 focus:ring-red-200' : 'border-gray-200 focus:ring-blue-200'} focus:border-blue-600 focus:ring-4 transition-all outline-none`}
           />
-          {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+          {errors.name && <p id="name-error" className="text-xs text-red-600 mt-1">{errors.name}</p>}
         </div>
 
         {/* Email Field */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <Mail size={16} className="text-primary-500" />
+          <label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <Mail size={16} className="text-blue-600" />
             Email Address *
           </label>
           <input
+            id="email"
+            aria-invalid={errors.email ? 'true' : 'false'}
+            aria-describedby={errors.email ? 'email-error' : undefined}
             type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
             placeholder="Enter your email address"
             disabled={loading}
-            className={`w-full px-4 py-2.5 rounded-xl border ${errors.email ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none`}
+            className={`w-full px-4 py-2.5 rounded-xl border ${errors.email ? 'border-red-600 focus:ring-red-200' : 'border-gray-200 focus:ring-blue-200'} focus:border-blue-600 focus:ring-4 transition-all outline-none`}
           />
-          {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+          {errors.email && <p id="email-error" className="text-xs text-red-600 mt-1">{errors.email}</p>}
         </div>
 
         {/* Subject Field */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <AlertCircle size={16} className="text-primary-500" />
+          <label htmlFor="subject" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <AlertCircle size={16} className="text-blue-600" />
             Subject
           </label>
           <input
+            id="subject"
             type="text"
             name="subject"
             value={formData.subject}
@@ -183,11 +190,14 @@ const InquiryForm = ({ onSuccess = null }) => {
 
         {/* Message Field */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <MessageSquare size={16} className="text-primary-500" />
+          <label htmlFor="message" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <MessageSquare size={16} className="text-blue-600" />
             Message *
           </label>
           <textarea
+            id="message"
+            aria-invalid={errors.message ? 'true' : 'false'}
+            aria-describedby={errors.message ? 'message-error' : undefined}
             name="message"
             value={formData.message}
             onChange={handleChange}
@@ -195,17 +205,17 @@ const InquiryForm = ({ onSuccess = null }) => {
             rows="5"
             maxLength={1000}
             disabled={loading}
-            className={`w-full px-4 py-2.5 rounded-xl border ${errors.message ? 'border-red-500 focus:ring-red-200' : 'border-gray-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none resize-none`}
+            className={`w-full px-4 py-2.5 rounded-xl border ${errors.message ? 'border-red-600 focus:ring-red-200' : 'border-gray-200 focus:ring-blue-200'} focus:border-blue-600 focus:ring-4 transition-all outline-none resize-none`}
           />
           <div className="flex justify-between items-center mt-1">
             {errors.message ? (
-              <p className="text-xs text-red-500">{errors.message}</p>
+              <p id="message-error" className="text-xs text-red-600">{errors.message}</p>
             ) : (
               <span></span>
             )}
             <span className={`text-xs font-medium transition-colors ${
-              formData.message.length >= 900 ? 'text-red-500' : 
-              formData.message.length >= 800 ? 'text-amber-500' : 'text-gray-400'
+              formData.message.length >= 900 ? 'text-red-600' : 
+              formData.message.length >= 800 ? 'text-blue-500' : 'text-gray-400'
             }`}>
               {formData.message.length} / 1000
             </span>
@@ -216,7 +226,7 @@ const InquiryForm = ({ onSuccess = null }) => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-primary-600 to-blue-600 hover:from-primary-700 hover:to-blue-700 shadow-lg hover:shadow-primary-500/25 transform hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+          className="w-full px-6 py-3 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
         >
           {loading ? (
             <>

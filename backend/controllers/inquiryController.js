@@ -48,6 +48,36 @@ export const createInquiry = async (req, res, next) => {
   }
 };
 
+// @desc    Get inquiries for the authenticated user
+// @route   GET /api/inquiries/my
+// @access  Private (authenticated users)
+export const getMyInquiries = async (req, res, next) => {
+  try {
+    const email = req.user?.email;
+    const result = await inquiryService.getInquiries({ ...req.query, email });
+    res.status(200).json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Add a follow-up message to the user's own inquiry
+// @route   POST /api/inquiries/:id/reply
+// @access  Private (authenticated users)
+export const addUserReply = async (req, res, next) => {
+  try {
+    const inquiryId = req.params.id;
+    const message = req.body.message;
+    const updated = await inquiryService.addUserReply(inquiryId, req.user?.email, message);
+    res.status(200).json({ success: true, data: updated });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Update inquiry status/response
 // @route   PUT /api/inquiries/:id
 // @access  Private/Admin

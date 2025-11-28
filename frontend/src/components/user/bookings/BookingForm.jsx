@@ -7,13 +7,19 @@ import Loader from "../../ui/Loader";
 import { X, Calendar, Users, Phone, Mail, User, MessageSquare } from 'lucide-react';
 import { formatPrice } from '../../../utils/formatters';
 
-const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
+const BookingForm = ({ package: tourPackage, packages: tourPackages, onSuccess, onCancel }) => {
   const { createNewBooking, loading } = useBooking();
   const { showToast } = useToast();
   const { isAuthenticated, requireAuthRedirect } = useAuth();
 
+  const initialPackageId = tourPackage?._id || '';
+  const initialPackageIds = (Array.isArray(tourPackages) && tourPackages.length > 0)
+    ? tourPackages.map(p => p._id)
+    : (initialPackageId ? [initialPackageId] : []);
+
   const [formData, setFormData] = useState({
-    packageId: tourPackage?._id || '',
+    packageId: initialPackageId,
+    packageIds: initialPackageIds,
     clientName: '',
     clientEmail: '',
     clientPhone: '',
@@ -25,12 +31,16 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
   const [errors, setErrors] = useState({});
   const [calculatedPrice, setCalculatedPrice] = useState(0);
 
-  // Calculate price when guests or package changes
+  // Calculate price when guests or package(s) changes
   useEffect(() => {
-    if (tourPackage && formData.guests > 0) {
-      setCalculatedPrice(tourPackage.price * formData.guests);
+    const guests = Number(formData.guests) || 1;
+    if (Array.isArray(tourPackages) && tourPackages.length > 0) {
+      const sum = tourPackages.reduce((acc, p) => acc + (p.price || 0), 0);
+      setCalculatedPrice(sum * guests);
+    } else if (tourPackage) {
+      setCalculatedPrice((tourPackage.price || 0) * guests);
     }
-  }, [formData.guests, tourPackage]);
+  }, [formData.guests, tourPackage, tourPackages]);
 
   // Auto-fill user data if available
   useEffect(() => {
@@ -71,7 +81,7 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
     if (!formData.bookingDate) newErrors.bookingDate = 'Booking date is required';
     
     if (!formData.guests || formData.guests < 1) newErrors.guests = 'At least 1 guest is required';
-    if (!formData.packageId) newErrors.packageId = 'Package is required';
+    if ((!formData.packageId || !formData.packageId) && (!formData.packageIds || formData.packageIds.length === 0)) newErrors.packageId = 'Package is required';
 
     // Validate booking date is not in the past
     const selectedDate = new Date(formData.bookingDate);
@@ -101,14 +111,42 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
     }
 
     try {
-      await createNewBooking(formData);
-      showToast('Booking created successfully!', 'success');
-      
-      if (onSuccess) {
-        onSuccess();
+      const guests = Number(formData.guests) || 1;
+
+      if (Array.isArray(tourPackages) && tourPackages.length > 0) {
+        // Send a single booking request containing multiple package IDs
+        const payload = {
+          clientName: formData.clientName,
+          clientEmail: formData.clientEmail,
+          clientPhone: formData.clientPhone,
+          bookingDate: formData.bookingDate,
+          guests: guests,
+          specialRequests: formData.specialRequests,
+          packageIds: tourPackages.map(p => p._id)
+        };
+
+        await createNewBooking(payload);
+        showToast('Booking created successfully!', 'success');
+        if (onSuccess) onSuccess();
+      } else {
+        // Single package booking
+        const payload = {
+          clientName: formData.clientName,
+          clientEmail: formData.clientEmail,
+          clientPhone: formData.clientPhone,
+          bookingDate: formData.bookingDate,
+          guests: formData.guests,
+          specialRequests: formData.specialRequests,
+          packageId: formData.packageId || (tourPackage && tourPackage._id) || ''
+        };
+
+        await createNewBooking(payload);
+        showToast('Booking created successfully!', 'success');
+        if (onSuccess) onSuccess();
       }
     } catch (error) {
-      showToast(error.message || 'Failed to create booking', 'error');
+      const msg = (error && (error.message || error.response?.data?.message || error.message)) || 'Failed to create booking';
+      showToast(msg, 'error');
     }
   };
 
@@ -118,11 +156,13 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
   };
 
   if (!tourPackage) {
-    return (
-      <div className="p-6 text-center text-red-500 bg-red-50 rounded-xl">
-        No package selected for booking
-      </div>
-    );
+    if (!Array.isArray(tourPackages) || tourPackages.length === 0) {
+      return (
+        <div className="p-6 text-center text-red-500 bg-red-50 rounded-xl">
+          No package selected for booking
+        </div>
+      );
+    }
   }
 
   return (
@@ -130,7 +170,11 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-600 to-blue-600 p-6 text-white relative">
         <h2 className="text-2xl font-bold">Book Your Adventure</h2>
-        <p className="text-white/90 text-sm mt-1">{tourPackage.title}</p>
+        <p className="text-white/90 text-sm mt-1">
+          {Array.isArray(tourPackages) && tourPackages.length > 0
+            ? `${tourPackages.length} packages selected`
+            : tourPackage.title}
+        </p>
         
         {onCancel && (
           <button 
@@ -259,10 +303,25 @@ const BookingForm = ({ package: tourPackage, onSuccess, onCancel }) => {
         {/* Price Summary */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
           <h3 className="text-sm font-semibold text-gray-900 mb-3 uppercase tracking-wider">Price Summary</h3>
-          <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
-            <span>{tourPackage.title} × {formData.guests}</span>
-            <span>{formatPrice(tourPackage.price)} × {formData.guests}</span>
-          </div>
+          {Array.isArray(tourPackages) && tourPackages.length > 0 ? (
+            <div className="space-y-2">
+              {tourPackages.map(p => (
+                <div key={p._id} className="flex justify-between items-center text-sm text-gray-600">
+                  <span className="truncate">{p.title} × {formData.guests}</span>
+                  <span>{formatPrice(p.price)} × {formData.guests}</span>
+                </div>
+              ))}
+              <div className="flex justify-between items-center pt-3 border-t border-slate-200">
+                <span className="font-bold text-gray-900">Total Days:</span>
+                <span className="text-gray-900 font-medium">{tourPackages.reduce((a,p) => a + (p.duration||0),0)} Day{tourPackages.reduce((a,p) => a + (p.duration||0),0) !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-between items-center text-sm text-gray-600 mb-2">
+              <span>{tourPackage.title} × {formData.guests}</span>
+              <span>{formatPrice(tourPackage.price)} × {formData.guests}</span>
+            </div>
+          )}
           <div className="flex justify-between items-center pt-3 border-t border-slate-200">
             <span className="font-bold text-gray-900">Total Amount:</span>
             <span className="text-xl font-bold text-primary-600">{formatPrice(calculatedPrice)}</span>

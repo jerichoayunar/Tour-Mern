@@ -11,6 +11,8 @@ import {
   archiveInquiry,
   restoreInquiry,
   permanentDeleteInquiry
+  , getMyInquiries
+  , addUserReply
 } from '../controllers/inquiryController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { validateRequest } from '../middleware/validateMiddleware.js';
@@ -39,6 +41,12 @@ router.post('/', createInquiryLimiter, validateRequest(createInquirySchema), cre
 
 // All other routes are protected and admin only
 router.use(protect);
+
+// Allow authenticated users to access their own inquiries and post follow-ups
+router.get('/my', getMyInquiries);
+router.post('/:id/reply', addUserReply);
+
+// Admin-only routes
 router.use(authorize('admin'));
 
 router.get('/', getInquiries);

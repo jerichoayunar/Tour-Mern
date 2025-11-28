@@ -37,6 +37,7 @@ const BookingFilters = ({ filters, onFilterChange, onReset }) => {
     { label: "⏳ Pending", value: "pending" },
     { label: "✅ Confirmed", value: "confirmed" },
     { label: "❌ Cancelled", value: "cancelled" },
+    { label: "⚠️ Cancellation Requested", value: "requested" },
     // 🛠️ NOTE: Backend doesn't currently support 'completed' status
     // { label: "🎉 Completed", value: "completed" },
   ];

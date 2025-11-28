@@ -181,7 +181,7 @@ const DestinationFilters = ({
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
                       : filter.type === 'status'
                       ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
-                      : 'bg-yellow-50 text-yellow-700 border-yellow-100 hover:bg-yellow-100'
+                      : 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
                   }`}
                 >
                   <span>{filter.label}</span>

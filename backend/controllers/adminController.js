@@ -98,7 +98,8 @@ export const getRecentBookings = async (req, res) => {
   try {
     const bookings = await Booking.find()
       .populate('user', 'name email')
-      .populate('package', 'name price destination')
+      .populate('package', 'title price destination')
+      .populate('packages', 'title price duration')
       .sort({ createdAt: -1 })
       .limit(5);
 
@@ -262,5 +263,71 @@ export const exportDashboardData = async (req, res) => {
   } catch (error) {
     console.error('Export dashboard error:', error);
     res.status(500).json({ success: false, message: 'Error exporting dashboard data', error: error.message });
+  }
+};
+
+/**
+ * @desc    Export bookings as CSV
+ * @route   GET /api/admin/bookings/export
+ * @access  Private/Admin
+ */
+export const exportBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find()
+      .populate('user', 'name email')
+      .populate('package', 'title price duration')
+      .populate('packages', 'title price duration')
+      .sort({ createdAt: -1 });
+
+    const rows = [];
+    const headers = [
+      'Booking ID',
+      'Client Name',
+      'Client Email',
+      'Packages',
+      'Total Days',
+      'Booking Date',
+      'Guests',
+      'Total Price',
+      'Status',
+      'Created At'
+    ];
+
+    rows.push(headers);
+
+    bookings.forEach(b => {
+      const packageTitles = (b.packages && b.packages.length > 0)
+        ? b.packages.map(p => p.title).join('; ')
+        : (b.package?.title || '');
+
+      const totalDays = b.totalDays ?? ((b.packages && b.packages.length > 0)
+        ? b.packages.reduce((a, p) => a + (p.duration || 0), 0)
+        : (b.package?.duration || ''));
+
+      const row = [
+        b._id,
+        b.clientName || b.user?.name || '',
+        b.clientEmail || b.user?.email || '',
+        packageTitles,
+        String(totalDays),
+        b.bookingDate ? b.bookingDate.toISOString() : '',
+        String(b.guests || ''),
+        String(b.totalPrice || b.totalAmount || 0),
+        b.status || '',
+        b.createdAt ? b.createdAt.toISOString() : ''
+      ];
+
+      rows.push(row);
+    });
+
+    const escapeCsv = v => '"' + String(v).replace(/"/g, '""') + '"';
+    const csv = rows.map(r => r.map(escapeCsv).join(',')).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="bookings_export.csv"');
+    return res.status(200).send(csv);
+  } catch (error) {
+    console.error('Export bookings error:', error);
+    res.status(500).json({ success: false, message: 'Error exporting bookings', error: error.message });
   }
 };

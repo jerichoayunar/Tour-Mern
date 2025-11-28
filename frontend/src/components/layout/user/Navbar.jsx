@@ -80,7 +80,7 @@ function Navbar() {
 
           {/* Desktop Account Dropdown - Enhanced */}
           <div className="hidden md:flex items-center">
-            <div className="relative">
+            <div className="relative" onMouseEnter={() => setIsDropdownOpen(true)} onMouseLeave={() => setIsDropdownOpen(false)}>
               <Motion.button 
                 className="flex items-center space-x-3 p-2 rounded-xl border-2 border-transparent hover:border-alabaster transition-all duration-300 hover:bg-white hover:shadow-sm"
                 whileHover={{ scale: 1.02 }}
@@ -117,12 +117,12 @@ function Navbar() {
                       {isAuthenticated ? (
                         <>
                           <Link 
-                            to="/dashboard" 
+                            to="/my-inquiries" 
                             className="flex items-center gap-3 w-full px-4 py-3 text-slate-700 rounded-xl hover:bg-platinum-50 transition-colors duration-200 group"
                             onClick={() => setIsDropdownOpen(false)}
                           >
                             <User className="w-4 h-4 text-primary-500" />
-                            <span>Dashboard</span>
+                            <span>My Inquiries</span>
                           </Link>
                           <Link 
                             to="/profile" 

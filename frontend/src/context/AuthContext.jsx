@@ -334,6 +334,14 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       
       showToast('Signed out successfully', 'info');
+        
+        // Redirect to landing page to fully exit authenticated areas
+        try {
+          // Use full navigation to ensure all state is cleared
+          window.location.href = '/';
+        } catch (e) {
+          console.debug('Redirect to landing page failed', e);
+        }
       
     } catch (error) {
       console.error('Logout error:', error);

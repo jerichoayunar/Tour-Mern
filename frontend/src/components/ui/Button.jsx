@@ -24,7 +24,7 @@ const Button = ({
     success:
       "bg-success text-white hover:bg-emerald-700 focus:ring-emerald-500 shadow-sm border border-transparent",
     warning:
-      "bg-warning text-white hover:bg-amber-600 focus:ring-amber-500 shadow-sm border border-transparent",
+      "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-sm border border-transparent",
     ghost:
       "bg-transparent text-slate-600 hover:bg-platinum-100 hover:text-slate-900 focus:ring-slate-400",
     outline:

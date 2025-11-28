@@ -56,6 +56,19 @@ export const adminService = {
       throw { success: false, message, response: { data: { message } } };
     }
   }
+  ,
+  exportBookings: async (format = 'csv') => {
+    try {
+      const response = await api.get(`/admin/bookings/export?format=${format}`, {
+        responseType: 'blob'
+      });
+      const resp = response?.data ?? response;
+      return { success: true, data: resp, message: 'Export ready' };
+    } catch (error) {
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
+    }
+  }
 };
 
 export default adminService;

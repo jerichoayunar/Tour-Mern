@@ -16,10 +16,10 @@ const Alert = ({ type = 'info', title, children, className = "" }) => {
       text: "text-emerald-700"
     },
     warning: {
-      container: "bg-amber-50 border-amber-200",
-      icon: <AlertCircle className="h-5 w-5 text-amber-600" />,
-      title: "text-amber-800",
-      text: "text-amber-700"
+      container: "bg-blue-50 border-blue-200",
+      icon: <AlertCircle className="h-5 w-5 text-blue-600" />,
+      title: "text-blue-800",
+      text: "text-blue-700"
     },
     error: {
       container: "bg-red-50 border-red-200",

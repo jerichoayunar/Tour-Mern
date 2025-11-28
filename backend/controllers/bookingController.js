@@ -116,7 +116,13 @@ export const createBooking = async (req, res, next) => {
 export const updateBookingStatus = async (req, res, next) => {
   try {
     // Call service layer to update booking status (admin only operation)
-    const booking = await bookingService.updateBookingStatus(req.params.id, req.body.status);
+    // When confirming, automatically mark payment as paid and record admin id.
+    const booking = await bookingService.updateBookingStatus(req.params.id, req.body.status, {
+      recordedBy: req.user._id,
+      paymentMethod: req.body.paymentMethod,
+      transactionId: req.body.transactionId,
+      autoMarkPayment: true
+    });
     
     // ✅ SEND BOOKING STATUS UPDATE EMAIL
     try {

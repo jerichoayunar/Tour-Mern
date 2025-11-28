@@ -21,6 +21,26 @@ const getInquiries = async (params = {}) => {
   }
 };
 
+const getMyInquiries = async (params = {}) => {
+  try {
+    const response = await api.get('/inquiries/my', { params });
+    return normalizeResponse(response);
+  } catch (error) {
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
+  }
+};
+
+const addUserReply = async (id, body) => {
+  try {
+    const response = await api.post(`/inquiries/${id}/reply`, body);
+    return normalizeResponse(response);
+  } catch (error) {
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
+  }
+};
+
 const getInquiryStats = async () => {
   try {
     const response = await api.get('/inquiries/stats');
@@ -127,4 +147,6 @@ export default {
   archiveInquiry,
   restoreInquiry,
   permanentDeleteInquiry
+    , getMyInquiries
+    , addUserReply
 };

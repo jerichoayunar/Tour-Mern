@@ -48,37 +48,11 @@ const ManagePackages = () => {
   // Ensure we always operate on an array (services may return normalized {data: []})
   const packagesList = Array.isArray(packages) ? packages : (Array.isArray(packages?.data) ? packages.data : []);
 
-  // UPDATED: Package statistics with ONLY day-specific inclusion calculations
+  // Compact package statistics used by the compact summary
   const packageStats = {
-    // Basic counts
     total: packagesList.length,
     active: packagesList.filter(p => p.status === 'active').length,
-    
-    // Day-specific inclusion statistics
-    daysWithTransport: packagesList.reduce((sum, pkg) => 
-      sum + (pkg.itinerary?.filter(day => day.inclusions?.transport).length || 0), 0),
-    daysWithMeals: packagesList.reduce((sum, pkg) => 
-      sum + (pkg.itinerary?.filter(day => day.inclusions?.meals).length || 0), 0),
-    daysWithStay: packagesList.reduce((sum, pkg) => 
-      sum + (pkg.itinerary?.filter(day => day.inclusions?.stay).length || 0), 0),
-    
-    // Packages that have at least one day with each inclusion
-    packagesWithSomeTransport: packagesList.filter(pkg => 
-      pkg.itinerary?.some(day => day.inclusions?.transport)).length,
-    packagesWithSomeMeals: packagesList.filter(pkg => 
-      pkg.itinerary?.some(day => day.inclusions?.meals)).length,
-    packagesWithSomeStay: packagesList.filter(pkg => 
-      pkg.itinerary?.some(day => day.inclusions?.stay)).length,
-    
-    // Financial statistics
-    totalValue: packagesList.reduce((sum, pkg) => sum + (pkg.price || 0), 0),
-    averagePrice: packagesList.length > 0 ? 
-      packagesList.reduce((sum, pkg) => sum + (pkg.price || 0), 0) / packagesList.length : 0,
-    
-    // Itinerary statistics
-    totalItineraryDays: packagesList.reduce((sum, pkg) => sum + (pkg.itinerary?.length || 0), 0),
-    averageDaysPerPackage: packagesList.length > 0 ? 
-      packagesList.reduce((sum, pkg) => sum + (pkg.itinerary?.length || 0), 0) / packagesList.length : 0
+    totalItineraryDays: packagesList.reduce((sum, pkg) => sum + (pkg.itinerary?.length || 0), 0)
   };
 
   // ------------------ DATA FETCHING ------------------
@@ -238,7 +212,7 @@ const ManagePackages = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Tour Packages</h1>
           <p className="text-gray-600">
-            Create and manage your tour packages with day-specific inclusions. All prices in Philippine Peso (₱).
+            Create and manage your tour packages with day-specific inclusions.
           </p>
         </div>
         <Button 
@@ -263,129 +237,9 @@ const ManagePackages = () => {
         </Button>
       </div>
 
-      {/* UPDATED: Stats Summary with ONLY Day-Specific Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {/* Total Packages */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Packages</p>
-              <p className="text-2xl font-bold text-gray-900">{packageStats.total}</p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <span className="text-blue-600 text-xl">📦</span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            {packageStats.active} active • {packageStats.totalItineraryDays} total days
-          </div>
-        </div>
-
-        {/* Portfolio Value */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Portfolio Value</p>
-              <p className="text-2xl font-bold text-green-600">{formatPrice(packageStats.totalValue)}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <span className="text-green-600 text-xl">💰</span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            Avg: {formatPrice(packageStats.averagePrice)} per package
-          </div>
-        </div>
-
-        {/* Transport Coverage */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Transport Days</p>
-              <p className="text-2xl font-bold text-purple-600">{packageStats.daysWithTransport}</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <span className="text-purple-600 text-xl">🚗</span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            {packageStats.packagesWithSomeTransport} packages • {Math.round((packageStats.daysWithTransport / packageStats.totalItineraryDays) * 100) || 0}% coverage
-          </div>
-        </div>
-
-        {/* Comprehensive Packages */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Full Experience</p>
-              <p className="text-2xl font-bold text-orange-600">
-                {packageStats.packagesWithSomeTransport && 
-                 packageStats.packagesWithSomeMeals && 
-                 packageStats.packagesWithSomeStay ? 
-                 Math.min(packageStats.packagesWithSomeTransport, packageStats.packagesWithSomeMeals, packageStats.packagesWithSomeStay) : 0}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <span className="text-orange-600 text-xl">⭐</span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            Packages with transport, meals & stay
-          </div>
-        </div>
-      </div>
-
-      {/* Additional Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Meals Coverage */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Meals Included</p>
-              <p className="text-2xl font-bold text-yellow-600">{packageStats.daysWithMeals} days</p>
-            </div>
-            <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <span className="text-yellow-600 text-lg">🍽️</span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            {packageStats.packagesWithSomeMeals} packages include meals
-          </div>
-        </div>
-
-        {/* Stay Coverage */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Accommodation</p>
-              <p className="text-2xl font-bold text-indigo-600">{packageStats.daysWithStay} nights</p>
-            </div>
-            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <span className="text-indigo-600 text-lg">🏨</span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            {packageStats.packagesWithSomeStay} packages include stay
-          </div>
-        </div>
-
-        {/* Average Itinerary */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Avg. Itinerary</p>
-              <p className="text-2xl font-bold text-teal-600">
-                {packageStats.averageDaysPerPackage.toFixed(1)} days
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
-              <span className="text-teal-600 text-lg">📅</span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            {packageStats.totalItineraryDays} total planned days
-          </div>
-        </div>
+      {/* Compact summary (stats removed for cleaner admin view) */}
+      <div className="mb-6 text-sm text-gray-600">
+        Showing <span className="font-semibold text-gray-800">{packageStats.total}</span> packages • <span className="font-semibold text-gray-800">{packageStats.active}</span> active • <span className="font-semibold text-gray-800">{packageStats.totalItineraryDays}</span> total days
       </div>
 
       {/* Packages Table */}

@@ -173,20 +173,25 @@ const InquiryModal = ({ inquiry, isOpen, onClose, onUpdate }) => {
           </div>
         </div>
 
-        {/* Existing Response */}
-        {inquiry.response && (
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Previous Response</h3>
-            <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
-              <p className="text-gray-700 whitespace-pre-wrap">{inquiry.response}</p>
-              {inquiry.respondedBy && (
-                <p className="text-sm text-gray-500 mt-2">
-                  Responded by: {inquiry.respondedBy.name} ({inquiry.respondedBy.email})
-                </p>
-              )}
-            </div>
+        {/* Conversation Thread */}
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Conversation</h3>
+          <div className="space-y-3">
+            {Array.isArray(inquiry.conversation) && inquiry.conversation.length > 0 ? (
+              inquiry.conversation.map((c, idx) => (
+                <div key={idx} className={`p-3 rounded-lg ${c.sender === 'admin' ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50 border border-gray-100'}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="text-sm font-medium text-gray-700">{c.sender === 'admin' ? 'Admin' : inquiry.name}</div>
+                    <div className="text-xs text-gray-400">{c.createdAt ? new Date(c.createdAt).toLocaleString() : ''}</div>
+                  </div>
+                  <div className="text-gray-700 whitespace-pre-wrap text-sm">{c.message}</div>
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-gray-400">No conversation yet. Use the form below to reply to the customer.</div>
+            )}
           </div>
-        )}
+        </div>
 
         {/* Response Form */}
         <form onSubmit={handleSubmit} className="space-y-6">

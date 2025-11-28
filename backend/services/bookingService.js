@@ -52,7 +52,8 @@ export const getBookings = async (query) => {
 
   const bookings = await Booking.find(filter)
     .populate('user', 'name email')
-    .populate('package', 'title price destination duration image')
+    .populate('package', 'title price destination duration image itinerary')
+    .populate('packages', 'title price duration image itinerary transport meals stay')
     .sort({ bookingDate: -1 });
 
   return bookings;
@@ -61,7 +62,8 @@ export const getBookings = async (query) => {
 // Get user’s own bookings
 export const getMyBookings = async (userId) => {
   return await Booking.find({ user: userId })
-    .populate('package', 'title price image duration')
+    .populate('package', 'title price image duration itinerary')
+    .populate('packages', 'title price duration image itinerary transport meals stay')
     .sort({ createdAt: -1 });
 };
 
@@ -69,7 +71,8 @@ export const getMyBookings = async (userId) => {
 export const getBooking = async (bookingId, user) => {
   const booking = await Booking.findById(bookingId)
     .populate('user', 'name email role')
-    .populate('package', 'title price duration');
+    .populate('package', 'title price duration image itinerary')
+    .populate('packages', 'title price duration image itinerary transport meals stay');
 
   if (!booking) throw new ApiError(404, 'Booking not found');
 
@@ -82,7 +85,7 @@ export const getBooking = async (bookingId, user) => {
 
 // Get refund estimate without modifying booking (used by frontend before cancellation)
 export const getRefundEstimate = async (bookingId, user) => {
-  const booking = await Booking.findById(bookingId).populate('package', 'title price');
+  const booking = await Booking.findById(bookingId).populate('package', 'title price').populate('packages', 'title price duration');
   if (!booking) throw new ApiError(404, 'Booking not found');
 
   // Authorization: owner or admin
@@ -90,21 +93,30 @@ export const getRefundEstimate = async (bookingId, user) => {
   const isAdmin = user.role === 'admin';
   if (!isOwner && !isAdmin) throw new ApiError(403, 'Not authorized to view this booking');
 
-  const now = new Date();
-  const tourDate = new Date(booking.bookingDate);
-  const daysUntil = Math.ceil((tourDate - now) / (1000 * 60 * 60 * 24));
-
+  // Refunds are only applicable for confirmed bookings. If the booking is not confirmed,
+  // the booking is not eligible for refund on cancellation (manual/admin decisions may differ).
+  const total = booking.totalPrice || booking.totalAmount || 0;
   let refundAmount = 0;
   let refundPercentage = 0;
-  const total = booking.totalPrice || booking.totalAmount || 0;
+  let daysUntil = null;
 
-  if (daysUntil >= 14) {
-    refundAmount = total;
-    refundPercentage = 100;
-  } else if (daysUntil >= 7) {
-    refundAmount = Math.floor(total * 0.5);
-    refundPercentage = 50;
+  if (booking.status === 'confirmed') {
+    const now = new Date();
+    const tourDate = new Date(booking.bookingDate);
+    daysUntil = Math.ceil((tourDate - now) / (1000 * 60 * 60 * 24));
+
+    if (daysUntil >= 14) {
+      refundAmount = total;
+      refundPercentage = 100;
+    } else if (daysUntil >= 7) {
+      refundAmount = Math.floor(total * 0.5);
+      refundPercentage = 50;
+    } else {
+      refundAmount = 0;
+      refundPercentage = 0;
+    }
   } else {
+    // Not confirmed -> no refund eligibility
     refundAmount = 0;
     refundPercentage = 0;
   }
@@ -115,16 +127,16 @@ export const getRefundEstimate = async (bookingId, user) => {
     daysUntil,
     total,
     bookingId: booking._id,
-    packageTitle: booking.package?.title || null,
+    packageTitle: (booking.packages && booking.packages.length > 0) ? booking.packages.map(p => p.title).join(', ') : (booking.package?.title || null),
     bookingDate: booking.bookingDate
   };
 };
 
 // Create booking
 export const createBooking = async (userId, data) => {
-  const { packageId, clientName, clientEmail, clientPhone, bookingDate, guests, specialRequests } = data;
+  const { packageId, packageIds, clientName, clientEmail, clientPhone, bookingDate, guests, specialRequests } = data;
 
-  if (!packageId || !clientName || !clientEmail || !clientPhone || !bookingDate || !guests)
+  if ((!packageId && (!packageIds || packageIds.length === 0)) || !clientName || !clientEmail || !clientPhone || !bookingDate || !guests)
     throw new ApiError(400, 'All fields are required');
   let session;
   let useTransaction = false;
@@ -146,35 +158,55 @@ export const createBooking = async (userId, data) => {
       console.info('MongoDB does not support transactions in this environment; using non-transactional booking create.');
     }
 
-    // Fetch package (use session only if transactions are enabled)
-    const tourPackage = useTransaction && session
-      ? await Package.findById(packageId).session(session)
-      : await Package.findById(packageId);
+    // If packageIds provided, fetch all packages and compute aggregated total
+    let tourPackages = [];
+    let tourPackage = null;
+    if (packageIds && packageIds.length > 0) {
+      tourPackages = useTransaction && session
+        ? await Package.find({ _id: { $in: packageIds } }).session(session)
+        : await Package.find({ _id: { $in: packageIds } });
 
-    if (!tourPackage) {
-      if (useTransaction && session) await session.abortTransaction();
-      throw new ApiError(404, 'Package not found');
+      if (!tourPackages || tourPackages.length === 0) {
+        if (useTransaction && session) await session.abortTransaction();
+        throw new ApiError(404, 'One or more packages not found');
+      }
+
+      // set representative package as first one
+      tourPackage = tourPackages[0];
+    } else {
+      tourPackage = useTransaction && session
+        ? await Package.findById(packageId).session(session)
+        : await Package.findById(packageId);
+      if (!tourPackage) {
+        if (useTransaction && session) await session.abortTransaction();
+        throw new ApiError(404, 'Package not found');
+      }
+      tourPackages = [tourPackage];
     }
 
-    const totalPrice = tourPackage.price * Number(guests);
+    const sumPrices = tourPackages.reduce((acc, p) => acc + (p.price || 0), 0);
+    const sumDurations = tourPackages.reduce((acc, p) => acc + (p.duration || 0), 0);
+    const totalPrice = sumPrices * Number(guests);
+    const totalDays = sumDurations;
 
     let booking;
-    if (useTransaction && session) {
-      booking = await Booking.create([
-        {
-          user: userId,
-          package: packageId,
-          clientName,
-          clientEmail,
-          clientPhone,
-          bookingDate: new Date(bookingDate),
-          guests: Number(guests),
-          totalPrice,
-          specialRequests: specialRequests || '',
-        }
-      ], { session });
+    const bookingData = {
+      user: userId,
+      package: tourPackage._id,
+      packages: tourPackages.map(p => p._id),
+      totalDays,
+      clientName,
+      clientEmail,
+      clientPhone,
+      bookingDate: new Date(bookingDate),
+      guests: Number(guests),
+      totalPrice,
+      specialRequests: specialRequests || '',
+    };
 
-      // Only commit if a transaction was actually started
+    if (useTransaction && session) {
+      booking = await Booking.create([bookingData], { session });
+
       try {
         if (session.inTransaction && session.inTransaction()) {
           await session.commitTransaction();
@@ -189,24 +221,12 @@ export const createBooking = async (userId, data) => {
         throw commitErr;
       }
 
-      // Return populated booking
-      return await Booking.findById(booking[0]._id).populate('package', 'title price');
+      return await Booking.findById(booking[0]._id).populate('package', 'title price duration image itinerary').populate('packages', 'title price duration image itinerary transport meals stay');
     }
 
     // Non-transactional create (fallback)
-    const created = await Booking.create({
-      user: userId,
-      package: packageId,
-      clientName,
-      clientEmail,
-      clientPhone,
-      bookingDate: new Date(bookingDate),
-      guests: Number(guests),
-      totalPrice,
-      specialRequests: specialRequests || '',
-    });
-
-    return await Booking.findById(created._id).populate('package', 'title price');
+    const created = await Booking.create(bookingData);
+    return await Booking.findById(created._id).populate('package', 'title price duration image itinerary').populate('packages', 'title price duration image itinerary transport meals stay');
   } catch (error) {
     // If a transaction was started, attempt to abort it
     try {
@@ -244,7 +264,8 @@ export const updateBookingStatus = async (bookingId, status) => {
     { new: true, runValidators: true }
   )
     .populate('user', 'name email')
-    .populate('package', 'title price');
+    .populate('package', 'title price image duration itinerary')
+    .populate('packages', 'title price duration image itinerary transport meals stay');
 
   if (!booking) throw new ApiError(404, 'Booking not found');
 
@@ -254,7 +275,8 @@ export const updateBookingStatus = async (bookingId, status) => {
 // Delete booking (with refund calculation)
 export const deleteBooking = async (bookingId, user) => {
   const booking = await Booking.findById(bookingId)
-    .populate('package', 'title price');
+    .populate('package', 'title price')
+    .populate('packages', 'title price');
     
   if (!booking) throw new ApiError(404, 'Booking not found');
 
@@ -288,7 +310,9 @@ export const deleteBooking = async (bookingId, user) => {
     guests: booking.guests,
     totalPrice: booking.totalPrice,
     package: booking.package,
-    destinationName: booking.package?.title,
+    packages: booking.packages,
+    totalDays: booking.totalDays,
+    destinationName: booking.packages && booking.packages.length > 0 ? booking.packages.map(p => p.title).join(', ') : booking.package?.title,
     cancellation: {
       cancelledAt: now,
       cancelledBy: isAdmin ? 'admin' : 'user',
@@ -309,7 +333,8 @@ export const deleteBooking = async (bookingId, user) => {
 export const cancelBooking = async (bookingId, user) => {
   const booking = await Booking.findById(bookingId)
     .populate('user', 'name email')
-    .populate('package', 'title price');
+    .populate('package', 'title price')
+    .populate('packages', 'title price duration transport meals stay');
 
   if (!booking) throw new ApiError(404, 'Booking not found');
 
@@ -320,7 +345,23 @@ export const cancelBooking = async (bookingId, user) => {
 
   // Cannot cancel already cancelled or confirmed bookings
   if (booking.status === 'cancelled') throw new ApiError(400, 'Booking is already cancelled');
-  if (booking.status === 'confirmed') throw new ApiError(400, 'Cannot cancel a confirmed booking. Contact admin.');
+  // If booking is confirmed, create a cancellation request (user) instead of rejecting
+  if (booking.status === 'confirmed') {
+    // If requester is admin, allow immediate cancellation
+    if (isAdmin) {
+      // proceed with cancellation flow below
+    } else {
+      // mark cancellation request and return booking without cancelling
+      booking.cancellation = booking.cancellation || {};
+      booking.cancellation.requested = true;
+      booking.cancellation.requestedAt = new Date();
+      booking.cancellation.requestedBy = 'user';
+      booking.cancellation.reason = booking.cancellation.reason || 'User requested cancellation';
+      await booking.save();
+      // Return booking with a message (controller can translate this to user-facing text)
+      return booking;
+    }
+  }
 
   // Calculate days until tour
   const now = new Date();
@@ -356,9 +397,10 @@ export const cancelBooking = async (bookingId, user) => {
 // 🔹 ADMIN: PROCESS REFUND (Mark refund as processed)
 // ============================================================================
 export const processRefund = async (bookingId, processed) => {
-  const booking = await Booking.findById(bookingId);
-
-  if (!booking) throw new ApiError(404, 'Booking not found');
+  const booking = await Booking.findById(bookingId)
+    .populate('user', 'name email')
+    .populate('package', 'title price duration')
+    .populate('packages', 'title price duration transport meals stay');
   if (!booking.cancellation) throw new ApiError(400, 'This booking is not cancelled');
 
   booking.cancellation.refundStatus = processed ? 'processed' : 'rejected';

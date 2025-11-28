@@ -93,9 +93,15 @@ export const createPackage = async (data, file = null) => {
   }
 
   // Ensure all itinerary days have inclusions
+  const normalizeInclusions = (inc) => {
+    if (Array.isArray(inc)) return inc;
+    if (inc && typeof inc === 'object') return Object.keys(inc).filter(k => inc[k]);
+    return [];
+  };
+
   const processedItinerary = itinerary.map(day => ({
     ...day,
-    inclusions: day.inclusions || { transport: false, meals: false, stay: false }
+    inclusions: normalizeInclusions(day.inclusions)
   }));
 
   const pkg = await Package.create({
@@ -170,9 +176,15 @@ export const updatePackage = async (packageId, updateData, file = null) => {
   // Process itinerary with inclusions
   let processedItinerary = updateData.itinerary;
   if (updateData.itinerary) {
+    const normalizeInclusionsLocal = (inc) => {
+      if (Array.isArray(inc)) return inc;
+      if (inc && typeof inc === 'object') return Object.keys(inc).filter(k => inc[k]);
+      return [];
+    };
+
     processedItinerary = updateData.itinerary.map(day => ({
       ...day,
-      inclusions: day.inclusions || { transport: false, meals: false, stay: false }
+      inclusions: normalizeInclusionsLocal(day.inclusions)
     }));
   }
 
