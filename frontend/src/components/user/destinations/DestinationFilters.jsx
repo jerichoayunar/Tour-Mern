@@ -97,13 +97,15 @@ const DestinationFilters = ({
         {/* Search Bar */}
         <div className="flex-1 max-w-lg">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
             <input
               type="text"
+              aria-label="Search destinations"
+              title="Search destinations, locations"
               placeholder="Search destinations, locations..."
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-gray-50 placeholder-gray-400"
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-gray-700 placeholder-gray-500 text-sm"
             />
           </div>
         </div>
@@ -113,16 +115,18 @@ const DestinationFilters = ({
           {/* Location Filter - Clean Dropdown */}
           <div className="relative">
             <select
+              aria-label="Location"
+              title="Location"
               value={filters.location || ''}
               onChange={(e) => handleLocationSelect(e.target.value)}
-              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[180px]"
+              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-gray-700 appearance-none cursor-pointer min-w-[180px] text-sm"
             >
               <option value="">All Locations</option>
               {availableLocations.map(location => (
                 <option key={location} value={location}>{location}</option>
               ))}
             </select>
-            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
           </div>
 
           {/* Status Filter */}
@@ -148,16 +152,18 @@ const DestinationFilters = ({
           {/* Sort By */}
           <div className="relative">
             <select
+              aria-label="Sort by"
+              title="Sort by"
               value={filters.sortBy}
               onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[160px]"
+              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-gray-700 appearance-none cursor-pointer min-w-[160px] text-sm"
             >
               <option value="name">Sort: A-Z</option>
               <option value="nameDesc">Sort: Z-A</option>
               <option value="newest">Newest First</option>
               <option value="oldest">Oldest First</option>
             </select>
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
           </div>
         </div>
       </div>
@@ -176,7 +182,7 @@ const DestinationFilters = ({
                   onClick={() => clearFilter(filter.type)}
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 group border ${
                     filter.type === 'search' 
-                      ? 'bg-primary-50 text-primary-700 border-primary-100 hover:bg-primary-100'
+                      ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
                       : filter.type === 'location'
                       ? 'bg-emerald-50 text-emerald-700 border-emerald-100 hover:bg-emerald-100'
                       : filter.type === 'status'
@@ -184,14 +190,14 @@ const DestinationFilters = ({
                       : 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
                   }`}
                 >
-                  <span>{filter.label}</span>
-                  <X className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                  <span className="text-gray-700">{filter.label}</span>
+                  <X className="w-3 h-3 group-hover:scale-110 transition-transform text-gray-600" />
                 </button>
               ))}
             </div>
             <button
               onClick={clearAllFilters}
-              className="text-sm text-gray-500 hover:text-gray-700 underline transition-colors duration-200 whitespace-nowrap ml-auto"
+              className="text-sm text-gray-600 hover:text-gray-800 underline transition-colors duration-200 whitespace-nowrap ml-auto"
             >
               Clear all
             </button>

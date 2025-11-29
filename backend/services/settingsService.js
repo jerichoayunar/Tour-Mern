@@ -86,6 +86,7 @@ export const getPublicSettings = async () => {
     },
     booking: {
       minAdvanceDays: settings.booking.minAdvanceDays,
+      minGroupSize: settings.booking.minGroupSize,
       maxGroupSize: settings.booking.maxGroupSize,
       cancellationPolicy: {
         days14Plus: settings.booking.cancellationPolicy.days14Plus,

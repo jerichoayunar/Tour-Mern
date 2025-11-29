@@ -50,7 +50,7 @@ function Footer() {
   return (
     <footer className="bg-slate-950/90 backdrop-blur-lg border-t border-slate-800/50 relative overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-900/20 via-slate-900/10 to-slate-950/30 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 via-slate-900/8 to-slate-950/30 pointer-events-none"></div>
       
       <div className="relative z-10 container mx-auto px-4 py-12">
         {/* Main Footer Content */}
@@ -68,18 +68,18 @@ function Footer() {
             {/* Logo and Brand */}
             <div className="flex items-center gap-4 mb-6 group cursor-pointer">
               <div className="relative">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-600 to-primary-500 shadow-lg flex items-center justify-center transform group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-500 shadow-md flex items-center justify-center transform group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
                   <img
                     src={settings?.general?.logo || "/images/destinations/bukidnonupdates.jpg"}
                     alt={settings?.general?.siteName || "ExploreBukidnon"}
                     className="w-12 h-12 object-cover rounded-xl"
                   />
                 </div>
-                <div className="absolute inset-0 rounded-2xl bg-primary-400/20 blur-md group-hover:blur-lg transition-all duration-300 -z-10"></div>
+                <div className="absolute inset-0 rounded-2xl bg-blue-400/20 blur-md group-hover:blur-lg transition-all duration-300 -z-10"></div>
               </div>
 
               <div className="flex flex-col">
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-blue-400 bg-clip-text text-transparent tracking-tight group-hover:scale-105 transition-transform duration-300">
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-400 bg-clip-text text-transparent tracking-tight group-hover:scale-105 transition-transform duration-300">
                   {settings?.general?.siteName || "ExploreBukidnon"}
                 </h3>
                 <p className="text-slate-400 font-medium mt-1 tracking-wide">
@@ -89,40 +89,53 @@ function Footer() {
             </div>
 
             {/* Description */}
-            <p className="text-slate-400 mb-6 leading-relaxed max-w-md border-l-4 border-primary-500 pl-4">
+            <p className="text-slate-400 mb-6 leading-relaxed max-w-md border-l-4 border-blue-500 pl-4">
               {settings?.general?.description || "Your trusted partner for exploring breathtaking landscapes and rich cultural experiences across Bukidnon's scenic highlands."}
             </p>
 
             {/* Contact Info */}
             <div className="space-y-3">
               <div className="flex items-center gap-3 group">
-                <MapPinIcon className="w-5 h-5 text-primary-400 group-hover:scale-110 transition-transform" />
+                <MapPinIcon className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />
                 <span className="text-slate-400 text-sm group-hover:text-white transition-colors">
                   {settings?.contact?.address || "Bukidnon, Philippines"}
                 </span>
               </div>
 
               <div className="flex items-center gap-3 group">
-                <PhoneIcon className="w-5 h-5 text-primary-400 group-hover:scale-110 transition-transform" />
+                <PhoneIcon className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />
                 <span className="text-slate-400 text-sm group-hover:text-white transition-colors">
                   {settings?.contact?.phone || "+63 912 345 6789"}
                 </span>
               </div>
 
               <div className="flex items-center gap-3 group">
-                <MailIcon className="w-5 h-5 text-primary-400 group-hover:scale-110 transition-transform" />
+                <MailIcon className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />
                 <span className="text-slate-400 text-sm group-hover:text-white transition-colors">
                   {settings?.contact?.supportEmail || "info@bukidnontours.com"}
                 </span>
+              </div>
+            </div>
+
+            {/* Business Hours (visible in Footer) */}
+            <div className="mt-6">
+              <h4 className="text-sm font-semibold text-white mb-2">Business Hours</h4>
+              <div className="text-slate-400 text-sm space-y-1">
+                <div>Mon–Fri: {settings?.businessHours?.weekday || '9:00 AM - 6:00 PM'}</div>
+                <div>Saturday: {settings?.businessHours?.saturday || '9:00 AM - 5:00 PM'}</div>
+                <div>Sunday: {settings?.businessHours?.sunday || 'Closed'}</div>
+                {settings?.businessHours?.timezone && (
+                  <div className="mt-1">Timezone: {settings.businessHours.timezone}</div>
+                )}
               </div>
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-lg font-semibold text-white mb-6 relative inline-block">
+              <h4 className="text-lg font-semibold text-white mb-6 relative inline-block">
               Quick Links
-              <div className="absolute bottom-0 left-0 w-8 h-0.5 bg-gradient-to-r from-primary-400 to-blue-400 rounded-full"></div>
+              <div className="absolute bottom-0 left-0 w-8 h-0.5 bg-gradient-to-r from-blue-400 to-blue-400 rounded-full"></div>
             </h4>
             <ul className="space-y-3">
               {[
@@ -134,9 +147,9 @@ function Footer() {
                 <li key={link.to}>
                   <Link 
                     to={link.to}
-                    className="text-slate-400 hover:text-primary-400 transition-all duration-300 flex items-center gap-2 group"
+                    className="text-slate-400 hover:text-blue-400 transition-all duration-300 flex items-center gap-2 group"
                   >
-                    <span className="w-1.5 h-1.5 bg-primary-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                     {link.label}
                   </Link>
                 </li>
@@ -146,9 +159,9 @@ function Footer() {
 
           {/* Follow Us & Legal */}
           <div>
-            <h4 className="text-lg font-semibold text-white mb-6 relative inline-block">
+              <h4 className="text-lg font-semibold text-white mb-6 relative inline-block">
               Follow Us
-              <div className="absolute bottom-0 left-0 w-8 h-0.5 bg-gradient-to-r from-primary-400 to-blue-400 rounded-full"></div>
+              <div className="absolute bottom-0 left-0 w-8 h-0.5 bg-gradient-to-r from-blue-400 to-blue-400 rounded-full"></div>
             </h4>
             
             {/* Social Links */}

@@ -64,9 +64,9 @@ const BookingList = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" role="list" aria-label="Bookings list">
       {bookings.map((booking) => (
-        <div key={booking._id} className="animate-fade-in">
+        <div key={booking._id} className="animate-fade-in" role="listitem">
           <BookingCard
             booking={booking}
             onStatusUpdate={onStatusUpdate}

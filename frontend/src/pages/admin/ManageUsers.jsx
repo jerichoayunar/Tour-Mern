@@ -212,39 +212,7 @@ const ManageUsers = () => {
           </button>
         </div>
 
-        {/* Statistics Cards Grid - Hide when viewing archives */}
-        {stats && !showArchived && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <AdminStatsCard
-              title="Total Clients"
-              value={stats.totalClients}
-              trend={stats.growthRate}
-              icon="👥"
-              color="blue"
-            />
-            <AdminStatsCard
-              title="New Clients (30 days)"
-              value={stats.newClientsLast30Days}
-              trend="Last month"
-              icon="🆕"
-              color="green"
-            />
-            <AdminStatsCard
-              title="Active Clients"
-              value={stats.byStatus?.active || 0}
-              trend={`${stats.byStatus?.inactive || 0} inactive`}
-              icon="✅"
-              color="green"
-            />
-            <AdminStatsCard
-              title="Google Users"
-              value={stats.byLoginMethod?.google || 0}
-              trend={`${stats.byLoginMethod?.local || 0} local`}
-              icon="🔐"
-              color="purple"
-            />
-          </div>
-        )}
+        {/* Statistics Cards removed per request to declutter admin clients view */}
 
         {/* Clients Table Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

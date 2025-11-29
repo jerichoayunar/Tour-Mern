@@ -64,20 +64,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
     }
   }, [client]);
 
-  // Fetch activities when activity tab is active
-  useEffect(() => {
-    if (isOpen && client && activeTab === 'activity') {
-      fetchUserActivities();
-    }
-    // Note: fetchUserActivities is a stable function declaration (hoisted)
-  }, [activeTab, client, isOpen, fetchUserActivities]);
-
-  // Fetch booking history when bookings tab is active
-  useEffect(() => {
-    if (isOpen && client && activeTab === 'bookings') {
-      fetchClientBookings();
-    }
-  }, [activeTab, client, isOpen, fetchClientBookings]);
+  // NOTE: effects that call fetch functions are declared later (after functions)
 
   // Fixed activity fetching
   const fetchUserActivities = useCallback(async () => {
@@ -187,6 +174,20 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
       setBookingLoading(false);
     }
   }, [client?.id]);
+
+  // Fetch activities when activity tab is active (run after fetchUserActivities is defined)
+  useEffect(() => {
+    if (isOpen && client && activeTab === 'activity') {
+      fetchUserActivities();
+    }
+  }, [activeTab, client, isOpen, fetchUserActivities]);
+
+  // Fetch booking history when bookings tab is active (run after fetchClientBookings is defined)
+  useEffect(() => {
+    if (isOpen && client && activeTab === 'bookings') {
+      fetchClientBookings();
+    }
+  }, [activeTab, client, isOpen, fetchClientBookings]);
 
   // Calculate activity statistics
   const calculateActivityStats = (activities) => {

@@ -23,6 +23,7 @@ const ManagePackages = () => {
   // ------------------ STATE MANAGEMENT ------------------
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState({ search: '', status: '' });
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPackage, setEditingPackage] = useState(null);
   const [showArchived, setShowArchived] = useState(false); // 📦 ARCHIVE STATE
@@ -61,7 +62,10 @@ const ManagePackages = () => {
       setLoading(true);
       console.log(`🔄 Fetching ${showArchived ? 'archived' : 'active'} packages...`);
       // Pass archived filter
-      const response = await getPackages({ onlyArchived: showArchived });
+      const params = { onlyArchived: showArchived };
+      if (filters?.search) params.search = filters.search;
+      if (filters?.status) params.status = filters.status;
+      const response = await getPackages(params);
       const resp = response?.data ?? response;
       console.log('✅ Packages data:', resp);
       // Normalize to array: support raw array, { success, data } or axios response
@@ -78,12 +82,21 @@ const ManagePackages = () => {
     } finally {
       setLoading(false);
     }
-  }, [showArchived, showToast]);
+  }, [showArchived, showToast, filters]);
 
   // Fetch packages on component mount or when archive mode changes
   useEffect(() => {
     fetchPackages();
   }, [fetchPackages]);
+
+  // ------------------ FILTER HANDLERS ------------------
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({ search: '', status: '' });
+  };
 
   // ------------------ CRUD OPERATIONS ------------------
   const handleSave = async (formData) => {
@@ -237,9 +250,40 @@ const ManagePackages = () => {
         </Button>
       </div>
 
-      {/* Compact summary (stats removed for cleaner admin view) */}
-      <div className="mb-6 text-sm text-gray-600">
-        Showing <span className="font-semibold text-gray-800">{packageStats.total}</span> packages • <span className="font-semibold text-gray-800">{packageStats.active}</span> active • <span className="font-semibold text-gray-800">{packageStats.totalItineraryDays}</span> total days
+      {/* Compact summary removed to declutter header */}
+
+      {/* Filters */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Search packages</label>
+            <input
+              type="text"
+              value={filters.search}
+              onChange={(e) => handleFilterChange('search', e.target.value)}
+              placeholder="Search by title or description"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-700 placeholder-gray-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              value={filters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-700"
+            >
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button onClick={clearFilters} className="text-sm text-gray-600 hover:text-gray-900">Clear</button>
+            <Button onClick={fetchPackages} variant="primary">Apply</Button>
+          </div>
+        </div>
       </div>
 
       {/* Packages Table */}

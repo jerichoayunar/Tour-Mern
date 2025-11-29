@@ -2,6 +2,7 @@
 import mongoose from 'mongoose';
 import Booking from '../models/Booking.js';
 import Package from '../models/Package.js';
+import Settings from '../models/Settings.js';
 import ApiError from '../utils/ApiError.js';
 
 // Helper: Detect whether the connected MongoDB deployment supports transactions
@@ -189,6 +190,38 @@ export const createBooking = async (userId, data) => {
     const totalPrice = sumPrices * Number(guests);
     const totalDays = sumDurations;
 
+    // -----------------------
+    // Enforce admin booking rules
+    // -----------------------
+    try {
+      const appSettings = await Settings.getSettings();
+      const minAdvanceDays = appSettings.booking?.minAdvanceDays ?? 0;
+      const minGroupSize = appSettings.booking?.minGroupSize ?? 1;
+      const maxGroupSize = appSettings.booking?.maxGroupSize ?? 9999;
+
+      // Validate guests against settings
+      if (Number(guests) < Number(minGroupSize)) {
+        throw new ApiError(400, `Minimum ${minGroupSize} guest(s) required`);
+      }
+      if (Number(guests) > Number(maxGroupSize)) {
+        throw new ApiError(400, `Maximum ${maxGroupSize} guests allowed`);
+      }
+
+      // Validate booking date against minAdvanceDays
+      const requested = new Date(bookingDate);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const earliest = new Date(today);
+      earliest.setDate(earliest.getDate() + Number(minAdvanceDays || 0));
+      if (requested < earliest) {
+        throw new ApiError(400, `Booking must be made at least ${minAdvanceDays} day(s) in advance`);
+      }
+    } catch (err) {
+      // If we received ApiError rethrow it, otherwise wrap
+      if (err instanceof ApiError) throw err;
+      throw err;
+    }
+
     let booking;
     const bookingData = {
       user: userId,
@@ -257,7 +290,54 @@ export const updateAdminNotes = async (bookingId, notes) => {
 export const updateBookingStatus = async (bookingId, status) => {
   if (!['pending', 'confirmed', 'cancelled'].includes(status))
     throw new ApiError(400, 'Invalid status value');
+  // If admin is setting status to 'cancelled', treat this as an immediate cancellation
+  // and populate cancellation fields (clearing any previous cancellation request flag).
+  if (status === 'cancelled') {
+    const booking = await Booking.findById(bookingId)
+      .populate('user', 'name email role')
+      .populate('package', 'title price')
+      .populate('packages', 'title price duration transport meals stay');
 
+    if (!booking) throw new ApiError(404, 'Booking not found');
+
+    // If already cancelled, return error
+    if (booking.status === 'cancelled') throw new ApiError(400, 'Booking is already cancelled');
+
+    // Calculate refund using same policy as cancelBooking
+    const now = new Date();
+    const tourDate = new Date(booking.bookingDate);
+    const daysUntil = Math.ceil((tourDate - now) / (1000 * 60 * 60 * 24));
+
+    let refundAmount = 0;
+    if (daysUntil >= 14) {
+      refundAmount = booking.totalPrice;
+    } else if (daysUntil >= 7) {
+      refundAmount = Math.floor(booking.totalPrice * 0.5);
+    }
+
+    booking.status = 'cancelled';
+    booking.cancellation = {
+      cancelledAt: now,
+      cancelledBy: 'admin',
+      reason: 'Admin cancelled',
+      refundAmount,
+      refundStatus: 'pending',
+      refundProcessedAt: null,
+      // ensure any previous request flags are cleared
+      requested: false,
+      requestedAt: null,
+      requestedBy: null
+    };
+
+    await booking.save();
+
+    return await Booking.findById(bookingId)
+      .populate('user', 'name email')
+      .populate('package', 'title price image duration itinerary')
+      .populate('packages', 'title price duration image itinerary transport meals stay');
+  }
+
+  // Otherwise, simple status update
   const booking = await Booking.findByIdAndUpdate(
     bookingId,
     { status },

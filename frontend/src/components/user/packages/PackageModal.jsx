@@ -124,13 +124,7 @@ const PackageModal = ({ package: pkg, isOpen, onClose, onBook, onToggleSelect })
             >
               <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
             </button>
-            <button
-              onClick={onClose}
-              className="p-2 bg-black/40 text-white rounded-full backdrop-blur-sm hover:bg-black/60 transition-colors duration-200"
-              aria-label="Close modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {/* modal already provides a close control; avoid duplicate X here */}
           </div>
 
           {/* Duration Badge */}

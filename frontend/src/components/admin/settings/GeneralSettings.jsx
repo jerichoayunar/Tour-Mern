@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import Button from '../../ui/Button';
 
-const GeneralSettings = ({ initialData, contactData, localizationData, businessHoursData, onSave, saving }) => {
+const GeneralSettings = ({ initialData, contactData, businessHoursData, onSave, saving }) => {
   const [general, setGeneral] = useState(initialData || {});
   const [contact, setContact] = useState(contactData || {});
-  const [localization, setLocalization] = useState(localizationData || {});
   const [businessHours, setBusinessHours] = useState(businessHoursData || {});
 
   const handleSubmit = (e) => {
@@ -13,7 +12,6 @@ const GeneralSettings = ({ initialData, contactData, localizationData, businessH
     onSave({
       general,
       contact,
-      localization,
       businessHours
     });
   };
@@ -87,44 +85,7 @@ const GeneralSettings = ({ initialData, contactData, localizationData, businessH
         </div>
       </div>
 
-      <div className="border-t border-gray-200 pt-8">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Localization</h3>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Currency</label>
-            <select
-              value={localization.currency || 'PHP'}
-              onChange={(e) => setLocalization({ ...localization, currency: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-            >
-              <option value="PHP">PHP (₱)</option>
-              <option value="USD">USD ($)</option>
-              <option value="EUR">EUR (€)</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Currency Symbol</label>
-            <input
-              type="text"
-              value={localization.currencySymbol || ''}
-              onChange={(e) => setLocalization({ ...localization, currencySymbol: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Date Format</label>
-            <select
-              value={localization.dateFormat || 'MMM DD, YYYY'}
-              onChange={(e) => setLocalization({ ...localization, dateFormat: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"
-            >
-              <option value="MMM DD, YYYY">Nov 20, 2025</option>
-              <option value="MM/DD/YYYY">11/20/2025</option>
-              <option value="DD/MM/YYYY">20/11/2025</option>
-            </select>
-          </div>
-        </div>
-      </div>
+      {/* Localization removed - not used for runtime formatting. */}
 
       <div className="border-t border-gray-200 pt-8">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Business Hours</h3>

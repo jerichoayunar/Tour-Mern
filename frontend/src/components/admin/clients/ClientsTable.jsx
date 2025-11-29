@@ -74,15 +74,7 @@ const ClientsTable = ({
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-            <input
-              type="text"
-              placeholder="Search clients..."
-              value={filters.search}
-              onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64"
-            />
-            
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-end">
             <select
               value={filters.status}
               onChange={(e) => onFiltersChange({ ...filters, status: e.target.value })}
@@ -92,17 +84,6 @@ const ClientsTable = ({
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
               <option value="suspended">Suspended</option>
-            </select>
-
-            <select
-              value={filters.role}
-              onChange={(e) => onFiltersChange({ ...filters, role: e.target.value })}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Roles</option>
-              <option value="user">User</option>
-              <option value="premium">Premium</option>
-              <option value="agent">Agent</option>
             </select>
 
             <button

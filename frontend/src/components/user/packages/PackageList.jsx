@@ -11,7 +11,9 @@ const PackageList = ({
   viewMode = 'grid',
   onViewModeChange,
   sortBy = 'featured',
-  onSortChange
+  onSortChange,
+  activeFiltersCount = 0,
+  onClearFilters // optional handler to clear filters
 }) => {
   // Simplified Empty State
   if (!loading && packages.length === 0 && !error) {
@@ -152,9 +154,23 @@ const PackageList = ({
                 }
               </p>
             </div>
-            
-            {/* Simplified Controls */}
+
+            {/* Controls + Active Filters */}
             <div className="flex items-center gap-4">
+              {activeFiltersCount > 0 && (
+                <div className="flex items-center gap-3">
+                  <div className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100">
+                    {activeFiltersCount} filter{activeFiltersCount !== 1 ? 's' : ''} applied
+                  </div>
+                  <button
+                    onClick={() => typeof onClearFilters === 'function' && onClearFilters()}
+                    className="text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              )}
+
               {/* Optional Sort Dropdown */}
               {onSortChange && (
                 <div className="flex items-center gap-2">

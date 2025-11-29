@@ -27,13 +27,13 @@ const BookingFilters = ({ filters, onFilterChange, onClearFilters, isAdmin = fal
           <div className="lg:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Search Client</label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Search by client name or email..."
                 value={filters.search || ''}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white text-gray-700 placeholder-gray-500"
               />
             </div>
           </div>
@@ -44,7 +44,7 @@ const BookingFilters = ({ filters, onFilterChange, onClearFilters, isAdmin = fal
           <select
             value={filters.status || ''}
             onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
+            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white text-gray-700"
           >
             <option value="">All Status</option>
             <option value="pending">Pending</option>
@@ -56,12 +56,12 @@ const BookingFilters = ({ filters, onFilterChange, onClearFilters, isAdmin = fal
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">From Date</label>
           <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
             <input
               type="date"
               value={filters.startDate || ''}
               onChange={(e) => handleFilterChange('startDate', e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white text-gray-700"
             />
           </div>
         </div>
@@ -69,12 +69,12 @@ const BookingFilters = ({ filters, onFilterChange, onClearFilters, isAdmin = fal
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">To Date</label>
           <div className="relative">
-            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
             <input
               type="date"
               value={filters.endDate || ''}
               onChange={(e) => handleFilterChange('endDate', e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white"
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white text-gray-700"
             />
           </div>
         </div>

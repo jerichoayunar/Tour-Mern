@@ -5,6 +5,7 @@ import { Search, X, Calendar } from 'lucide-react';
 const PackageFilters = ({ 
   filters, 
   onFiltersChange, 
+  onClearAll, // optional handler passed from parent to clear filters globally
   className = '' 
 }) => {
   const [localFilters, setLocalFilters] = useState(filters || {});
@@ -44,6 +45,7 @@ const PackageFilters = ({
     };
     setLocalFilters(clearedFilters);
     onFiltersChange(clearedFilters);
+    if (typeof onClearAll === 'function') onClearAll();
   };
 
   // Handle price range selection
@@ -177,13 +179,15 @@ const PackageFilters = ({
         {/* Search Bar */}
         <div className="flex-1 max-w-lg">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
             <input
               type="text"
+              aria-label="Search packages"
+              title="Search packages, destinations, or activities"
               placeholder="Search packages, destinations, or activities..."
               value={localFilters.search || ''}
               onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 placeholder-gray-400"
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-gray-700 placeholder-gray-500 text-sm"
             />
           </div>
         </div>
@@ -193,9 +197,11 @@ const PackageFilters = ({
           {/* Price Filter */}
           <div className="relative">
             <select
+              aria-label="Price range"
+              title="Price range"
               value={getCurrentPriceRange()}
               onChange={(e) => handlePriceRangeChange(e.target.value)}
-              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[160px]"
+              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-gray-700 appearance-none cursor-pointer min-w-[160px] text-sm"
             >
               <option value="">Any Price</option>
               <option value="5000">Under ₱5,000</option>
@@ -204,15 +210,17 @@ const PackageFilters = ({
               <option value="50000">Under ₱50,000</option>
             </select>
             {/* Replaced DollarSign with Peso symbol */}
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm font-medium">₱</span>
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium">₱</span>
           </div>
 
           {/* Duration Filter */}
           <div className="relative">
             <select
+              aria-label="Duration range"
+              title="Duration range"
               value={getCurrentDurationRange()}
               onChange={(e) => handleDurationRangeChange(e.target.value)}
-              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[160px]"
+              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-gray-700 appearance-none cursor-pointer min-w-[160px] text-sm"
             >
               <option value="">Any Duration</option>
               <option value="3">1-3 Days</option>
@@ -220,7 +228,7 @@ const PackageFilters = ({
               <option value="14">8-14 Days</option>
               <option value="30">15+ Days</option>
             </select>
-            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
           </div>
 
           {/* Clear Filters */}

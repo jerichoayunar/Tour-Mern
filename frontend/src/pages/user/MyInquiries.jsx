@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react';
 import inquiryService from '../../services/inquiryService';
+import { Mail } from 'lucide-react';
 import { AuthContext } from '../../context/AuthContext';
 import Loader from '../../components/ui/Loader';
 import Button from '../../components/ui/Button';
@@ -69,9 +70,16 @@ const MyInquiries = () => {
   if (loading) return <div className="p-8"><Loader /></div>;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-2xl font-bold mb-4">My Inquiries</h1>
-      <p className="text-sm text-gray-600 mb-6">View inquiries you submitted and any responses from our team. You can add a follow-up reply below an inquiry.</p>
+    <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <div className="flex items-center gap-4 mb-4">
+        <div className="w-12 h-12 bg-white/10 text-white rounded-xl flex items-center justify-center ring-1 ring-white/20">
+          <Mail className="w-6 h-6 text-black" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-black drop-shadow-sm">My Inquiries</h1>
+          <p className="text-sm text-black/80">View inquiries you submitted and any responses from our team. You can add a follow-up reply below an inquiry.</p>
+        </div>
+      </div>
 
       {error && <div className="text-red-600 mb-4">{error}</div>}
 
@@ -114,7 +122,7 @@ const MyInquiries = () => {
                           const isAdmin = c.sender === 'admin';
                           const isLast = idx === inq.conversation.length - 1;
                           return (
-                            <div key={idx} role="listitem" ref={el => { if (isLast) lastMsgRefs.current[inq._id] = el; }} className={`p-3 rounded-lg max-w-[85%] ${isAdmin ? 'bg-gray-50 border border-gray-100 self-start' : 'bg-emerald-50 border border-emerald-100 self-end ml-auto'}`}>
+                            <div key={idx} role="listitem" ref={el => { if (isLast) lastMsgRefs.current[inq._id] = el; }} className={`p-3 rounded-lg max-w-[85%] ${isAdmin ? 'bg-gray-50 border border-gray-100 self-start text-gray-700' : 'bg-emerald-50 border border-emerald-100 self-end ml-auto text-gray-800'}`}>
                               <div className="flex items-center justify-between mb-1">
                                 <div className="text-sm font-medium text-gray-700">{isAdmin ? 'Admin' : (user?.name || 'You')}</div>
                                 <div className="text-xs text-gray-400">{c.createdAt ? formatDate(c.createdAt) : ''}</div>
@@ -125,7 +133,7 @@ const MyInquiries = () => {
                         })}
                       </div>
                     ) : (
-                      <div className="text-sm text-gray-400">No conversation yet.</div>
+                      <div className="text-sm text-gray-600">No conversation yet.</div>
                     )}
 
                     <div className="mt-2">
@@ -136,7 +144,7 @@ const MyInquiries = () => {
                             id={`reply-${inq._id}`}
                             value={replyTexts[inq._id] || ''}
                             onChange={(e)=>setReplyTexts(prev => ({ ...prev, [inq._id]: e.target.value }))}
-                            className="w-full rounded-lg border border-gray-200 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full rounded-lg border border-gray-200 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-700 placeholder-gray-500"
                             rows={3}
                             maxLength={2000}
                             placeholder="Write a follow-up message..."

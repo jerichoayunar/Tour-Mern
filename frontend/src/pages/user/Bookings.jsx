@@ -127,7 +127,16 @@ const Bookings = () => {
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-blue-50 text-black rounded-xl flex items-center justify-center">
+            <LayoutDashboard className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-black">Bookings</h1>
+            <p className="text-sm text-black/80">Manage and review your bookings and their statuses.</p>
+          </div>
+        </div>
+
         {isAdmin && (
           <div className="bg-gray-100 p-1 rounded-xl flex items-center">
             <button 

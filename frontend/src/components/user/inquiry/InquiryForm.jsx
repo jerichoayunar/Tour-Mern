@@ -109,13 +109,13 @@ const InquiryForm = ({ onSuccess = null }) => {
   // ============================================================================
   if (submitted) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm p-6 text-center max-w-lg mx-auto border border-gray-100">
+      <div className="bg-white rounded-2xl shadow-sm p-6 text-center max-w-lg mx-auto border border-slate-100">
         <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <CheckCircle className="w-7 h-7 text-emerald-600" />
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-1">Thank You!</h2>
-        <p className="text-gray-600 mb-2">Your inquiry has been submitted successfully.</p>
-        <p className="text-sm text-gray-500">We'll review your message and get back to you within 24 hours.</p>
+        <h2 className="text-xl font-semibold text-slate-900 mb-1">Thank You!</h2>
+        <p className="text-slate-600 mb-2">Your inquiry has been submitted successfully.</p>
+        <p className="text-sm text-slate-500">We'll review your message and get back to you within 24 hours.</p>
       </div>
     );
   }
@@ -123,15 +123,15 @@ const InquiryForm = ({ onSuccess = null }) => {
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden max-w-2xl w-full mx-auto border border-gray-100">
       <div className="p-6 bg-white">
-        <h2 className="text-xl md:text-2xl font-bold text-gray-900">Send Us an Inquiry</h2>
-        <p className="text-gray-600 text-sm mt-1">Have a question? We'd love to hear from you.</p>
+        <h2 className="text-xl md:text-2xl font-bold text-slate-900">Send Us an Inquiry</h2>
+        <p className="text-slate-600 text-sm mt-1">Have a question? We'd love to hear from you.</p>
       </div>
 
       <form onSubmit={handleSubmit} className="p-6 space-y-6">
         {/* Name Field */}
         <div className="space-y-2">
-          <label htmlFor="name" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <User size={16} className="text-blue-600" />
+          <label htmlFor="name" className="text-sm font-medium text-slate-700 flex items-center gap-2">
+            <User size={16} className="text-primary-500" />
             Full Name *
           </label>
           <input
@@ -144,15 +144,15 @@ const InquiryForm = ({ onSuccess = null }) => {
             onChange={handleChange}
             placeholder="Enter your full name"
             disabled={loading}
-            className={`w-full px-4 py-2.5 rounded-xl border ${errors.name ? 'border-red-600 focus:ring-red-200' : 'border-gray-200 focus:ring-blue-200'} focus:border-blue-600 focus:ring-4 transition-all outline-none`}
+            className={`w-full px-4 py-2.5 rounded-xl border ${errors.name ? 'border-red-600 focus:ring-red-200' : 'border-slate-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none placeholder-slate-400 text-slate-800`}
           />
           {errors.name && <p id="name-error" className="text-xs text-red-600 mt-1">{errors.name}</p>}
         </div>
 
         {/* Email Field */}
         <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <Mail size={16} className="text-blue-600" />
+          <label htmlFor="email" className="text-sm font-medium text-slate-700 flex items-center gap-2">
+            <Mail size={16} className="text-primary-500" />
             Email Address *
           </label>
           <input
@@ -165,33 +165,36 @@ const InquiryForm = ({ onSuccess = null }) => {
             onChange={handleChange}
             placeholder="Enter your email address"
             disabled={loading}
-            className={`w-full px-4 py-2.5 rounded-xl border ${errors.email ? 'border-red-600 focus:ring-red-200' : 'border-gray-200 focus:ring-blue-200'} focus:border-blue-600 focus:ring-4 transition-all outline-none`}
+            className={`w-full px-4 py-2.5 rounded-xl border ${errors.email ? 'border-red-600 focus:ring-red-200' : 'border-slate-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none placeholder-slate-400 text-slate-800`}
           />
           {errors.email && <p id="email-error" className="text-xs text-red-600 mt-1">{errors.email}</p>}
         </div>
 
         {/* Subject Field */}
         <div className="space-y-2">
-          <label htmlFor="subject" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-            <AlertCircle size={16} className="text-blue-600" />
+          <label htmlFor="subject" className="text-sm font-medium text-slate-700 flex items-center gap-2">
+            <AlertCircle size={16} className="text-primary-500" />
             Subject
           </label>
           <input
             id="subject"
+            aria-invalid={errors.subject ? 'true' : 'false'}
+            aria-describedby={errors.subject ? 'subject-error' : undefined}
             type="text"
             name="subject"
             value={formData.subject}
             onChange={handleChange}
             placeholder="What is your inquiry about? (optional)"
             disabled={loading}
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-primary-200 focus:border-primary-500 focus:ring-4 transition-all outline-none"
+            className={`w-full px-4 py-2.5 rounded-xl border ${errors.subject ? 'border-red-600 focus:ring-red-200' : 'border-slate-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none placeholder-slate-400 text-slate-800`}
           />
+          {errors.subject && <p id="subject-error" className="text-xs text-red-600 mt-1">{errors.subject}</p>}
         </div>
 
         {/* Message Field */}
         <div className="space-y-2">
-          <label htmlFor="message" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <MessageSquare size={16} className="text-blue-600" />
+          <label htmlFor="message" className="text-sm font-medium text-slate-700 flex items-center gap-2">
+            <MessageSquare size={16} className="text-primary-500" />
             Message *
           </label>
           <textarea
@@ -205,7 +208,7 @@ const InquiryForm = ({ onSuccess = null }) => {
             rows="5"
             maxLength={1000}
             disabled={loading}
-            className={`w-full px-4 py-2.5 rounded-xl border ${errors.message ? 'border-red-600 focus:ring-red-200' : 'border-gray-200 focus:ring-blue-200'} focus:border-blue-600 focus:ring-4 transition-all outline-none resize-none`}
+            className={`w-full px-4 py-2.5 rounded-xl border ${errors.message ? 'border-red-600 focus:ring-red-200' : 'border-slate-200 focus:ring-primary-200'} focus:border-primary-500 focus:ring-4 transition-all outline-none resize-none placeholder-slate-400 text-slate-800`}
           />
           <div className="flex justify-between items-center mt-1">
             {errors.message ? (
@@ -215,7 +218,7 @@ const InquiryForm = ({ onSuccess = null }) => {
             )}
             <span className={`text-xs font-medium transition-colors ${
               formData.message.length >= 900 ? 'text-red-600' : 
-              formData.message.length >= 800 ? 'text-blue-500' : 'text-gray-400'
+              formData.message.length >= 800 ? 'text-primary-500' : 'text-slate-400'
             }`}>
               {formData.message.length} / 1000
             </span>

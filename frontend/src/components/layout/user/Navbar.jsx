@@ -23,7 +23,7 @@ function Navbar() {
     { to: "/inquiry", label: "Send Inquiry" }
   ];
 
-  const isActiveRoute = (path) => location.pathname === path;
+  const isActiveRoute = (path) => location.pathname === path || location.pathname.startsWith(path + "/");
 
   return (
     <nav className="bg-white/95 backdrop-blur-md border-b border-gray-200/80 sticky top-0 z-50 shadow-sm">
@@ -62,15 +62,15 @@ function Navbar() {
                 className={`
                   relative px-5 py-2.5 rounded-xl font-semibold text-sm transition-all duration-300
                   ${isActiveRoute(link.to)
-                    ? "text-primary-600 bg-primary-50 shadow-sm"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-platinum-100"
+                    ? "text-blue-600 bg-blue-50 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-blue-50"
                   }
                 `}
               >
                 {link.label}
                 {isActiveRoute(link.to) && (
                   <Motion.div
-                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-primary-500 rounded-full"
+                    className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full"
                     layoutId="navbar-indicator"
                   />
                 )}
@@ -118,26 +118,26 @@ function Navbar() {
                         <>
                           <Link 
                             to="/my-inquiries" 
-                            className="flex items-center gap-3 w-full px-4 py-3 text-slate-700 rounded-xl hover:bg-platinum-50 transition-colors duration-200 group"
+                            className="flex items-center gap-3 w-full px-4 py-3 text-slate-700 rounded-xl hover:bg-blue-50 transition-colors duration-200 group"
                             onClick={() => setIsDropdownOpen(false)}
                           >
-                            <User className="w-4 h-4 text-primary-500" />
+                            <User className="w-4 h-4 text-blue-600" />
                             <span>My Inquiries</span>
                           </Link>
                           <Link 
                             to="/profile" 
-                            className="flex items-center gap-3 w-full px-4 py-3 text-slate-700 rounded-xl hover:bg-platinum-50 transition-colors duration-200 group"
+                            className="flex items-center gap-3 w-full px-4 py-3 text-slate-700 rounded-xl hover:bg-blue-50 transition-colors duration-200 group"
                             onClick={() => setIsDropdownOpen(false)}
                           >
-                            <Settings className="w-4 h-4 text-primary-500" />
+                            <Settings className="w-4 h-4 text-blue-600" />
                             <span>My Profile</span>
                           </Link>
                           <Link 
                             to="/bookings" 
-                            className="flex items-center gap-3 w-full px-4 py-3 text-slate-700 rounded-xl hover:bg-platinum-50 transition-colors duration-200 group"
+                            className="flex items-center gap-3 w-full px-4 py-3 text-slate-700 rounded-xl hover:bg-blue-50 transition-colors duration-200 group"
                             onClick={() => setIsDropdownOpen(false)}
                           >
-                            <History className="w-4 h-4 text-primary-500" />
+                            <History className="w-4 h-4 text-blue-600" />
                             <span>Booking History</span>
                           </Link>
                           <div className="border-t border-alabaster my-2" />
@@ -150,14 +150,14 @@ function Navbar() {
                           </button>
                         </>
                       ) : (
-                        <Link 
-                          to="/login" 
-                          className="flex items-center gap-3 w-full px-4 py-3 text-slate-700 rounded-xl hover:bg-platinum-50 transition-colors duration-200"
-                          onClick={() => setIsDropdownOpen(false)}
-                        >
-                          <User className="w-4 h-4 text-primary-500" />
-                          <span>Sign In</span>
-                        </Link>
+                          <Link 
+                            to="/login" 
+                            className="flex items-center gap-3 w-full px-4 py-3 text-slate-700 rounded-xl hover:bg-blue-50 transition-colors duration-200"
+                            onClick={() => setIsDropdownOpen(false)}
+                          >
+                            <User className="w-4 h-4 text-blue-600" />
+                            <span>Sign In</span>
+                          </Link>
                       )}
                     </div>
                   </Motion.div>
@@ -193,9 +193,9 @@ function Navbar() {
                     className={`
                       block px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-300
                       ${isActiveRoute(link.to)
-                        ? "text-primary-600 bg-primary-50"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-platinum-100"
-                      }
+                          ? "text-blue-600 bg-blue-50"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-blue-50"
+                        }
                     `}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
