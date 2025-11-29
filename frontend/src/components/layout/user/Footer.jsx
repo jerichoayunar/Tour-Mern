@@ -117,18 +117,7 @@ function Footer() {
               </div>
             </div>
 
-            {/* Business Hours (visible in Footer) */}
-            <div className="mt-6">
-              <h4 className="text-sm font-semibold text-white mb-2">Business Hours</h4>
-              <div className="text-slate-400 text-sm space-y-1">
-                <div>Mon–Fri: {settings?.businessHours?.weekday || '9:00 AM - 6:00 PM'}</div>
-                <div>Saturday: {settings?.businessHours?.saturday || '9:00 AM - 5:00 PM'}</div>
-                <div>Sunday: {settings?.businessHours?.sunday || 'Closed'}</div>
-                {settings?.businessHours?.timezone && (
-                  <div className="mt-1">Timezone: {settings.businessHours.timezone}</div>
-                )}
-              </div>
-            </div>
+            {/* Business Hours moved under Quick Links (see below) */}
           </div>
 
           {/* Quick Links */}
@@ -155,6 +144,16 @@ function Footer() {
                 </li>
               ))}
             </ul>
+            {/* Business Hours (placed under Quick Links) */}
+            <div className="mt-6">
+              <h4 className="text-lg font-semibold text-white mb-6 relative inline-block">Business Hours</h4>
+              <div className="text-slate-400 text-sm space-y-1">
+                <div>Mon–Fri: {settings?.businessHours?.weekday || '1:00 AM - 1:00 PM'}</div>
+                <div>Saturday: {settings?.businessHours?.saturday || '3:00 AM - 3:00 PM'}</div>
+                <div>Sunday: {settings?.businessHours?.sunday || 'Appointment'}</div>
+                <div className="mt-1">Timezone: {settings?.businessHours?.timezone || 'Asia/Manila'}</div>
+              </div>
+            </div>
           </div>
 
           {/* Follow Us & Legal */}

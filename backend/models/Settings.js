@@ -596,6 +596,9 @@ const SettingsSchema = new mongoose.Schema({
   // 🔍 AUDIT FIELDS - Track Changes
   // ========================================
   // Purpose: Know who changed settings and when
+  read_ts: { type: Number, default: 0 },
+  write_ts: { type: Number, default: 0 },
+
   version: {
     type: Number,
     default: 1
@@ -656,25 +659,61 @@ SettingsSchema.statics.getSettings = async function() {
  *   contact: { phone: '+63 912 345 6789' }
  * }, adminUserId);
  */
-SettingsSchema.statics.updateSettings = async function(updates, userId) {
+import { getTs, readWithTS, writeWithTS } from '../utils/tsop.js';
+
+SettingsSchema.statics.updateSettings = async function(updates, userId, opts = {}) {
   // Remove system fields to prevent conflicts
   const { _id, __v, version, createdAt, updatedAt, lastUpdatedBy, ...cleanUpdates } = updates;
+  const enableTsop = Boolean(process.env.ENABLE_TSOP) || Boolean(opts.enableTsop);
+
+  if (!enableTsop) {
+    const settings = await this.findOneAndUpdate(
+      {},
+      {
+        ...cleanUpdates,
+        lastUpdatedBy: userId,
+        $inc: { version: 1 }
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true
+      }
+    ).populate('lastUpdatedBy', 'name email');
+    return settings;
+  }
+
+  // Prefer client-provided txTs (opts.txTs) so the UI can start a transaction at read time
+  const txTs = opts && opts.txTs ? opts.txTs : getTs();
+  const Model = this;
+  // Read with TS check (throws on read conflict)
+  const base = await readWithTS(Model, {}, txTs);
   
-  const settings = await this.findOneAndUpdate(
-    {},
-    {
-      ...cleanUpdates,
-      lastUpdatedBy: userId,
-      $inc: { version: 1 }
-    },
-    {
-      new: true,
-      upsert: true,
-      runValidators: true
+  if (!base) {
+    const created = await this.create({ ...cleanUpdates, lastUpdatedBy: userId, write_ts: txTs });
+    return created;
+  }
+
+  // Attempt write using TSOP rules
+  try {
+    const res = await writeWithTS(
+      Model,
+      { _id: base._id },
+      { $set: { ...cleanUpdates, lastUpdatedBy: userId }, $inc: { version: 1 } },
+      txTs,
+      { new: true, runValidators: true }
+    );
+    // populate lastUpdatedBy for parity with non-TSOP flow
+    await res.populate('lastUpdatedBy', 'name email').execPopulate?.();
+    return res;
+  } catch (err) {
+    if (err && err.code && err.code.startsWith('TSOP_ABORT')) {
+      const e = new Error('TSOP abort: ' + err.message);
+      e.code = err.code;
+      throw e;
     }
-  ).populate('lastUpdatedBy', 'name email');
-  
-  return settings;
+    throw err;
+  }
 };
 
 const Settings = mongoose.model('Settings', SettingsSchema);

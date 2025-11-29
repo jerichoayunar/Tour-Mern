@@ -36,8 +36,11 @@ const Settings = () => {
   const handleSave = async (updates) => {
     try {
       setSaving(true);
-      
-      const response = await updateSettings(updates);
+      // Attach TSOP transaction timestamp if present on loaded settings
+      const payload = { ...updates };
+      if (settings && settings._txTs) payload._txTs = settings._txTs;
+
+      const response = await updateSettings(payload);
       const resp = response?.data ?? response;
       setSettings(resp?.data ?? resp ?? null);
       showToast('Settings updated successfully', 'success');

@@ -4,14 +4,14 @@ import { ShieldCheck, Headphones, Map, CreditCard } from 'lucide-react';
 
 const Inquiry = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="page-bg-auth min-h-screen py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto space-y-12">
         {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">
             Contact Us
           </h1>
-          <p className="text-base text-gray-600 max-w-2xl mx-auto">
+          <p className="text-base text-black-600 max-w-2xl mx-auto">
             Have questions about our tours or need a custom package? We're here to help you plan your perfect getaway.
           </p>
         </div>
