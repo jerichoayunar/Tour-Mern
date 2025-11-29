@@ -93,7 +93,10 @@ export const handleGoogleCallback = async (code) => {
     email: user.email,
     role: user.role,
     avatar: user.avatar,
-    loginMethod: user.loginMethod
+    loginMethod: user.loginMethod,
+    // Include contact/profile fields so frontend receives canonical data
+    phone: user.phone || '',
+    address: user.address || ''
   };
 
   return { token, userData };
@@ -116,7 +119,10 @@ export const getGoogleUserProfile = async (userId) => {
     name: user.name,
     email: user.email,
     role: user.role,
-    loginMethod: user.loginMethod
+    loginMethod: user.loginMethod,
+    phone: user.phone || '',
+    address: user.address || '',
+    avatar: user.avatar || ''
   };
 };
 

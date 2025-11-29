@@ -117,7 +117,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="min-h-[calc(100vh-200px)] bg-gradient-to-b from-gray-50 to-gray-100 py-8">
+    <div className="page-bg-auth min-h-[calc(100vh-200px)] py-8">
       <div className="container mx-auto px-4 max-w-4xl">
         <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
           {/* Profile Header */}

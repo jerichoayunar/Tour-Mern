@@ -51,7 +51,8 @@ export const getAllSettings = async () => {
     return normalizeResponse(response);
   } catch (error) {
     const message = error?.response?.data?.message || error?.message || String(error);
-    throw { success: false, message, response: { data: { message } } };
+    const status = error?.response?.status;
+    throw { success: false, message, status, response: { data: { message } } };
   }
 };
 
