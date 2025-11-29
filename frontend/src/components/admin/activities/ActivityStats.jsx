@@ -106,7 +106,7 @@ const ActivityStats = ({ activities }) => {
       title: 'Payments',
       value: stats.payments,
       description: 'Payment processing',
-      icon: '💳',
+      icon: '�',
       color: 'amber',
       trend: 'payments'
     }
