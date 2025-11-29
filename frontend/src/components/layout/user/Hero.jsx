@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, MapPin, ChevronDown } from "lucide-react";
 import { useSettings } from "../../../context/SettingsContext";
@@ -7,15 +7,37 @@ import heroImg from '../../../assets/images/bukid.jpg';
 function Hero() {
   const { settings } = useSettings();
   const heroRef = useRef(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   const siteName = settings?.general?.siteName || "Explore Bukidnon";
   const nameParts = siteName.split(" ");
   const firstPart = nameParts[0];
   const secondPart = nameParts.slice(1).join(" ") || "";
 
-  // Animations temporarily disabled to reduce JS parsing and runtime cost.
+  // Lightweight scroll-based animation to create a subtle parallax effect
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const windowHeight = window.innerHeight;
+      const heroHeight = heroRef.current?.offsetHeight || windowHeight;
+      const progress = Math.min(scrollY / (heroHeight * 0.7), 1);
+      setScrollProgress(progress);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const scrollToContent = () => window.scrollTo({ top: window.innerHeight, behavior: "smooth" });
+
+  const backgroundStyle = {
+    transform: `translateY(${scrollProgress * -20}px) scale(${1 + scrollProgress * 0.02})`
+  };
+
+  const heroContentStyle = {
+    opacity: 1 - scrollProgress * 1.5,
+    transform: `translateY(${scrollProgress * 40}px)`
+  };
 
   return (
     <section
@@ -34,13 +56,14 @@ function Hero() {
         width="1920"
         height="1080"
         className="absolute inset-0 w-full h-full object-cover"
+        style={backgroundStyle}
       />
 
       <div className="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-900/40 to-slate-900/70" />
       <div className="absolute inset-0 bg-gradient-to-r from-slate-900/50 via-transparent to-slate-900/50" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-black/20 to-transparent" />
 
-      <div className="relative z-10 text-center text-white px-6 max-w-6xl mx-auto">
+      <div className="relative z-10 text-center text-white px-6 max-w-6xl mx-auto" style={heroContentStyle}>
         <div className="hero-badge inline-flex items-center gap-3 bg-gradient-to-r from-blue-600/12 to-blue-500/12 backdrop-blur-lg border border-blue-300/20 rounded-2xl px-6 py-3 mb-8 shadow-sm relative overflow-hidden group hover:border-blue-300/40 transition-all duration-400">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/6 to-transparent skew-x-12 translate-x-[-120%] group-hover:translate-x-[120%] transition-transform duration-900" />
 
