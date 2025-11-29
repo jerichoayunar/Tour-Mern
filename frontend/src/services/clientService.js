@@ -1,12 +1,23 @@
 import api from './api';
 
+const normalizeResponse = (response) => {
+  const payload = response?.data || {};
+  return {
+    success: payload.success,
+    data: payload.data ?? payload,
+    message: payload.message,
+    token: payload.data?.token ?? payload.token
+  };
+};
+
 // Get all clients with filtering and pagination
 export const getClients = async (params = {}) => {
   try {
     const response = await api.get('/clients', { params });
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -14,9 +25,10 @@ export const getClients = async (params = {}) => {
 export const getClient = async (clientId) => {
   try {
     const response = await api.get(`/clients/${clientId}`);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -24,9 +36,10 @@ export const getClient = async (clientId) => {
 export const updateClient = async (clientId, clientData) => {
   try {
     const response = await api.put(`/clients/${clientId}`, clientData);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -34,9 +47,10 @@ export const updateClient = async (clientId, clientData) => {
 export const deleteClient = async (clientId) => {
   try {
     const response = await api.delete(`/clients/${clientId}`);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -44,9 +58,10 @@ export const deleteClient = async (clientId) => {
 export const archiveClient = async (clientId, reason = null) => {
   try {
     const response = await api.put(`/clients/${clientId}/archive`, { reason });
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -54,9 +69,10 @@ export const archiveClient = async (clientId, reason = null) => {
 export const restoreClient = async (clientId) => {
   try {
     const response = await api.put(`/clients/${clientId}/restore`);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -64,9 +80,10 @@ export const restoreClient = async (clientId) => {
 export const permanentDeleteClient = async (clientId) => {
   try {
     const response = await api.delete(`/clients/${clientId}/permanent`);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -74,9 +91,10 @@ export const permanentDeleteClient = async (clientId) => {
 export const getClientStats = async () => {
   try {
     const response = await api.get('/clients/stats');
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 

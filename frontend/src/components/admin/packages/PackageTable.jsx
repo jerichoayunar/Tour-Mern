@@ -5,7 +5,7 @@ import Button from "../../ui/Button";
 const PackageTable = ({ 
   data, 
   onEdit, 
-  onDelete,
+  _onDelete,
   isArchived = false,
   onArchive,
   onRestore,
@@ -33,15 +33,23 @@ const PackageTable = ({
 
   // Helper to calculate package-wide inclusion summary
   const getInclusionSummary = (packageItem) => {
+    const dayHasInclusion = (day, tag) => {
+      if (!day) return false;
+      const inc = day.inclusions;
+      if (Array.isArray(inc)) return inc.some(t => String(t).toLowerCase() === String(tag).toLowerCase());
+      if (inc && typeof inc === 'object') return !!inc[tag];
+      return false;
+    };
+
     if (!packageItem?.itinerary || !Array.isArray(packageItem.itinerary)) {
       return { transport: false, meals: false, stay: false };
     }
-    
+
     // Check if ANY day has each inclusion
-    const hasTransport = packageItem.itinerary.some(day => day?.inclusions?.transport);
-    const hasMeals = packageItem.itinerary.some(day => day?.inclusions?.meals);
-    const hasStay = packageItem.itinerary.some(day => day?.inclusions?.stay);
-    
+    const hasTransport = packageItem.itinerary.some(day => dayHasInclusion(day, 'transport'));
+    const hasMeals = packageItem.itinerary.some(day => dayHasInclusion(day, 'meals'));
+    const hasStay = packageItem.itinerary.some(day => dayHasInclusion(day, 'stay'));
+
     return { transport: hasTransport, meals: hasMeals, stay: hasStay };
   };
 
@@ -84,28 +92,30 @@ const PackageTable = ({
 
   // Enhanced inclusion indicator that shows day-specific summary
   const InclusionIndicator = ({ packageItem }) => {
-    const inclusionSummary = getInclusionSummary(packageItem);
-    
+    // Collect unique inclusions across all days (support array or legacy object)
+    const tags = new Set();
+    (packageItem?.itinerary || []).forEach(day => {
+      const inc = day?.inclusions;
+      if (Array.isArray(inc)) {
+        inc.forEach(t => { if (t) tags.add(String(t).trim()); });
+      } else if (inc && typeof inc === 'object') {
+        Object.keys(inc).forEach(k => { if (inc[k]) tags.add(String(k).trim()); });
+      }
+    });
+
+    const tagArray = Array.from(tags);
+
+    if (tagArray.length === 0) {
+      return <div className="text-xs text-gray-500">—</div>;
+    }
+
     return (
-      <div className="flex flex-col space-y-1 items-center">
-        <div className="flex items-center space-x-1" title="Transport included in some days">
-          <span className={`inline-block w-2 h-2 rounded-full ${inclusionSummary.transport ? 'bg-green-500' : 'bg-gray-300'}`} />
-          <span className="text-xs text-gray-600">
-            {inclusionSummary.transport ? 'Some' : 'No'} Transport
+      <div className="flex flex-wrap gap-2">
+        {tagArray.map((t, i) => (
+          <span key={i} className="inline-flex items-center bg-amber-50 border border-amber-100 rounded text-amber-700 text-xs px-2 py-1">
+            {t}
           </span>
-        </div>
-        <div className="flex items-center space-x-1" title="Meals included in some days">
-          <span className={`inline-block w-2 h-2 rounded-full ${inclusionSummary.meals ? 'bg-green-500' : 'bg-gray-300'}`} />
-          <span className="text-xs text-gray-600">
-            {inclusionSummary.meals ? 'Some' : 'No'} Meals
-          </span>
-        </div>
-        <div className="flex items-center space-x-1" title="Stay included in some days">
-          <span className={`inline-block w-2 h-2 rounded-full ${inclusionSummary.stay ? 'bg-green-500' : 'bg-gray-300'}`} />
-          <span className="text-xs text-gray-600">
-            {inclusionSummary.stay ? 'Some' : 'No'} Stay
-          </span>
-        </div>
+        ))}
       </div>
     );
   };
@@ -134,15 +144,12 @@ const PackageTable = ({
               <th className="px-6 py-4 font-medium text-center">Duration</th>
               <th className="px-6 py-4 font-medium text-center">Itinerary Days</th>
               <th className="px-6 py-4 font-medium text-center">Inclusions</th>
-              <th className="px-6 py-4 font-medium text-center">Status</th>
-              <th className="px-6 py-4 font-medium text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {data.map((pkg, index) => {
               const itinerary = pkg?.itinerary || [];
               const itineraryDays = itinerary.length;
-              
               return (
                 <tr
                   key={pkg._id || index}
@@ -174,24 +181,36 @@ const PackageTable = ({
                                 {itinerary.slice(0, 3).map((day, idx) => {
                                   const dayTitle = day?.title || 'Untitled Day';
                                   const dayNumber = day?.day || idx + 1;
-                                  const inclusions = day?.inclusions || {};
-                                  
+                                  const inc = day?.inclusions;
+
+                                  const dayInclusionList = Array.isArray(inc)
+                                    ? inc
+                                    : (inc && typeof inc === 'object')
+                                      ? Object.keys(inc).filter(k => inc[k])
+                                      : [];
+
+                                  const dayHas = (tag) => {
+                                    if (Array.isArray(inc)) return inc.some(t => String(t).toLowerCase() === String(tag).toLowerCase());
+                                    if (inc && typeof inc === 'object') return !!inc[tag];
+                                    return false;
+                                  };
+
                                   return (
                                     <span 
                                       key={idx}
                                       className="inline-flex items-center bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded"
-                                      title={`${dayTitle} - Transport: ${inclusions.transport ? 'Yes' : 'No'}, Meals: ${inclusions.meals ? 'Yes' : 'No'}, Stay: ${inclusions.stay ? 'Yes' : 'No'}`}
+                                      title={`${dayTitle} - Inclusions: ${dayInclusionList.join(', ') || 'None'}`}
                                     >
                                       <span>Day {dayNumber}: {dayTitle.length > 12 ? dayTitle.substring(0, 12) + '...' : dayTitle}</span>
                                       {/* Day inclusion indicators */}
                                       <div className="flex ml-1 space-x-1">
-                                        {inclusions.transport && (
+                                        {dayHas('transport') && (
                                           <span className="w-1.5 h-1.5 bg-green-500 rounded-full" title="Transport included"></span>
                                         )}
-                                        {inclusions.meals && (
+                                        {dayHas('meals') && (
                                           <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full" title="Meals included"></span>
                                         )}
-                                        {inclusions.stay && (
+                                        {dayHas('stay') && (
                                           <span className="w-1.5 h-1.5 bg-purple-500 rounded-full" title="Stay included"></span>
                                         )}
                                       </div>
@@ -305,27 +324,7 @@ const PackageTable = ({
         </table>
       </div>
 
-      {/* Table Footer with Enhanced Statistics */}
-      {data.length > 0 && (
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-          <div className="flex justify-between items-center text-sm text-gray-600">
-            <div>
-              Total packages: <span className="font-semibold text-gray-800">{data.length}</span>
-              {' • '}
-              Itinerary days: <span className="font-semibold text-gray-800">
-                {data.reduce((sum, pkg) => sum + ((pkg?.itinerary || []).length || 0), 0)}
-              </span>
-              {' • '}
-              Days with transport: <span className="font-semibold text-gray-800">
-                {data.reduce((sum, pkg) => sum + ((pkg?.itinerary || []).filter(day => day?.inclusions?.transport).length || 0), 0)}
-              </span>
-            </div>
-            <div className="text-xs text-gray-500">
-              {data.filter(p => p?.status === 'active').length} active packages
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Footer removed — kept table compact per admin preference */}
     </div>
   );
 };

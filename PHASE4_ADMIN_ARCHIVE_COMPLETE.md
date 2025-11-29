@@ -358,10 +358,10 @@ All migration scripts successfully:
 
 ### Remaining Admin Core Features:
 
-1. **Analytics Page** - Test existing implementation
-   - Verify charts and statistics
-   - Check data aggregation queries
-   - Ensure proper date range filtering
+1. **Analytics Page** - ARCHIVED / REMOVED
+  - The analytics module (frontend + backend) has been removed from the codebase.
+  - Dashboard charts remain implemented in `DashboardCharts.jsx` using dashboard `stats` data.
+  - Any historical notes about analytics testing are preserved here for traceability.
 
 2. **Dashboard Review** - Final verification
    - Confirm all stats display correctly

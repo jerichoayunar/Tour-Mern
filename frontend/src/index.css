@@ -353,3 +353,41 @@
     transform: none;
   }
 }
+
+/* Global typography & accessibility refinements */
+:root {
+  --ui-font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--ui-font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  line-height: 1.45;
+  color: #e6eef8;
+  background-color: #0b1220;
+}
+
+/* Improve focus visibility and reduce noisy outlines */
+:where(:focus-visible) {
+  outline: none;
+}
+
+/* provide a consistent focus ring used across components */
+.focus-ring {
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.12);
+  outline: none;
+}
+
+/* Accessibility: prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

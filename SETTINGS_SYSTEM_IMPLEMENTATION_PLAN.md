@@ -351,7 +351,7 @@ Implement a comprehensive settings management system that allows administrators 
     google: {
       oauthEnabled: { type: Boolean, default: false },
       recaptchaEnabled: { type: Boolean, default: false },
-      analyticsId: { type: String, default: "" }
+      analyticsId: { type: String, default: "" } // NOTE: Analytics module removed from codebase; this field retained for historical/compatibility reference
     },
     
     cloudinary: {

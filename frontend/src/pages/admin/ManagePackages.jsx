@@ -1,5 +1,5 @@
 // src/pages/admin/ManagePackages.jsx - REMOVED GLOBAL INCLUSIONS
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { 
   getPackages, 
   createPackage, 
@@ -12,6 +12,7 @@ import {
 import { useToast } from "../../context/ToastContext";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import Loader from "../../components/ui/Loader";
 import PackageTable from "../../components/admin/packages/PackageTable";
 import PackageForm from "../../components/admin/packages/PackageForm";
@@ -22,9 +23,18 @@ const ManagePackages = () => {
   // ------------------ STATE MANAGEMENT ------------------
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState({ search: '', status: '' });
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPackage, setEditingPackage] = useState(null);
   const [showArchived, setShowArchived] = useState(false); // 📦 ARCHIVE STATE
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    type: 'danger',
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    onConfirm: null
+  });
 
   // Format currency function for Philippine Peso
   const formatPrice = (price) => {
@@ -36,48 +46,35 @@ const ManagePackages = () => {
     }).format(price || 0);
   };
 
-  // UPDATED: Package statistics with ONLY day-specific inclusion calculations
+  // Ensure we always operate on an array (services may return normalized {data: []})
+  const packagesList = Array.isArray(packages) ? packages : (Array.isArray(packages?.data) ? packages.data : []);
+
+  // Compact package statistics used by the compact summary
   const packageStats = {
-    // Basic counts
-    total: packages.length,
-    active: packages.filter(p => p.status === 'active').length,
-    
-    // Day-specific inclusion statistics
-    daysWithTransport: packages.reduce((sum, pkg) => 
-      sum + (pkg.itinerary?.filter(day => day.inclusions?.transport).length || 0), 0),
-    daysWithMeals: packages.reduce((sum, pkg) => 
-      sum + (pkg.itinerary?.filter(day => day.inclusions?.meals).length || 0), 0),
-    daysWithStay: packages.reduce((sum, pkg) => 
-      sum + (pkg.itinerary?.filter(day => day.inclusions?.stay).length || 0), 0),
-    
-    // Packages that have at least one day with each inclusion
-    packagesWithSomeTransport: packages.filter(pkg => 
-      pkg.itinerary?.some(day => day.inclusions?.transport)).length,
-    packagesWithSomeMeals: packages.filter(pkg => 
-      pkg.itinerary?.some(day => day.inclusions?.meals)).length,
-    packagesWithSomeStay: packages.filter(pkg => 
-      pkg.itinerary?.some(day => day.inclusions?.stay)).length,
-    
-    // Financial statistics
-    totalValue: packages.reduce((sum, pkg) => sum + (pkg.price || 0), 0),
-    averagePrice: packages.length > 0 ? 
-      packages.reduce((sum, pkg) => sum + (pkg.price || 0), 0) / packages.length : 0,
-    
-    // Itinerary statistics
-    totalItineraryDays: packages.reduce((sum, pkg) => sum + (pkg.itinerary?.length || 0), 0),
-    averageDaysPerPackage: packages.length > 0 ? 
-      packages.reduce((sum, pkg) => sum + (pkg.itinerary?.length || 0), 0) / packages.length : 0
+    total: packagesList.length,
+    active: packagesList.filter(p => p.status === 'active').length,
+    totalItineraryDays: packagesList.reduce((sum, pkg) => sum + (pkg.itinerary?.length || 0), 0)
   };
 
   // ------------------ DATA FETCHING ------------------
-  const fetchPackages = async () => {
+  const fetchPackages = useCallback(async () => {
     try {
       setLoading(true);
       console.log(`🔄 Fetching ${showArchived ? 'archived' : 'active'} packages...`);
       // Pass archived filter
-      const response = await getPackages({ onlyArchived: showArchived });
-      console.log('✅ Packages data:', response);
-      setPackages(response || []);
+      const params = { onlyArchived: showArchived };
+      if (filters?.search) params.search = filters.search;
+      if (filters?.status) params.status = filters.status;
+      const response = await getPackages(params);
+      const resp = response?.data ?? response;
+      console.log('✅ Packages data:', resp);
+      // Normalize to array: support raw array, { success, data } or axios response
+      const packagesData = Array.isArray(resp)
+        ? resp
+        : (resp && resp.success !== undefined)
+          ? (Array.isArray(resp.data) ? resp.data : [])
+          : (Array.isArray(resp?.data) ? resp.data : []);
+      setPackages(packagesData);
     } catch (error) {
       console.error('❌ Packages error:', error);
       showToast(error.message || "Failed to fetch packages", "error");
@@ -85,12 +82,21 @@ const ManagePackages = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showArchived, showToast, filters]);
 
   // Fetch packages on component mount or when archive mode changes
   useEffect(() => {
     fetchPackages();
-  }, [showArchived]);
+  }, [fetchPackages]);
+
+  // ------------------ FILTER HANDLERS ------------------
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({ search: '', status: '' });
+  };
 
   // ------------------ CRUD OPERATIONS ------------------
   const handleSave = async (formData) => {
@@ -120,17 +126,25 @@ const ManagePackages = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this package? This action cannot be undone.")) return;
-    try {
-      setLoading(true);
-      await deletePackage(id);
-      showToast("Package deleted successfully", "success");
-      fetchPackages();
-    } catch (error) {
-      showToast(error.message || "Error deleting package", "error");
-    } finally {
-      setLoading(false);
-    }
+    setConfirmationModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Delete Package',
+      message: 'Are you sure you want to delete this package? This action cannot be undone.',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          await deletePackage(id);
+          showToast("Package deleted successfully", "success");
+          fetchPackages();
+        } catch (error) {
+          showToast(error.message || "Error deleting package", "error");
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   const handleEdit = (pkg) => {
@@ -145,20 +159,25 @@ const ManagePackages = () => {
 
   // Archive Package
   const handleArchive = async (pkg) => {
-    if (!window.confirm(`Are you sure you want to archive "${pkg.title}"?`)) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await archivePackage(pkg._id);
-      showToast("Package archived successfully", "success");
-      fetchPackages();
-    } catch (error) {
-      showToast(error.message || "Failed to archive package", "error");
-    } finally {
-      setLoading(false);
-    }
+    setConfirmationModal({
+      isOpen: true,
+      type: 'warning',
+      title: 'Archive Package',
+      message: `Are you sure you want to archive "${pkg.title}"?`,
+      confirmText: 'Archive',
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          await archivePackage(pkg._id);
+          showToast("Package archived successfully", "success");
+          fetchPackages();
+        } catch (error) {
+          showToast(error.message || "Failed to archive package", "error");
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   // Restore Package
@@ -177,20 +196,25 @@ const ManagePackages = () => {
 
   // Permanent Delete
   const handleDeletePermanent = async (pkg) => {
-    if (!window.confirm(`⚠️ WARNING: This will PERMANENTLY delete "${pkg.title}". This action CANNOT be undone. Are you sure?`)) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await deletePackagePermanent(pkg._id);
-      showToast("Package permanently deleted", "success");
-      fetchPackages();
-    } catch (error) {
-      showToast(error.message || "Failed to delete package", "error");
-    } finally {
-      setLoading(false);
-    }
+    setConfirmationModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Permanently Delete Package',
+      message: `⚠️ WARNING: This will PERMANENTLY delete "${pkg.title}". This action CANNOT be undone. Continue?`,
+      confirmText: 'Delete Forever',
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          await deletePackagePermanent(pkg._id);
+          showToast("Package permanently deleted", "success");
+          fetchPackages();
+        } catch (error) {
+          showToast(error.message || "Failed to delete package", "error");
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   // ------------------ RENDER COMPONENT ------------------
@@ -201,7 +225,7 @@ const ManagePackages = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Manage Tour Packages</h1>
           <p className="text-gray-600">
-            Create and manage your tour packages with day-specific inclusions. All prices in Philippine Peso (₱).
+            Create and manage your tour packages with day-specific inclusions.
           </p>
         </div>
         <Button 
@@ -226,127 +250,38 @@ const ManagePackages = () => {
         </Button>
       </div>
 
-      {/* UPDATED: Stats Summary with ONLY Day-Specific Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {/* Total Packages */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Packages</p>
-              <p className="text-2xl font-bold text-gray-900">{packageStats.total}</p>
-            </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <span className="text-blue-600 text-xl">📦</span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            {packageStats.active} active • {packageStats.totalItineraryDays} total days
-          </div>
-        </div>
+      {/* Compact summary removed to declutter header */}
 
-        {/* Portfolio Value */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Portfolio Value</p>
-              <p className="text-2xl font-bold text-green-600">{formatPrice(packageStats.totalValue)}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <span className="text-green-600 text-xl">💰</span>
-            </div>
+      {/* Filters */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Search packages</label>
+            <input
+              type="text"
+              value={filters.search}
+              onChange={(e) => handleFilterChange('search', e.target.value)}
+              placeholder="Search by title or description"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-700 placeholder-gray-500"
+            />
           </div>
-          <div className="mt-2 text-xs text-gray-500">
-            Avg: {formatPrice(packageStats.averagePrice)} per package
-          </div>
-        </div>
 
-        {/* Transport Coverage */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Transport Days</p>
-              <p className="text-2xl font-bold text-purple-600">{packageStats.daysWithTransport}</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <span className="text-purple-600 text-xl">🚗</span>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              value={filters.status}
+              onChange={(e) => handleFilterChange('status', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-700"
+            >
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
           </div>
-          <div className="mt-2 text-xs text-gray-500">
-            {packageStats.packagesWithSomeTransport} packages • {Math.round((packageStats.daysWithTransport / packageStats.totalItineraryDays) * 100) || 0}% coverage
-          </div>
-        </div>
 
-        {/* Comprehensive Packages */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Full Experience</p>
-              <p className="text-2xl font-bold text-orange-600">
-                {packageStats.packagesWithSomeTransport && 
-                 packageStats.packagesWithSomeMeals && 
-                 packageStats.packagesWithSomeStay ? 
-                 Math.min(packageStats.packagesWithSomeTransport, packageStats.packagesWithSomeMeals, packageStats.packagesWithSomeStay) : 0}
-              </p>
-            </div>
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <span className="text-orange-600 text-xl">⭐</span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            Packages with transport, meals & stay
-          </div>
-        </div>
-      </div>
-
-      {/* Additional Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Meals Coverage */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Meals Included</p>
-              <p className="text-2xl font-bold text-yellow-600">{packageStats.daysWithMeals} days</p>
-            </div>
-            <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <span className="text-yellow-600 text-lg">🍽️</span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            {packageStats.packagesWithSomeMeals} packages include meals
-          </div>
-        </div>
-
-        {/* Stay Coverage */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Accommodation</p>
-              <p className="text-2xl font-bold text-indigo-600">{packageStats.daysWithStay} nights</p>
-            </div>
-            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <span className="text-indigo-600 text-lg">🏨</span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            {packageStats.packagesWithSomeStay} packages include stay
-          </div>
-        </div>
-
-        {/* Average Itinerary */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Avg. Itinerary</p>
-              <p className="text-2xl font-bold text-teal-600">
-                {packageStats.averageDaysPerPackage.toFixed(1)} days
-              </p>
-            </div>
-            <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center">
-              <span className="text-teal-600 text-lg">📅</span>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-500">
-            {packageStats.totalItineraryDays} total planned days
+          <div className="flex items-center gap-2">
+            <button onClick={clearFilters} className="text-sm text-gray-600 hover:text-gray-900">Clear</button>
+            <Button onClick={fetchPackages} variant="primary">Apply</Button>
           </div>
         </div>
       </div>
@@ -359,7 +294,7 @@ const ManagePackages = () => {
         </div>
       ) : (
         <PackageTable 
-          data={packages} 
+          data={packagesList} 
           onEdit={handleEdit} 
           onDelete={handleDelete} 
           isArchived={showArchived}
@@ -382,6 +317,15 @@ const ManagePackages = () => {
           onCancel={() => setModalOpen(false)}
         />
       </Modal>
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmationModal.onConfirm}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        type={confirmationModal.type}
+        confirmText={confirmationModal.confirmText}
+      />
     </div>
   );
 };

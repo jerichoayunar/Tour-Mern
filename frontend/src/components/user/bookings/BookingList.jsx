@@ -11,6 +11,7 @@ const BookingList = ({
   onStatusUpdate, 
   onDelete, 
   onCancel, // Add onCancel prop
+  onViewDetails, // new prop to view booking details
   isAdmin = false 
 }) => {
   if (loading) {
@@ -36,7 +37,7 @@ const BookingList = ({
         </p>
         <button
           onClick={() => window.location.reload()}
-          className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-6 py-2 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+          className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-6 py-2 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg"
         >
           Try Again
         </button>
@@ -63,14 +64,15 @@ const BookingList = ({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" role="list" aria-label="Bookings list">
       {bookings.map((booking) => (
-        <div key={booking._id} className="animate-fade-in">
+        <div key={booking._id} className="animate-fade-in" role="listitem">
           <BookingCard
             booking={booking}
             onStatusUpdate={onStatusUpdate}
             onDelete={onDelete}
             onCancel={onCancel} // Pass onCancel prop
+            onViewDetails={onViewDetails}
             isAdmin={isAdmin}
           />
         </div>

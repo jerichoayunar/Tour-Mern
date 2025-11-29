@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { getAllSettings, updateSettings } from '../../services/settingsService';
 import Loader from '../../components/ui/Loader';
@@ -15,35 +15,32 @@ const Settings = () => {
   const [settings, setSettings] = useState(null);
 
   // Fetch all settings on mount
-  useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
+  const fetchSettings = useCallback(async () => {
     try {
       setLoading(true);
       const response = await getAllSettings();
-      if (response.success) {
-        setSettings(response.data);
-      }
+      const resp = response?.data ?? response;
+      setSettings(resp?.data ?? resp ?? null);
     } catch (error) {
       console.error('Error fetching settings:', error);
       showToast('Failed to load settings', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
 
   const handleSave = async (updates) => {
     try {
       setSaving(true);
       
       const response = await updateSettings(updates);
-      
-      if (response.success) {
-        setSettings(response.data);
-        showToast('Settings updated successfully', 'success');
-      }
+      const resp = response?.data ?? response;
+      setSettings(resp?.data ?? resp ?? null);
+      showToast('Settings updated successfully', 'success');
     } catch (error) {
       console.error('Error saving settings:', error);
       showToast(error.message || 'Failed to save settings', 'error');

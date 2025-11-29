@@ -2,7 +2,8 @@
 // ============================================================================
 // Session: Tour MERN MVP - Backend First Implementation
 // Focus: Fix critical gaps identified in Phase 3 verification
-// Priority: User Core Features Only (Defer Packages/Payments/Analytics)
+ Move to PHASE 4 Part 2: Admin Core Implementation 
+ - Note: Analytics module references in this document have been archived/removed from the codebase; dashboard charts continue to render via `DashboardCharts.jsx` using `adminService.getDashboardStats()`.
 // ============================================================================
 
 ## ✅ ALL 6 CRITICAL GAPS FIXED

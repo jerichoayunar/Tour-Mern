@@ -1,5 +1,5 @@
 // src/context/BookingContext.jsx
-import React, { createContext, useContext, useReducer, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useBookings } from '../hooks/useBookings';
 
@@ -76,58 +76,58 @@ export const BookingProvider = ({ children }) => {
   const { user } = useAuth();
   const {
     bookings,
-    loading,
-    error,
+    loading: _loading,
+    error: _error,
     fetchMyBookings,
     addBooking,
     updateStatus,
     removeBooking,
-    clearError,
+    clearError: _clearError,
   } = useBookings();
 
   // Load user's bookings when user changes
   useEffect(() => {
     if (user) {
-      loadUserBookings();
+      (async () => {
+        dispatch({ type: BOOKING_ACTIONS.SET_LOADING, payload: true });
+        try {
+          const data = await fetchMyBookings();
+          dispatch({ type: BOOKING_ACTIONS.SET_BOOKINGS, payload: data || [] });
+        } catch (err) {
+          dispatch({ type: BOOKING_ACTIONS.SET_ERROR, payload: err.message });
+        }
+      })();
     } else {
       dispatch({ type: BOOKING_ACTIONS.CLEAR_BOOKINGS });
     }
-  }, [user]);
+  }, [user, fetchMyBookings]);
 
-  const loadUserBookings = async () => {
-    dispatch({ type: BOOKING_ACTIONS.SET_LOADING, payload: true });
-    try {
-      await fetchMyBookings();
-      dispatch({ type: BOOKING_ACTIONS.SET_BOOKINGS, payload: bookings });
-    } catch (err) {
-      dispatch({ type: BOOKING_ACTIONS.SET_ERROR, payload: err.message });
-    }
-  };
-
-  const createNewBooking = async (bookingData) => {
+  const createNewBooking = useCallback(async (bookingData) => {
     dispatch({ type: BOOKING_ACTIONS.SET_LOADING, payload: true });
     try {
       const response = await addBooking(bookingData);
-      dispatch({ type: BOOKING_ACTIONS.ADD_BOOKING, payload: response.data });
+      // `addBooking` returns the created booking object (not axios response)
+      dispatch({ type: BOOKING_ACTIONS.ADD_BOOKING, payload: response });
       return response;
     } catch (err) {
       dispatch({ type: BOOKING_ACTIONS.SET_ERROR, payload: err.message });
       throw err;
     }
-  };
+  }, [addBooking]);
 
-  const updateBookingStatus = async (bookingId, status) => {
+  const updateBookingStatus = useCallback(async (bookingId, status) => {
     try {
       const response = await updateStatus(bookingId, status);
-      dispatch({ type: BOOKING_ACTIONS.UPDATE_BOOKING, payload: response.data });
+      // `updateStatus` returns the updated booking object
+      dispatch({ type: BOOKING_ACTIONS.UPDATE_BOOKING, payload: response });
       return response;
     } catch (err) {
       dispatch({ type: BOOKING_ACTIONS.SET_ERROR, payload: err.message });
       throw err;
     }
-  };
+  }, [updateStatus]);
 
-  const deleteBooking = async (bookingId) => {
+  const deleteBooking = useCallback(async (bookingId) => {
     try {
       await removeBooking(bookingId);
       dispatch({ type: BOOKING_ACTIONS.DELETE_BOOKING, payload: bookingId });
@@ -135,11 +135,21 @@ export const BookingProvider = ({ children }) => {
       dispatch({ type: BOOKING_ACTIONS.SET_ERROR, payload: err.message });
       throw err;
     }
-  };
+  }, [removeBooking]);
 
   const clearBookingError = () => {
     dispatch({ type: BOOKING_ACTIONS.SET_ERROR, payload: null });
   };
+
+  const loadUserBookings = useCallback(async () => {
+    dispatch({ type: BOOKING_ACTIONS.SET_LOADING, payload: true });
+    try {
+      await fetchMyBookings();
+      dispatch({ type: BOOKING_ACTIONS.SET_BOOKINGS, payload: bookings });
+    } catch (err) {
+      dispatch({ type: BOOKING_ACTIONS.SET_ERROR, payload: err.message });
+    }
+  }, [fetchMyBookings, bookings]);
 
   const value = useMemo(() => ({
     bookings: state.bookings,
@@ -150,7 +160,9 @@ export const BookingProvider = ({ children }) => {
     deleteBooking,
     loadUserBookings,
     clearBookingError,
-  }), [state.bookings, state.loading, state.error]);
+    // Local update helper for optimistic UI updates
+    updateBookingLocal: (booking) => dispatch({ type: BOOKING_ACTIONS.UPDATE_BOOKING, payload: booking }),
+  }), [state.bookings, state.loading, state.error, loadUserBookings, createNewBooking, deleteBooking, updateBookingStatus]);
 
   return (
     <BookingContext.Provider value={value}>

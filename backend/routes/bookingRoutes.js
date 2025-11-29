@@ -11,6 +11,7 @@ import {
   archiveBooking,
   restoreBooking,
   permanentDeleteBooking
+  , getRefundEstimate, updateAdminNotes, resendBookingConfirmation
 } from '../controllers/bookingController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { validateRequest } from '../middleware/validateMiddleware.js';
@@ -31,6 +32,10 @@ router.get('/mybookings', getMyBookings);
 
 // POST /api/bookings - Create a new booking (with validation)
 router.post('/', validateRequest(createBookingSchema), createBooking);
+
+// GET /api/bookings/:id - Get a specific booking by ID
+// GET /api/bookings/:id/refund-estimate - Get refund estimate (user/admin)
+router.get('/:id/refund-estimate', getRefundEstimate);
 
 // GET /api/bookings/:id - Get a specific booking by ID
 router.get('/:id', getBooking);
@@ -55,6 +60,12 @@ router.put('/:id/status', validateRequest(updateStatusSchema), updateBookingStat
 
 // PUT /api/bookings/:id/refund - Process refund approval/rejection
 router.put('/:id/refund', processRefund);
+
+// PUT /api/bookings/:id/notes - Save admin notes (admin only)
+router.put('/:id/notes', updateAdminNotes);
+
+// POST /api/bookings/:id/resend-confirmation - Resend confirmation email (admin only)
+router.post('/:id/resend-confirmation', resendBookingConfirmation);
 
 // PUT /api/bookings/:id/archive - Archive booking
 router.put('/:id/archive', archiveBooking);

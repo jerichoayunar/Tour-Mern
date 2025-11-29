@@ -1,7 +1,10 @@
 // src/components/admin/bookings/BookingDetailsModal.jsx - FIXED HOOK ORDER
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Button from "../../ui/Button";
 import BookingStatusBadge from "./BookingStatusBadge";
+import * as bookingService from '../../../services/bookingService';
+import { useToast } from '../../../context/ToastContext';
+import { useBooking } from '../../../context/BookingContext';
 
 const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
   // ============================================================================
@@ -9,13 +12,14 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
   // ============================================================================
   const [activeTab, setActiveTab] = useState("details");
   const [adminNotes, setAdminNotes] = useState("");
+  const [_savingNotes, setSavingNotes] = useState(false);
+  const { showToast } = useToast();
+  const { updateBookingLocal } = useBooking();
 
-  // 🛠️ FIX: Initialize adminNotes based on booking, but do it unconditionally
-  useState(() => {
-    if (booking?.adminNotes) {
-      setAdminNotes(booking.adminNotes);
-    }
-  });
+  // Initialize adminNotes when booking changes
+  useEffect(() => {
+    setAdminNotes(booking?.adminNotes || "");
+  }, [booking]);
 
   // ============================================================================
   // 🎯 MEMOIZED DATA FOR PERFORMANCE - MUST BE CALLED UNCONDITIONALLY
@@ -41,10 +45,16 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
     const clientEmail = booking.clientEmail || booking.user?.email || booking.client?.email || 'N/A';
     const clientPhone = booking.clientPhone || booking.user?.phone || booking.client?.phone || booking.phone || 'Not provided';
     
+    // Support multi-package bookings
     const packageInfo = booking.package || {};
-    const packageName = packageInfo.title || packageInfo.name || 'N/A';
-    const packagePrice = packageInfo.price || 0;
-    const packageDuration = packageInfo.duration || 'N/A';
+    const packagesArr = booking.packages || [];
+    const packageName = packagesArr && packagesArr.length > 0
+      ? packagesArr.map(p => p.title).join(', ')
+      : (packageInfo.title || packageInfo.name || 'N/A');
+    const packagePrice = packagesArr && packagesArr.length > 0
+      ? packagesArr.reduce((a,p) => a + (p.price || 0), 0)
+      : (packageInfo.price || 0);
+    const packageDuration = booking.totalDays || (packagesArr && packagesArr.length > 0 ? packagesArr.reduce((a,p) => a + (p.duration||0), 0) : packageInfo.duration || 'N/A');
     
     const bookingDate = booking.bookingDate || booking.preferredDate || booking.createdAt;
     const totalAmount = booking.totalPrice || booking.totalAmount || 0;
@@ -77,8 +87,36 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
     }
   };
 
-  const handleSaveNotes = () => {
-    console.log('Saving admin notes:', adminNotes);
+  const handleSaveNotes = async () => {
+    try {
+      setSavingNotes(true);
+      const res = await bookingService.saveAdminNotes(booking._id, adminNotes);
+      // bookingService returns axios response; extract updated booking
+      const updated = res?.data?.data || res?.data || res || {};
+      // Update context so lists/modals reflect new notes
+      if (updated && updated._id) {
+        updateBookingLocal(updated);
+      } else {
+        // If server returned minimal data, merge locally
+        updateBookingLocal({ ...booking, adminNotes });
+      }
+      showToast('Admin notes saved', 'success');
+    } catch (err) {
+      console.error('Failed to save admin notes', err);
+      showToast(err?.message || 'Failed to save notes', 'error');
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    try {
+      const res = await bookingService.resendConfirmation(booking._id);
+      showToast(res?.message || 'Confirmation email resent', 'success');
+    } catch (err) {
+      console.error('Failed to resend confirmation', err);
+      showToast(err?.message || 'Failed to resend confirmation', 'error');
+    }
   };
 
   // ============================================================================
@@ -287,16 +325,27 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
                 </div>
               </div>
               
-              {(booking.package?.transport !== undefined || booking.package?.meals !== undefined || booking.package?.stay !== undefined) && (
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Inclusions</label>
-                  <div className="flex space-x-4 text-sm">
-                    {booking.package?.transport && <span className="text-gray-700">🚗 Transport</span>}
-                    {booking.package?.meals && <span className="text-gray-700">🍽️ Meals</span>}
-                    {booking.package?.stay && <span className="text-gray-700">🏨 Stay</span>}
+              {/* Aggregate inclusions from packages when available */}
+              {(() => {
+                const packagesArr = booking.packages || [];
+                const hasPackages = packagesArr.length > 0;
+                const transport = hasPackages ? packagesArr.some(p => p.transport) : !!booking.package?.transport;
+                const meals = hasPackages ? packagesArr.some(p => p.meals) : !!booking.package?.meals;
+                const stay = hasPackages ? packagesArr.some(p => p.stay) : !!booking.package?.stay;
+
+                if (!transport && !meals && !stay) return null;
+
+                return (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Inclusions</label>
+                    <div className="flex space-x-4 text-sm">
+                      {transport && <span className="text-gray-700">🚗 Transport</span>}
+                      {meals && <span className="text-gray-700">🍽️ Meals</span>}
+                      {stay && <span className="text-gray-700">🏨 Stay</span>}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           )}
 
@@ -334,7 +383,7 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
           <div className="text-sm text-gray-500">
             Last updated: {new Date(booking.updatedAt || booking.createdAt).toLocaleString()}
           </div>
-          <div className="flex space-x-3">
+            <div className="flex space-x-3">
             {!booking.archived && (
               <>
                 {booking.status !== "confirmed" && booking.status !== "cancelled" && (
@@ -359,6 +408,11 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
                     variant="secondary"
                   >
                     🔄 Reopen Booking
+                  </Button>
+                )}
+                {booking.status === 'confirmed' && (
+                  <Button onClick={handleResendConfirmation} variant="outline">
+                    🔁 Resend Confirmation
                   </Button>
                 )}
               </>

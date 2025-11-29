@@ -116,7 +116,13 @@ export const createBooking = async (req, res, next) => {
 export const updateBookingStatus = async (req, res, next) => {
   try {
     // Call service layer to update booking status (admin only operation)
-    const booking = await bookingService.updateBookingStatus(req.params.id, req.body.status);
+    // When confirming, automatically mark payment as paid and record admin id.
+    const booking = await bookingService.updateBookingStatus(req.params.id, req.body.status, {
+      recordedBy: req.user._id,
+      paymentMethod: req.body.paymentMethod,
+      transactionId: req.body.transactionId,
+      autoMarkPayment: true
+    });
     
     // ✅ SEND BOOKING STATUS UPDATE EMAIL
     try {
@@ -401,6 +407,78 @@ export const permanentDeleteBooking = async (req, res, next) => {
       message: 'Booking permanently deleted!',
       data: {},
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc Get refund estimate for a booking (owner or admin)
+// @route GET /api/bookings/:id/refund-estimate
+// @access Private
+export const getRefundEstimate = async (req, res, next) => {
+  try {
+    const estimate = await bookingService.getRefundEstimate(req.params.id, req.user);
+    res.status(200).json({ success: true, data: estimate });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update admin notes on a booking (Admin only)
+// @route   PUT /api/bookings/:id/notes
+// @access  Private/Admin
+export const updateAdminNotes = async (req, res, next) => {
+  try {
+    const { notes } = req.body;
+    if (typeof notes !== 'string') {
+      return res.status(400).json({ success: false, message: 'Notes must be a string' });
+    }
+
+    const updated = await bookingService.updateAdminNotes(req.params.id, notes);
+
+    try {
+      await logActivity({
+        userId: req.user.id,
+        type: 'admin_updated_notes',
+        description: `Admin updated notes for booking ${updated._id}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        metadata: { bookingId: updated._id }
+      });
+    } catch (activityError) {
+      console.log('Activity logging failed for admin notes update:', activityError.message);
+    }
+
+    res.status(200).json({ success: true, data: updated });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Resend booking confirmation email (Admin only)
+// @route   POST /api/bookings/:id/resend-confirmation
+// @access  Private/Admin
+export const resendBookingConfirmation = async (req, res, next) => {
+  try {
+    const booking = await bookingService.getBooking(req.params.id, req.user);
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found' });
+
+    const sent = await emailService.sendBookingConfirmation(booking);
+
+    try {
+      await logActivity({
+        userId: req.user.id,
+        type: 'admin_resent_confirmation',
+        description: `Admin resent booking confirmation for ${booking._id}`,
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent'),
+        metadata: { bookingId: booking._id }
+      });
+    } catch (activityError) {
+      console.log('Activity logging failed for resend confirmation:', activityError.message);
+    }
+
+    res.status(200).json({ success: !!sent, message: sent ? 'Confirmation resent' : 'Failed to send confirmation' });
   } catch (error) {
     next(error);
   }

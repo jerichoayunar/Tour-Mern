@@ -376,6 +376,13 @@ const SettingsSchema = new mongoose.Schema({
       // EXAMPLE: Can't book tours starting in less than 2 days
       // WHY: Gives time for preparation and confirmation
     },
+    minGroupSize: {
+      type: Number,
+      default: 1,
+      min: 1
+      // WHERE USED: Booking form - minimum number of people allowed per booking
+      // EXAMPLE: "Minimum 1 person per booking"
+    },
     maxGroupSize: {
       type: Number,
       default: 20,

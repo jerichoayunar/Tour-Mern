@@ -19,8 +19,15 @@ export const usePackages = (initialFilters = {}) => {
       
       try {
         const response = await packageService.getPackages({});
-        console.log('✅ Packages fetched successfully:', response.length);
-        setPackages(response);
+        // Normalize response: support { success, data }, axios response, or raw array
+        const resp = response?.data ?? response;
+        let packagesData = [];
+        if (Array.isArray(resp)) packagesData = resp;
+        else if (resp && resp.success !== undefined) packagesData = Array.isArray(resp.data) ? resp.data : [];
+        else packagesData = Array.isArray(resp?.data) ? resp.data : [];
+
+        console.log('✅ Packages fetched successfully:', packagesData.length);
+        setPackages(packagesData);
       } catch (err) {
         console.error('❌ Error fetching packages:', err);
         const errorMessage = err.message || 'Failed to fetch packages';
@@ -40,10 +47,16 @@ export const usePackages = (initialFilters = {}) => {
     setError(null);
     
     try {
-      console.log('🔄 Refetching packages with filters:', customFilters);
-      const response = await packageService.getPackages(customFilters);
-      console.log('✅ Packages refetched:', response.length);
-      setPackages(response);
+    console.log('🔄 Refetching packages with filters:', customFilters);
+    const response = await packageService.getPackages(customFilters);
+    const resp = response?.data ?? response;
+    let packagesData = [];
+    if (Array.isArray(resp)) packagesData = resp;
+    else if (resp && resp.success !== undefined) packagesData = Array.isArray(resp.data) ? resp.data : [];
+    else packagesData = Array.isArray(resp?.data) ? resp.data : [];
+
+    console.log('✅ Packages refetched:', packagesData.length);
+    setPackages(packagesData);
     } catch (err) {
       console.error('❌ Error refetching packages:', err);
       const errorMessage = err.message || 'Failed to fetch packages';

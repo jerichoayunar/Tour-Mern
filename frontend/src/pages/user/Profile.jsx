@@ -3,7 +3,6 @@ import { useProfile } from '../../hooks/useProfile';
 import { useToast } from '../../context/ToastContext';
 import Loader from '../../components/ui/Loader';
 import { User, Mail, Phone, MapPin, Eye, EyeOff, Camera, Shield } from 'lucide-react';
-import './Profile.css';
 
 const Profile = () => {
   const { 
@@ -118,51 +117,43 @@ const Profile = () => {
   }
 
   return (
-    <div className="profile-container">
+    <div className="min-h-[calc(100vh-200px)] bg-gradient-to-b from-gray-50 to-gray-100 py-8">
       <div className="container mx-auto px-4 max-w-4xl">
-        <div className="profile-card">
+        <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
           {/* Profile Header */}
-          <div className="profile-header">
-            <div className="profile-avatar">
-              <img 
-                src={user.avatar || `https://ui-avatars.com/api/?name=${user.name}&background=random`} 
-                alt={user.name} 
-                className="w-full h-full object-cover rounded-full"
+          <div className="p-8 text-center relative bg-gradient-to-tr from-blue-50 to-white">
+            <div className="w-28 h-28 md:w-32 md:h-32 mx-auto rounded-full overflow-hidden border-4 border-white shadow-xl relative">
+              <img
+                src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`}
+                alt={user.name}
+                className="w-full h-full object-cover"
               />
               {isEditing && (
-                <button className="absolute bottom-0 right-0 bg-white p-2 rounded-full shadow-lg text-gray-600 hover:text-blue-600 transition-colors">
+                <button aria-label="Edit avatar" className="absolute bottom-2 right-2 bg-white p-2 rounded-full shadow text-gray-600 hover:text-blue-600 transition-colors">
                   <Camera size={16} />
                 </button>
               )}
             </div>
-            <h1 className="profile-name">{user.name}</h1>
-            <p className="profile-email">{user.email}</p>
-            <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-white/20 text-white text-sm backdrop-blur-sm">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mt-4">{user.name}</h1>
+            <p className="text-sm text-gray-500 mt-1">{user.email}</p>
+            <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-white/30 text-gray-700 text-sm">
               <Shield size={14} className="mr-2" />
               <span className="capitalize">{user.role || 'User'}</span>
             </div>
           </div>
 
           {/* Profile Content */}
-          <div className="profile-content">
+          <div className="p-6 md:p-8 bg-white">
             {/* Tabs */}
-            <div className="flex border-b border-gray-200 mb-8">
+            <div className="flex border-b border-gray-100 mb-8">
               <button
-                className={`px-6 py-3 font-medium text-sm transition-colors relative ${
-                  activeTab === 'info' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
+                className={`px-4 md:px-6 py-3 font-medium text-sm ${activeTab === 'info' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                 onClick={() => setActiveTab('info')}
               >
                 Personal Information
               </button>
               <button
-                className={`px-6 py-3 font-medium text-sm transition-colors relative ${
-                  activeTab === 'security' 
-                    ? 'text-blue-600 border-b-2 border-blue-600' 
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
+                className={`px-4 md:px-6 py-3 font-medium text-sm ${activeTab === 'security' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                 onClick={() => setActiveTab('security')}
               >
                 Security
@@ -171,78 +162,78 @@ const Profile = () => {
 
             {/* Personal Information Tab */}
             {activeTab === 'info' && (
-              <div className="animate-fadeIn">
+              <div>
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="profile-section-title mb-0 border-none">Personal Details</h2>
+                  <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-0">Personal Details</h2>
                   {!isEditing && (
-                    <button 
+                    <button
                       onClick={() => setIsEditing(true)}
-                      className="btn-secondary text-sm py-2 px-4"
+                      className="bg-white text-gray-700 text-sm py-2 px-4 rounded-lg border border-gray-200 hover:bg-gray-50"
                     >
                       Edit Profile
                     </button>
                   )}
                 </div>
 
-                <form onSubmit={handleProfileSubmit} className="profile-form">
+                <form onSubmit={handleProfileSubmit} className="w-full">
                   <div className="grid md:grid-cols-2 gap-6">
-                    <div className="form-group">
-                      <label className="form-label">Full Name</label>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Full Name</label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                           type="text"
                           name="name"
                           value={profileData.name}
                           onChange={handleProfileChange}
                           disabled={!isEditing || loading}
-                          className="form-input pl-10 w-full"
+                          className="pl-10 w-full border rounded-lg px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
                           placeholder="Enter your full name"
                         />
                       </div>
                     </div>
 
-                    <div className="form-group">
-                      <label className="form-label">Email Address</label>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Email Address</label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                           type="email"
                           value={user.email}
                           disabled={true}
-                          className="form-input pl-10 w-full opacity-70 cursor-not-allowed"
+                          className="pl-10 w-full border rounded-lg px-4 py-3 bg-gray-50 text-gray-700 cursor-not-allowed opacity-80"
                         />
                       </div>
                       <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
                     </div>
 
-                    <div className="form-group">
-                      <label className="form-label">Phone Number</label>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Phone Number</label>
                       <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                           type="tel"
                           name="phone"
                           value={profileData.phone}
                           onChange={handleProfileChange}
                           disabled={!isEditing || loading}
-                          className="form-input pl-10 w-full"
+                          className="pl-10 w-full border rounded-lg px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
                           placeholder="Enter your phone number"
                         />
                       </div>
                     </div>
 
-                    <div className="form-group">
-                      <label className="form-label">Address</label>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Address</label>
                       <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
                           type="text"
                           name="address"
                           value={profileData.address}
                           onChange={handleProfileChange}
                           disabled={!isEditing || loading}
-                          className="form-input pl-10 w-full"
+                          className="pl-10 w-full border rounded-lg px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
                           placeholder="Enter your address"
                         />
                       </div>
@@ -250,9 +241,9 @@ const Profile = () => {
                   </div>
 
                   {isEditing && (
-                    <div className="profile-actions">
-                      <button 
-                        type="button" 
+                    <div className="flex gap-4 justify-end mt-6">
+                      <button
+                        type="button"
                         onClick={() => {
                           setIsEditing(false);
                           setProfileData({
@@ -261,14 +252,14 @@ const Profile = () => {
                             address: user.address || ''
                           });
                         }}
-                        className="btn-secondary"
+                        className="bg-white text-gray-700 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50"
                         disabled={loading}
                       >
                         Cancel
                       </button>
-                      <button 
-                        type="submit" 
-                        className="btn-primary flex items-center"
+                      <button
+                        type="submit"
+                        className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-4 py-2 rounded-lg font-semibold shadow-sm hover:shadow-md flex items-center"
                         disabled={loading}
                       >
                         {loading ? (
@@ -288,79 +279,82 @@ const Profile = () => {
 
             {/* Security Tab */}
             {activeTab === 'security' && (
-              <div className="animate-fadeIn">
-                <h2 className="profile-section-title">Change Password</h2>
-                <form onSubmit={handlePasswordSubmit} className="profile-form max-w-lg">
-                  <div className="form-group">
-                    <label className="form-label">Current Password</label>
+              <div>
+                <h2 className="text-lg font-bold mb-4">Change Password</h2>
+                <form onSubmit={handlePasswordSubmit} className="max-w-lg space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Current Password</label>
                     <div className="relative">
                       <input
-                        type={showPasswords.current ? "text" : "password"}
+                        type={showPasswords.current ? 'text' : 'password'}
                         name="currentPassword"
                         value={passwordData.currentPassword}
                         onChange={handlePasswordChange}
                         disabled={loading}
-                        className="form-input w-full pr-10"
+                        className="w-full pr-10 border rounded-lg px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
                         placeholder="Enter current password"
                       />
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility('current')}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        aria-label="Toggle current password visibility"
                       >
                         {showPasswords.current ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">New Password</label>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">New Password</label>
                     <div className="relative">
                       <input
-                        type={showPasswords.new ? "text" : "password"}
+                        type={showPasswords.new ? 'text' : 'password'}
                         name="newPassword"
                         value={passwordData.newPassword}
                         onChange={handlePasswordChange}
                         disabled={loading}
-                        className="form-input w-full pr-10"
+                        className="w-full pr-10 border rounded-lg px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
                         placeholder="Enter new password (min 6 chars)"
                       />
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility('new')}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        aria-label="Toggle new password visibility"
                       >
                         {showPasswords.new ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
                   </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Confirm New Password</label>
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Confirm New Password</label>
                     <div className="relative">
                       <input
-                        type={showPasswords.confirm ? "text" : "password"}
+                        type={showPasswords.confirm ? 'text' : 'password'}
                         name="confirmPassword"
                         value={passwordData.confirmPassword}
                         onChange={handlePasswordChange}
                         disabled={loading}
-                        className="form-input w-full pr-10"
+                        className="w-full pr-10 border rounded-lg px-4 py-3 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-200"
                         placeholder="Confirm new password"
                       />
                       <button
                         type="button"
                         onClick={() => togglePasswordVisibility('confirm')}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        aria-label="Toggle confirm password visibility"
                       >
                         {showPasswords.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
                       </button>
                     </div>
                   </div>
 
-                  <div className="profile-actions justify-start">
-                    <button 
-                      type="submit" 
-                      className="btn-primary flex items-center"
+                  <div className="flex justify-start">
+                    <button
+                      type="submit"
+                      className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-4 py-2 rounded-lg font-semibold shadow-sm hover:shadow-md flex items-center"
                       disabled={loading}
                     >
                       {loading ? (

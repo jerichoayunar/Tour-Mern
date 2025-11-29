@@ -109,11 +109,11 @@ const Destinations = () => {
       {/* Enhanced Hero Section */}
       <div className="relative h-96 lg:h-[500px] overflow-hidden">
         {/* Background Slides with Destination Overlays */}
-        {heroSlides.map((slide, index) => (
+        {heroSlides.map((slide, _index) => (
           <div
             key={slide._id || slide.id}
             className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === currentSlide ? 'opacity-100' : 'opacity-0'
+              _index === currentSlide ? 'opacity-100' : 'opacity-0'
             }`}
           >
             <img
@@ -135,7 +135,7 @@ const Destinations = () => {
                 </div>
                 <button 
                   onClick={(e) => handleExploreNow(slide, e)}
-                  className="bg-gradient-to-r from-orange-500 to-rose-500 hover:from-orange-600 hover:to-rose-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 relative z-40 cursor-pointer active:scale-95"
+                  className="bg-gradient-to-r from-primary-600 to-blue-600 hover:from-primary-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 relative z-40 cursor-pointer active:scale-95"
                 >
                   Explore Now
                   <ExternalLink className="w-4 h-4" />
@@ -168,23 +168,23 @@ const Destinations = () => {
         {/* Slide Indicators */}
         {heroSlides.length > 1 && (
           <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-3 z-40">
-            {heroSlides.map((_, index) => (
+            {heroSlides.map((_, _index) => (
               <button
-                key={index}
+                key={_index}
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
-                  setCurrentSlide(index);
+                  setCurrentSlide(_index);
                 }}
                 className={`transition-all duration-300 cursor-pointer active:scale-95 ${
-                  index === currentSlide ? 'bg-white scale-125' : 'bg-white/50'
+                  _index === currentSlide ? 'bg-white scale-125' : 'bg-white/50'
                 }`}
                 style={{
                   width: '16px',
                   height: '16px',
                   borderRadius: '50%'
                 }}
-                aria-label={`Go to slide ${index + 1}`}
+                aria-label={`Go to slide ${_index + 1}`}
               />
             ))}
           </div>
@@ -200,7 +200,7 @@ const Destinations = () => {
             
             <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6 leading-tight">
               Explore
-              <span className="block bg-gradient-to-r from-orange-400 to-rose-400 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-primary-400 to-blue-400 bg-clip-text text-transparent">
                 Bukidnon
               </span>
             </h1>
