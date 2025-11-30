@@ -229,7 +229,7 @@ const PackageList = ({
         {packages.map((pkg, _index) => (
           <div
             key={pkg._id}
-            className="transition-all duration-300 hover:shadow-md"
+            className="transition-all duration-300 hover:shadow-md h-full"
           >
             <PackageCard 
               package={pkg} 

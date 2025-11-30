@@ -65,7 +65,7 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
 
   return (
     <div 
-      className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden border border-gray-200/60 hover:border-blue-200 focus-within:shadow-xl"
+      className="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 cursor-pointer overflow-hidden border border-gray-200/60 hover:border-blue-200 focus-within:shadow-xl flex flex-col h-full"
       onClick={() => onViewDetails(pkg._id)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -119,7 +119,7 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
       </div>
 
         {/* Content Section - Clean and Simple */}
-      <div className="p-5">
+      <div className="p-5 flex-1 flex flex-col">
         {/* Title and Price */}
         <div className="flex items-start justify-between mb-3">
           <h3 className="text-lg font-bold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors flex-1 mr-3">
@@ -209,8 +209,8 @@ const PackageCard = ({ package: pkg, onViewDetails }) => {
         )}
 
         {/* Simple CTA - FIXED CURSOR ISSUE */}
-        {/* Footer */}
-        <div className="pt-3 border-t border-gray-100 mt-3">
+        {/* Footer - stick to bottom for balanced cards */}
+        <div className="pt-3 border-t border-gray-100 mt-auto">
           <div className="flex items-center justify-between">
             <button
               onClick={(e) => { e.stopPropagation(); onViewDetails(pkg._id); }}
