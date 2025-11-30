@@ -60,9 +60,25 @@ const userSchema = new mongoose.Schema(
       sparse: true, // allows multiple nulls
     },
 
+    // ==================================================
+    // 🔹 GITHUB LOGIN FIELDS
+    // ==================================================
+    githubId: {
+      type: String,
+      sparse: true,
+    },
+    githubUsername: {
+      type: String,
+      default: null,
+    },
+    githubProfileUrl: {
+      type: String,
+      default: null,
+    },
+
     loginMethod: {
       type: String,
-      enum: ['local', 'google'],
+      enum: ['local', 'google', 'github'],
       default: 'local',
     },
 
