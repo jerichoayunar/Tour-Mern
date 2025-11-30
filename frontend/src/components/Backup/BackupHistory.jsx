@@ -99,17 +99,17 @@ const BackupHistory = () => {
         {total === 0 && <div className="text-sm text-gray-500">No backups yet.</div>}
 
         {pageItems.map((j) => (
-          <div key={j._id} className="flex items-start gap-3 p-3 border rounded-md">
+          <div key={j._id} className="flex items-start gap-3 p-3 bg-white rounded-md shadow-sm">
             <div className="shrink-0 pt-1"><IconStatus status={j.status} /></div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
-                <div className="font-medium">{j.type || 'manual'}</div>
+                <div className="font-medium truncate max-w-[60%]">{j.type || 'manual'}</div>
                 <div className="text-xs text-gray-500">{new Date(j.startedAt).toLocaleString()}</div>
               </div>
 
               <div className="mt-1 flex items-center justify-between">
                 <div className="text-sm text-gray-600">Status: <span className="font-medium">{j.status}</span></div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <div className="text-sm text-gray-500">Size: {humanBytes(j.sizeBytes)}</div>
                   <button onClick={() => toggleExpand(j._id)} className="text-sm text-blue-600 hover:underline">
                     {expanded.has(j._id) ? 'Hide' : 'Show'}
@@ -119,14 +119,14 @@ const BackupHistory = () => {
 
               {expanded.has(j._id) && (
                 <div className="mt-2 text-sm text-gray-700">
-                  {j.driveFileId && <div>Drive ID: {j.driveFileId}</div>}
+                  {j.driveFileId && <div className="break-all">Drive ID: {j.driveFileId}</div>}
                   {j.error && <div className="text-sm text-red-600 mt-1">Error: {j.error}</div>}
                   {j.files && j.files.length > 0 && (
                     <div className="mt-2">
                       <div className="font-medium">Files included</div>
                       <ul className="text-sm text-gray-600 list-disc list-inside mt-1">
                         {j.files.map((f, idx) => (
-                          <li key={idx}>{f.name} — {humanBytes(f.size)}</li>
+                          <li key={idx} className="break-all">{f.name} — {humanBytes(f.size)}</li>
                         ))}
                       </ul>
                     </div>

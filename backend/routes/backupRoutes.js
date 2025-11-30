@@ -1,5 +1,6 @@
 import express from 'express';
 import backupController from '../controllers/backupController.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -7,14 +8,15 @@ const router = express.Router();
 router.get('/auth/url', backupController.getAuthUrl);
 router.get('/auth/callback', backupController.handleAuthCallback);
 
-// Manual start
-router.post('/start', backupController.startManualBackup);
+// Manual start (protected)
+router.post('/start', protect, backupController.startManualBackup);
 
 // Status and history
-router.get('/status', backupController.getStatus);
-router.get('/history', backupController.getHistory);
+router.get('/status', protect, backupController.getStatus);
+router.get('/history', protect, backupController.getHistory);
+router.get('/download', protect, backupController.downloadFile);
 
 // Restore
-router.post('/restore', backupController.restoreBackup);
+router.post('/restore', protect, backupController.restoreBackup);
 
 export default router;

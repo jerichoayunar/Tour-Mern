@@ -20,6 +20,8 @@ const backupJobSchema = new mongoose.Schema(
     initiatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     encrypted: { type: Boolean, default: false },
     retentionKept: { type: Number, default: 0 }
+    ,
+    summaryDriveFileId: { type: String, default: null }
   },
   { timestamps: true }
 );

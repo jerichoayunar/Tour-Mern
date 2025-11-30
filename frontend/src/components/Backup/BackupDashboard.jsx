@@ -2,6 +2,7 @@ import React from 'react';
 import BackupButton from './BackupButton';
 import BackupStatus from './BackupStatus';
 import BackupHistory from './BackupHistory';
+import AdminBackupPanel from './AdminBackupPanel';
 
 const BackupDashboard = () => {
   return (
@@ -13,21 +14,15 @@ const BackupDashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         <div className="md:col-span-1">
-          <div className="bg-white shadow-sm rounded-lg p-4">
-            <h3 className="text-lg font-medium mb-3">Actions</h3>
-            <div className="mb-4">
-              <BackupButton />
-            </div>
-            <div>
-              <BackupStatus />
-            </div>
+          <div className="sticky top-6">
+            <AdminBackupPanel />
           </div>
         </div>
 
         <div className="md:col-span-2">
-          <div className="bg-white shadow-sm rounded-lg p-4">
+          <div className="bg-white rounded-lg p-4">
             <BackupHistory />
           </div>
         </div>

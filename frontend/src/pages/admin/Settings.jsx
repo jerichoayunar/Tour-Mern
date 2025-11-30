@@ -60,7 +60,7 @@ const Settings = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader size="large" />
+        <Loader size="lg" />
       </div>
     );
   }

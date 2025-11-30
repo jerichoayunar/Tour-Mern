@@ -1,0 +1,12 @@
+{
+  "watch": ["server.js", "routes", "controllers", "services"],
+  "ignore": [
+    "tmp/**",
+    "uploads/**",
+    "node_modules/**",
+    ".gdrive_token.json",
+    "**/*.log"
+  ],
+  "ext": "js,json",
+  "delay": "250"
+}

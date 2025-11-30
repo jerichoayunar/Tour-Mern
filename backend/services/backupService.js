@@ -7,8 +7,14 @@ import archiver from 'archiver';
 import crypto from 'crypto';
 import nodeCron from 'node-cron';
 import BackupJob from '../models/BackupJob.js';
+import Package from '../models/Package.js';
+import User from '../models/User.js';
+import Booking from '../models/Booking.js';
+import Destination from '../models/Destination.js';
+import Inquiry from '../models/Inquiry.js';
 import googleDriveService from './googleDriveService.js';
 import emailService from './emailService.js';
+import unzipper from 'unzipper';
 
 const TEMP_DIR = path.join(process.cwd(), 'tmp', 'backups');
 if (!fs.existsSync(TEMP_DIR)) fs.mkdirSync(TEMP_DIR, { recursive: true });
@@ -113,6 +119,100 @@ export const startBackup = async (options = {}) => {
     const remoteName = `tour-mern-backup-${timestamp}${encrypted ? '.zip.enc' : '.zip'}`;
     const { id, size } = await googleDriveService.uploadFile(fileToUpload, remoteName, folderId);
 
+    // 4b) Generate human-readable summary and upload it as a separate file
+    try {
+      const summary = {};
+      // Basic metadata
+      summary.timestamp = new Date().toISOString();
+      summary.backupFile = remoteName;
+      summary.sizeBytes = size;
+      // Collection stats
+      summary.collections = {
+        packages: await Package.countDocuments(),
+        users: await User.countDocuments(),
+        bookings: await Booking.countDocuments()
+      };
+      // Package/tour counts
+      summary.tourCounts = {
+        total: await Package.countDocuments(),
+        active: await Package.countDocuments({ archived: false, status: 'active' }),
+        archived: await Package.countDocuments({ archived: true })
+      };
+      // Cloudinary image count
+      summary.cloudinary = {
+        packagesWithImage: await Package.countDocuments({ 'image.isUploaded': true })
+      };
+      // Sample tours (safe fields only)
+      const samples = await Package.find({}).limit(10).select('title price duration itinerary image').lean();
+      summary.sampleTours = samples.map(s => ({
+        title: s.title,
+        price: s.price,
+        duration: s.duration,
+        itineraryDays: Array.isArray(s.itinerary) ? s.itinerary.length : 0,
+        imageUrl: s.image?.url || null
+      }));
+
+      // Users: count + safe samples (no emails/passwords)
+      const userCount = await User.countDocuments();
+      const userSamples = await User.find({}).limit(10).select('name role createdAt').lean();
+      summary.users = { count: userCount, samples: userSamples };
+
+      // Bookings: count + safe samples (omit client email/phone/payment info)
+      const bookingCount = await Booking.countDocuments();
+      const bookingSamples = await Booking.find({}).limit(10).select('bookingDate status clientName totalPrice package').populate('package','title').lean();
+      summary.bookings = { count: bookingCount, samples: bookingSamples.map(b => ({ bookingDate: b.bookingDate, status: b.status, clientName: b.clientName, totalPrice: b.totalPrice, packageTitle: b.package?.title || null })) };
+
+      // Destinations
+      const destCount = await Destination.countDocuments();
+      const destSamples = await Destination.find({}).limit(10).select('name location status').lean();
+      summary.destinations = { count: destCount, samples: destSamples };
+
+      // Inquiries
+      const inquiryCount = await Inquiry.countDocuments();
+      const inquirySamples = await Inquiry.find({}).limit(10).select('subject status createdAt').lean();
+      summary.inquiries = { count: inquiryCount, samples: inquirySamples };
+
+      // Uploads folder file count (if local uploads exist)
+      try {
+        const uploadsDir = path.join(process.cwd(), 'uploads');
+        let uploadFiles = 0;
+        if (fs.existsSync(uploadsDir)) {
+          const walk = (dir) => {
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            for (const e of entries) {
+              const p = path.join(dir, e.name);
+              if (e.isDirectory()) walk(p); else uploadFiles++;
+            }
+          };
+          walk(uploadsDir);
+        }
+        summary.uploads = { files: uploadFiles };
+      } catch (e) {
+        summary.uploads = { files: null };
+      }
+      // App version from package.json if available
+      try {
+        const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(),'package.json'),'utf8'));
+        summary.appVersion = pkg.version || null;
+      } catch (e) {}
+
+      const summaryPath = path.join(TEMP_DIR, `backup-summary-${timestamp}.json`);
+      fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2), 'utf8');
+
+      const summaryRemoteName = `backup-summary-${timestamp}.json`;
+      const summaryUpload = await googleDriveService.uploadFile(summaryPath, summaryRemoteName, folderId);
+      // store summary info in job
+      job.files = job.files || [];
+      job.files.push({ name: remoteName, path: null, size });
+      job.files.push({ name: summaryRemoteName, path: null, size: summaryUpload.size || 0 });
+      job.summaryDriveFileId = summaryUpload.id;
+      await job.save();
+      // cleanup summary file
+      try { fs.rmSync(summaryPath, { force: true }); } catch {}
+    } catch (err) {
+      console.warn('Failed to create/upload summary', err.message);
+    }
+
     // 5) Record completion
     job.status = 'completed';
     job.finishedAt = new Date();
@@ -157,7 +257,7 @@ export const startBackup = async (options = {}) => {
   }
 };
 
-export const restoreBackup = async ({ fileId }) => {
+export const restoreBackup = async ({ fileId, targetDb = 'tourdb_restore' }) => {
   if (!fileId) throw new Error('fileId is required');
   const job = new BackupJob({ type: 'manual', status: 'restoring', startedAt: new Date() });
   await job.save();
@@ -166,37 +266,94 @@ export const restoreBackup = async ({ fileId }) => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const downloadPath = path.join(TEMP_DIR, `download-${timestamp}`);
     if (!fs.existsSync(downloadPath)) fs.mkdirSync(downloadPath, { recursive: true });
-    const destFile = path.join(downloadPath, `backup-${timestamp}`);
-    await googleDriveService.downloadFile(fileId, destFile);
-    // If encrypted, decrypt
-    const encKey = process.env.BACKUP_ENCRYPTION_KEY;
-    let archivePath = destFile;
-    if (encKey) {
-      // assume IV is prepended
-      const iv = Buffer.alloc(16);
-      const inStream = fs.createReadStream(destFile);
-      // simple decrypt into archivePath + '.dec'
-      const decPath = destFile + '.dec';
-      const fd = fs.openSync(destFile, 'r');
-      const ivBuf = Buffer.alloc(16);
-      fs.readSync(fd, ivBuf, 0, 16, 0);
-      fs.closeSync(fd);
-      const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(encKey.slice(0,32),'utf8'), ivBuf);
-      const input = fs.createReadStream(destFile, { start: 16 });
-      const output = fs.createWriteStream(decPath);
-      await new Promise((resolve,reject)=>{
-        input.pipe(decipher).pipe(output).on('finish',resolve).on('error',reject);
-      });
-      archivePath = decPath;
-    }
-    // Extract and run mongorestore if dump exists
-    // We'll assume the archive contains a mongodump archive file
-    // For simplicity, write the archive to disk and rely on admin to verify restore
+    const destFile = path.join(downloadPath, `backup-${timestamp}.zip`);
 
+    // 1) Download file from Drive
+    currentJob.progress = 10;
+    await googleDriveService.downloadFile(fileId, destFile);
+    currentJob.progress = 30;
+
+    // 2) Attempt decrypt if key present (decrypt into .dec)
+    let workingZip = destFile;
+    const encKey = process.env.BACKUP_ENCRYPTION_KEY;
+    if (encKey && encKey.length >= 32) {
+      try {
+        const fd = fs.openSync(destFile, 'r');
+        const ivBuf = Buffer.alloc(16);
+        fs.readSync(fd, ivBuf, 0, 16, 0);
+        fs.closeSync(fd);
+        const decPath = destFile + '.dec';
+        const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(encKey.slice(0,32),'utf8'), ivBuf);
+        const input = fs.createReadStream(destFile, { start: 16 });
+        const output = fs.createWriteStream(decPath);
+        await new Promise((resolve,reject)=>{ input.pipe(decipher).pipe(output).on('finish',resolve).on('error',reject); });
+        workingZip = decPath;
+      } catch (e) {
+        // decryption failed — continue with original downloaded file
+      }
+    }
+
+    // 3) Extract zip
+    currentJob.progress = 50;
+    const extractDir = path.join(downloadPath, 'extracted');
+    if (!fs.existsSync(extractDir)) fs.mkdirSync(extractDir, { recursive: true });
+    await fs.createReadStream(workingZip).pipe(unzipper.Extract({ path: extractDir })).promise();
+
+    // 4) Find .archive file inside extracted folder
+    let archiveFile = null;
+    const findArchive = async (dir) => {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (const e of entries) {
+        const p = path.join(dir, e.name);
+        if (e.isDirectory()) {
+          await findArchive(p);
+          if (archiveFile) return;
+        } else if (e.isFile() && e.name.endsWith('.archive')) {
+          archiveFile = p; return;
+        }
+      }
+    };
+    await findArchive(extractDir);
+    if (!archiveFile && workingZip.endsWith('.archive')) archiveFile = workingZip;
+
+    if (!archiveFile) {
+      job.status = 'failed';
+      job.error = 'No mongodump archive found in backup';
+      job.finishedAt = new Date();
+      await job.save();
+      currentJob = { id: job._id, status: 'failed', error: job.error };
+      throw new Error('No mongodump archive found in backup');
+    }
+
+    // 5) Ensure mongorestore available
+    const mongorestoreCmd = process.env.MONGORESTORE_PATH || 'mongorestore';
+    try {
+      await execa(mongorestoreCmd, ['--version']);
+    } catch (e) {
+      job.status = 'failed'; job.error = 'mongorestore not found in PATH'; job.finishedAt = new Date(); await job.save(); currentJob = { id: job._id, status: 'failed', error: job.error }; throw new Error('mongorestore not found in PATH');
+    }
+
+    // 6) Run mongorestore into targetDb using nsFrom->nsTo mapping
+    currentJob.progress = 70;
+    // For mongorestore we prefer a server-only URI (no database path) so nsFrom/nsTo mappings work correctly.
+    const mongoUri = process.env.MONGO_RESTORE_URI || (() => {
+      const envUri = process.env.MONGO_URI || '';
+      if (!envUri) return 'mongodb://localhost:27017';
+      const m = envUri.match(/^(mongodb(?:\+srv)?:\/\/[^\/]+)(?:\/.*)?$/i);
+      return m ? m[1] : envUri;
+    })();
+      const nsFrom = 'tourdb.*';
+      const nsTo = `${targetDb}.*`;
+    await execa(mongorestoreCmd, [`--archive=${archiveFile}`, '--gzip', `--nsFrom=${nsFrom}`, `--nsTo=${nsTo}`, `--uri=${mongoUri}`], { stdio: 'inherit' });
+
+    currentJob.progress = 95;
     job.status = 'completed';
     job.finishedAt = new Date();
     await job.save();
     currentJob = { id: job._id, status: 'completed', progress: 100 };
+
+    // cleanup
+    try { fs.rmSync(downloadPath, { recursive: true, force: true }); } catch (e) {}
     return job;
   } catch (err) {
     console.error('Restore failed', err);
