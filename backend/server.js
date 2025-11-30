@@ -23,6 +23,8 @@ import helmet from 'helmet';
 import compression from 'compression';
 import connectDB from './config/db.js';
 import createAdmin from './utils/createAdmin.js';
+import passport from 'passport';
+import './config/passportGithub.js';
 import { apiLimiter, authLimiter } from './middleware/rateLimit.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
@@ -114,6 +116,9 @@ app.use(cors({
 }));
 
 app.use(express.json()); // Parses incoming JSON payloads (e.g. from POST requests)
+
+// Initialize Passport (for OAuth strategies)
+app.use(passport.initialize());
 
 // 4. Rate Limiting
 // Prevents abuse by limiting how many requests a user can make
