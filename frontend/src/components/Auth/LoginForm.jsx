@@ -23,7 +23,7 @@ function LoginForm({ onSwitchToRegister, onClose }) {
   // ======================================================
   // 🔹 HOOKS & CONTEXT
   // ======================================================
-  const { login, loading, error, clearError } = useAuth();
+  const { login, loading, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
   
   // ======================================================
@@ -97,7 +97,7 @@ function LoginForm({ onSwitchToRegister, onClose }) {
     }
     
     // Clear global authentication error
-    if (error) clearError();
+    if (authError) clearError();
   };
 
   /**
@@ -161,7 +161,7 @@ function LoginForm({ onSwitchToRegister, onClose }) {
     // Execute reCAPTCHA for security
     try {
       await executeRecaptcha();
-    } catch (error) {
+    } catch {
       setRecaptchaError('Please complete the security verification');
       return;
     }
@@ -229,7 +229,10 @@ function LoginForm({ onSwitchToRegister, onClose }) {
       localStorage.setItem('preAuthPath', window.location.pathname);
       
       // Redirect to backend Google OAuth endpoint
-      window.location.href = 'http://localhost:5000/api/auth/google';
+      // Use Vite env (if provided) and normalize root (strip trailing /api if present)
+      const viteApi = import.meta?.env?.VITE_API_URL;
+      const backendRoot = viteApi ? viteApi.replace(/\/api\/?$/i, '') : 'http://localhost:5000';
+      window.location.href = `${backendRoot}/api/auth/google`;
     }
   };
 
@@ -249,11 +252,11 @@ function LoginForm({ onSwitchToRegister, onClose }) {
       {/* ================================================== */}
       {/* 🔹 GLOBAL ERROR DISPLAY */}
       {/* ================================================== */}
-      {error && (
-        <div className="error-message modern-error">
-          {error}
-        </div>
-      )}
+      {authError && (
+            <div className="error-message modern-error">
+              {authError}
+            </div>
+          )}
 
       {/* ================================================== */}
       {/* 🔹 EMAIL FIELD */}

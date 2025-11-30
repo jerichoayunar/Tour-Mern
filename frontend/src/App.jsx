@@ -5,9 +5,10 @@ import { ToastProvider } from "./context/ToastContext.jsx";
 import { BookingProvider } from "./context/BookingContext.jsx";
 import { SettingsProvider } from "./context/SettingsContext.jsx";
 
-import ToastContainer from "./components/common/ToastContainer.jsx"; // 🧩 lowercase 'common' for consistency
+import ToastContainer from "./components/Common/ToastContainer.jsx";
 import LoadingSpinner from "./components/common/LoadingSpinner.jsx";
-import ScrollToTop from "./components/common/ScrollToTop.jsx";
+import ScrollToTop from "./components/Common/ScrollToTop.jsx";
+import ScrollToTopHandler from "./components/layout/ScrollToTopHandler.jsx";
 
 // Layouts
 import UserLayout from "./components/layout/user/UserLayout.jsx";
@@ -19,6 +20,8 @@ import Packages from "./pages/user/Packages.jsx";
 import Destinations from "./pages/user/Destinations.jsx";
 import Bookings from "./pages/user/Bookings.jsx";
 import Inquiry from "./pages/user/Inquiry.jsx";
+import MyInquiries from "./pages/user/MyInquiries.jsx";
+import About from "./pages/user/About.jsx";
 import Profile from "./pages/user/Profile.jsx";
 import Login from "./pages/user/Login.jsx";
 import Register from "./pages/user/Register.jsx";
@@ -34,11 +37,10 @@ const ManageDestinations = lazy(() => import("./pages/admin/ManageDestinations.j
 const ManageUsers = lazy(() => import("./pages/admin/ManageUsers.jsx"));
 const ManageActivities = lazy(() => import("./pages/admin/ManageActivities.jsx"));
 const ManageInquiries = lazy(() => import("./pages/admin/ManageInquiries.jsx"));
-const Analytics = lazy(() => import("./pages/admin/Analytics.jsx"));
 const Settings = lazy(() => import("./pages/admin/Settings.jsx"));
 
 // Protected Route
-import ProtectedRoute from "./components/common/ProtectedRoute.jsx"; 
+import ProtectedRoute from "./components/Common/ProtectedRoute.jsx"; 
 
 function App() {
   return (
@@ -48,6 +50,7 @@ function App() {
           <BookingProvider>
             <Router>
               <ToastContainer />
+              <ScrollToTopHandler />
               <ScrollToTop />
 
               <Routes>
@@ -58,6 +61,12 @@ function App() {
               <Route path="destinations" element={<Destinations />} />
               <Route path="bookings" element={<Bookings />} />
               <Route path="inquiry" element={<Inquiry />} />
+              <Route path="my-inquiries" element={
+                <ProtectedRoute>
+                  <MyInquiries />
+                </ProtectedRoute>
+              } />
+              <Route path="about" element={<About />} />
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
               <Route path="forgot-password" element={<ForgotPassword />} />
@@ -123,11 +132,7 @@ function App() {
                   <ManageInquiries />
                 </Suspense>
               } />
-              <Route path="analytics" element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Analytics />
-                </Suspense>
-              } />
+              
               <Route path="settings" element={
                 <Suspense fallback={<LoadingSpinner />}>
                   <Settings />

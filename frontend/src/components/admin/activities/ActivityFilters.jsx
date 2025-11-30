@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 
-const ActivityFilters = ({ activities = [], onFilterChange }) => {
+const ActivityFilters = ({ activities = [], onFilterChange, onTypeSelect }) => {
   const [filters, setFilters] = useState({
     activityType: '',
     dateFrom: '',
@@ -70,6 +70,11 @@ const ActivityFilters = ({ activities = [], onFilterChange }) => {
       ...prev,
       [key]: value
     }));
+
+    // If the activity type changed, notify parent to perform server-side fetch
+    if (key === 'activityType' && onTypeSelect) {
+      onTypeSelect(value);
+    }
   };
 
   const clearFilters = () => {
@@ -78,6 +83,9 @@ const ActivityFilters = ({ activities = [], onFilterChange }) => {
       dateFrom: '',
       dateTo: ''
     });
+
+    // If parent provided handler, clear server-side type filter as well
+    if (onTypeSelect) onTypeSelect('');
   };
 
   const hasActiveFilters = Object.values(filters).some(value => value !== '');
@@ -121,7 +129,11 @@ const ActivityFilters = ({ activities = [], onFilterChange }) => {
           </label>
           <select 
             value={filters.activityType}
-            onChange={(e) => handleFilterChange('activityType', e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              handleFilterChange('activityType', val);
+              if (onTypeSelect) onTypeSelect(val);
+            }}
             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors text-sm bg-white"
           >
             {activityTypes.map(type => (
@@ -235,6 +247,12 @@ const ActivityFilters = ({ activities = [], onFilterChange }) => {
           className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
         >
           Failed Logins
+        </button>
+        <button
+          onClick={() => handleFilterChange('activityType', 'password_changed')}
+          className="px-3 py-1 text-xs bg-pink-100 text-pink-700 rounded-lg hover:bg-pink-200 transition-colors"
+        >
+          Password Changes
         </button>
         <button
           onClick={() => handleFilterChange('activityType', 'login')}

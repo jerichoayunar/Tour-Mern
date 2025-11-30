@@ -157,5 +157,5 @@ frontend/
 
 *   **Project Type:** Full-featured Tour Booking Management System.
 *   **Roles:** Distinct User (Public) and Admin (Dashboard) interfaces.
-*   **Complexity:** Medium-High. Includes authentication, file uploads, complex data relationships (bookings, packages, users), and analytics.
+*   **Complexity:** Medium-High. Includes authentication, file uploads, complex data relationships (bookings, packages, users). Note: the analytics module was removed from the codebase and is no longer considered part of the active architecture.
 *   **Responsiveness:** Tailwind configuration suggests a mobile-first approach (`sm`, `md`, `lg` breakpoints used in Navbar).

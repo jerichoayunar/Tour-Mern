@@ -1,17 +1,27 @@
 // src/services/packageService.js - UPDATED FOR FORMDATA & ITINERARY
 import api from './api';
 
+const normalizeResponse = (response) => {
+  const payload = response?.data || {};
+  return {
+    success: payload.success,
+    data: payload.data ?? payload,
+    message: payload.message,
+    token: payload.data?.token ?? payload.token
+  };
+};
+
 // PUBLIC & ADMIN: Get all packages
 export const getPackages = async (filters = {}) => {
   try {
     const response = await api.get('/packages', { params: filters });
-    console.log('📦 Packages API Response:', response.data);
-    
-    // Handle the response structure: { success: true, data: [...] }
-    return response.data.data; // ✅ Return just the array of packages
+    const resp = response?.data ?? response;
+    console.log('📦 Packages API Response:', resp);
+    return normalizeResponse(response);
   } catch (error) {
     console.error('📦 Packages API Error:', error);
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -28,11 +38,13 @@ export const createPackage = async (packageData) => {
       : {};
     
     const response = await api.post('/packages', packageData, config);
-    console.log('✅ Create Package Response:', response.data);
-    return response.data.data; // ✅ Return the created package
+    const resp = response?.data ?? response;
+    console.log('✅ Create Package Response:', resp);
+    return normalizeResponse(response);
   } catch (error) {
     console.error('❌ Create Package Error:', error);
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -49,11 +61,13 @@ export const updatePackage = async (packageId, packageData) => {
       : {};
     
     const response = await api.put(`/packages/${packageId}`, packageData, config);
-    console.log('✅ Update Package Response:', response.data);
-    return response.data.data; // ✅ Return the updated package
+    const resp = response?.data ?? response;
+    console.log('✅ Update Package Response:', resp);
+    return normalizeResponse(response);
   } catch (error) {
     console.error('❌ Update Package Error:', error);
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -62,11 +76,13 @@ export const deletePackage = async (packageId) => {
   try {
     console.log('🗑️ Deleting package:', packageId);
     const response = await api.delete(`/packages/${packageId}`);
-    console.log('✅ Delete Package Response:', response.data);
-    return response.data; // ✅ Return the success message
+    const resp = response?.data ?? response;
+    console.log('✅ Delete Package Response:', resp);
+    return normalizeResponse(response);
   } catch (error) {
     console.error('❌ Delete Package Error:', error);
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -74,9 +90,10 @@ export const deletePackage = async (packageId) => {
 export const archivePackage = async (packageId, reason) => {
   try {
     const response = await api.put(`/packages/${packageId}/archive`, { reason });
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -84,9 +101,10 @@ export const archivePackage = async (packageId, reason) => {
 export const restorePackage = async (packageId) => {
   try {
     const response = await api.put(`/packages/${packageId}/restore`);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -94,9 +112,10 @@ export const restorePackage = async (packageId) => {
 export const deletePackagePermanent = async (packageId) => {
   try {
     const response = await api.delete(`/packages/${packageId}/permanent`);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -104,9 +123,10 @@ export const deletePackagePermanent = async (packageId) => {
 export const getPackage = async (packageId) => {
   try {
     const response = await api.get(`/packages/${packageId}`);
-    return response.data.data; // ✅ Return just the package object
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error.message;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 

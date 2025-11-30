@@ -1,12 +1,20 @@
 // services/settingsService.js
 import Settings from '../models/Settings.js';
 import ApiError from '../utils/ApiError.js';
+import { getTs } from '../utils/tsop.js';
 
 /**
  * Get all settings (admin access)
  */
 export const getSettings = async () => {
   const settings = await Settings.getSettings();
+  // If TSOP is enabled, provide a client-visible transaction timestamp
+  if (process.env.ENABLE_TSOP) {
+    // attach a read timestamp that client can use when saving (opt-in)
+    const obj = settings.toObject ? settings.toObject() : { ...settings };
+    obj._txTs = getTs();
+    return obj;
+  }
   return settings;
 };
 
@@ -15,11 +23,20 @@ export const getSettings = async () => {
  */
 export const updateSettings = async (updates, userId) => {
   try {
-    const settings = await Settings.updateSettings(updates, userId);
+    // If client provided a tx timestamp (_txTs), pass it into the model as opts
+    const txTs = updates && updates._txTs ? updates._txTs : undefined;
+    // Remove client-side helper field before saving
+    if (updates && updates._txTs) delete updates._txTs;
+
+    const settings = await Settings.updateSettings(updates, userId, { enableTsop: Boolean(process.env.ENABLE_TSOP), txTs });
     return settings;
   } catch (error) {
     if (error.name === 'ValidationError') {
       throw new ApiError(400, `Validation error: ${error.message}`);
+    }
+    // Map TSOP aborts to HTTP 409 Conflict for clarity in UI
+    if (error && error.code && error.code.startsWith && error.code.startsWith('TSOP_ABORT')) {
+      throw new ApiError(409, `Conflict (TSOP): ${error.message}`);
     }
     throw new ApiError(500, `Failed to update settings: ${error.message}`);
   }
@@ -62,6 +79,7 @@ export const getPublicSettings = async () => {
       whoWeAre: settings.aboutUs?.whoWeAre,
       mission: settings.aboutUs?.mission,
       vision: settings.aboutUs?.vision,
+      values: settings.aboutUs?.values,
       stats: {
         happyTravelers: settings.aboutUs?.stats?.happyTravelers,
         tourPackages: settings.aboutUs?.stats?.tourPackages,
@@ -86,6 +104,7 @@ export const getPublicSettings = async () => {
     },
     booking: {
       minAdvanceDays: settings.booking.minAdvanceDays,
+      minGroupSize: settings.booking.minGroupSize,
       maxGroupSize: settings.booking.maxGroupSize,
       cancellationPolicy: {
         days14Plus: settings.booking.cancellationPolicy.days14Plus,

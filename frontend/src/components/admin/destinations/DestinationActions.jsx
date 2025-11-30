@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 const DestinationActions = ({ 
   selectedDestinations, 
   onBulkStatusChange, 
-  onBulkDelete 
+  onBulkDelete,
+  onBulkDeleteRequest
 }) => {
   const [showActions, setShowActions] = useState(false);
 
@@ -35,9 +36,11 @@ const DestinationActions = ({
           {/* Bulk Delete */}
           <button
             onClick={() => {
-              if (window.confirm(`Delete ${selectedDestinations.length} destination(s)?`)) {
-                onBulkDelete(selectedDestinations);
+              if (onBulkDeleteRequest) {
+                return onBulkDeleteRequest(selectedDestinations);
               }
+              // If parent didn't provide a modal handler, call onBulkDelete directly
+              onBulkDelete && onBulkDelete(selectedDestinations);
             }}
             className="px-3 py-1.5 bg-red-100 text-red-700 rounded text-sm hover:bg-red-200 focus:ring-2 focus:ring-red-500"
           >

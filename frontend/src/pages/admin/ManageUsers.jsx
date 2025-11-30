@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { clientService } from '../../services/clientService';
 import ClientsTable from '../../components/admin/clients/ClientsTable';
 import ClientDetailsModal from '../../components/admin/clients/ClientDetailsModal';
 import AdminStatsCard from '../../components/admin/AdminStatsCard';
 import Loader from "../../components/ui/Loader";
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import { useToast } from '../../context/ToastContext';
 
 const ManageUsers = () => {
@@ -21,19 +22,17 @@ const ManageUsers = () => {
     loginMethod: 'all'
   });
   const { showToast } = useToast();
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    type: 'danger',
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    onConfirm: null
+  });
 
   // Fetch clients and stats on component mount
-  useEffect(() => {
-    fetchData();
-  }, [showArchived]); // Refetch when archive mode changes
-
-  // Apply filters when clients or filters change
-  useEffect(() => {
-    const filtered = clientService.filterClients(clients, filters);
-    setFilteredClients(filtered);
-  }, [clients, filters]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -44,20 +43,39 @@ const ManageUsers = () => {
         clientService.getClients(params),
         clientService.getClientStats()
       ]);
-      
-      setClients(clientsResponse.data.map(clientService.transformClientData));
-      setStats(statsResponse.data);
+
+      // clientService already returns parsed data (not axios response)
+      const respClients = clientsResponse?.data ?? clientsResponse;
+      const clientsData = Array.isArray(respClients) ? respClients : (respClients && respClients.success !== undefined ? (Array.isArray(respClients.data) ? respClients.data : []) : []);
+      setClients(clientsData.map(clientService.transformClientData));
+
+      const statsResp = statsResponse?.data ?? statsResponse;
+      const statsData = statsResp && statsResp.success !== undefined ? (statsResp.data ?? statsResp) : statsResp ?? null;
+      setStats(statsData);
     } catch (error) {
       showToast(error.message || 'Failed to fetch clients data', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [showArchived, showToast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]); // Refetch when archive mode changes
+
+  // Apply filters when clients or filters change
+  useEffect(() => {
+    const filtered = clientService.filterClients(clients, filters);
+    setFilteredClients(filtered);
+  }, [clients, filters]);
+
+  
 
   const handleViewClient = async (clientId) => {
     try {
       const response = await clientService.getClient(clientId);
-      setSelectedClient(clientService.transformClientData(response.data));
+      const clientData = response?.data ?? response;
+      setSelectedClient(clientService.transformClientData(clientData));
       setIsModalOpen(true);
     } catch (error) {
       showToast(error.message || 'Failed to fetch client details', 'error');
@@ -71,7 +89,7 @@ const ManageUsers = () => {
       // Update local state
       setClients(prev => prev.map(client => 
         client.id === clientId 
-          ? clientService.transformClientData(response.data)
+          ? clientService.transformClientData(response?.data ?? response)
           : client
       ));
       
@@ -79,9 +97,9 @@ const ManageUsers = () => {
 
       // Refresh stats
       const statsResponse = await clientService.getClientStats();
-      setStats(statsResponse.data);
+      setStats(statsResponse?.data ?? statsResponse ?? null);
 
-      return response.data;
+      return response?.data ?? response;
     } catch (error) {
       showToast(error.message || 'Failed to update client', 'error');
       throw error;
@@ -89,71 +107,66 @@ const ManageUsers = () => {
   };
 
   const handleArchiveClient = async (clientId) => {
-    if (!window.confirm('Are you sure you want to archive this client? They will be hidden from the main list but can be restored later.')) {
-      return;
-    }
-
-    try {
-      await clientService.archiveClient(clientId);
-      
-      // Update local state
-      setClients(prev => prev.filter(client => client.id !== clientId));
-      
-      showToast('Client archived successfully', 'success');
-
-      // Refresh stats
-      const statsResponse = await clientService.getClientStats();
-      setStats(statsResponse.data);
-    } catch (error) {
-      showToast(error.message || 'Failed to archive client', 'error');
-    }
+    setConfirmationModal({
+      isOpen: true,
+      type: 'warning',
+      title: 'Archive Client',
+      message: 'Are you sure you want to archive this client? They will be hidden from the main list but can be restored later.',
+      confirmText: 'Archive',
+      onConfirm: async () => {
+        try {
+          await clientService.archiveClient(clientId);
+          setClients(prev => prev.filter(client => client.id !== clientId));
+          showToast('Client archived successfully', 'success');
+          const statsResponse = await clientService.getClientStats();
+          setStats(statsResponse?.data ?? statsResponse ?? null);
+        } catch (error) {
+          showToast(error.message || 'Failed to archive client', 'error');
+        }
+      }
+    });
   };
 
   const handleRestoreClient = async (clientId) => {
-    if (!window.confirm('Are you sure you want to restore this client? They will become active again.')) {
-      return;
-    }
-
-    try {
-      await clientService.restoreClient(clientId);
-      
-      // Update local state
-      setClients(prev => prev.filter(client => client.id !== clientId));
-      
-      showToast('Client restored successfully', 'success');
-
-      // Refresh stats
-      const statsResponse = await clientService.getClientStats();
-      setStats(statsResponse.data);
-    } catch (error) {
-      showToast(error.message || 'Failed to restore client', 'error');
-    }
+    setConfirmationModal({
+      isOpen: true,
+      type: 'info',
+      title: 'Restore Client',
+      message: 'Are you sure you want to restore this client? They will become active again.',
+      confirmText: 'Restore',
+      onConfirm: async () => {
+        try {
+          await clientService.restoreClient(clientId);
+          setClients(prev => prev.filter(client => client.id !== clientId));
+          showToast('Client restored successfully', 'success');
+          const statsResponse = await clientService.getClientStats();
+          setStats(statsResponse?.data ?? statsResponse ?? null);
+        } catch (error) {
+          showToast(error.message || 'Failed to restore client', 'error');
+        }
+      }
+    });
   };
 
   const handlePermanentDelete = async (clientId) => {
-    const confirmText = prompt('WARNING: This action cannot be undone. Type "DELETE" to confirm permanent deletion:');
-    
-    if (confirmText !== 'DELETE') {
-      if (confirmText !== null) {
-        showToast('Deletion cancelled. You must type DELETE to confirm.', 'info');
+    setConfirmationModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Permanently Delete Client',
+      message: 'This will permanently delete the client and cannot be undone. Continue?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          await clientService.permanentDeleteClient(clientId);
+          setClients(prev => prev.filter(client => client.id !== clientId));
+          showToast('Client permanently deleted', 'success');
+          const statsResponse = await clientService.getClientStats();
+          setStats(statsResponse?.data ?? statsResponse ?? null);
+        } catch (error) {
+          showToast(error.message || 'Failed to delete client', 'error');
+        }
       }
-      return;
-    }
-
-    try {
-      await clientService.permanentDeleteClient(clientId);
-      
-      // Update local state
-      setClients(prev => prev.filter(client => client.id !== clientId));
-      
-      showToast('Client permanently deleted', 'success');
-
-      // Refresh stats
-      const statsResponse = await clientService.getClientStats();
-      setStats(statsResponse.data);
-    } catch (error) {
-      showToast(error.message || 'Failed to delete client', 'error');
-    }
+    });
   };
 
   const handleFiltersChange = (newFilters) => {
@@ -199,39 +212,7 @@ const ManageUsers = () => {
           </button>
         </div>
 
-        {/* Statistics Cards Grid - Hide when viewing archives */}
-        {stats && !showArchived && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <AdminStatsCard
-              title="Total Clients"
-              value={stats.totalClients}
-              trend={stats.growthRate}
-              icon="👥"
-              color="blue"
-            />
-            <AdminStatsCard
-              title="New Clients (30 days)"
-              value={stats.newClientsLast30Days}
-              trend="Last month"
-              icon="🆕"
-              color="green"
-            />
-            <AdminStatsCard
-              title="Active Clients"
-              value={stats.byStatus?.active || 0}
-              trend={`${stats.byStatus?.inactive || 0} inactive`}
-              icon="✅"
-              color="green"
-            />
-            <AdminStatsCard
-              title="Google Users"
-              value={stats.byLoginMethod?.google || 0}
-              trend={`${stats.byLoginMethod?.local || 0} local`}
-              icon="🔐"
-              color="purple"
-            />
-          </div>
-        )}
+        {/* Statistics Cards removed per request to declutter admin clients view */}
 
         {/* Clients Table Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -248,6 +229,16 @@ const ManageUsers = () => {
             onRefresh={fetchData}
           />
         </div>
+
+        <ConfirmationModal
+          isOpen={confirmationModal.isOpen}
+          onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={confirmationModal.onConfirm}
+          title={confirmationModal.title}
+          message={confirmationModal.message}
+          type={confirmationModal.type}
+          confirmText={confirmationModal.confirmText}
+        />
 
         {/* Client Details Modal */}
         {isModalOpen && selectedClient && (

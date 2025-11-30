@@ -15,7 +15,7 @@ We have successfully executed Phase 3 of the implementation plan, focusing on cl
   - Uninstalled `gsap` in favor of `framer-motion`.
 - **Refactoring:**
   - Refactored `Hero.jsx` to use `framer-motion` for animations, reducing bundle size and complexity.
-  - Verified `Analytics.jsx` was already using `recharts`.
+  - Note: `Analytics.jsx` referenced here was part of a previous admin analytics module which has since been removed; dashboard charting now uses `DashboardCharts.jsx`.
 
 ### 2. Production Logging (Task 3.2)
 - **Implemented Log Rotation:**

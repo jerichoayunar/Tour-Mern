@@ -27,7 +27,6 @@ import { apiLimiter, authLimiter } from './middleware/rateLimit.js';
 import { errorHandler } from './middleware/errorMiddleware.js';
 
 // 🧩 Import all route modules (The different sections of the API)
-import analyticsRoutes from './routes/analyticsRoutes.js';
 import { authRoutes } from './routes/authRoutes.js';
 import { destinationRoutes } from './routes/destinationRoutes.js';
 import { packageRoutes } from './routes/packageRoutes.js';
@@ -64,7 +63,15 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com"], // Allow Google OAuth
-      imgSrc: ["'self'", "data:", "https://res.cloudinary.com"], // Allow Cloudinary images
+      // Allow images from self, data URIs, Cloudinary and Google user content (Google profile pictures)
+      imgSrc: [
+        "'self'",
+        "data:",
+        "https://res.cloudinary.com",
+        "https://*.googleusercontent.com",
+        "https://lh3.googleusercontent.com",
+        "https://lh4.googleusercontent.com"
+      ],
       connectSrc: ["'self'", "https://accounts.google.com"],
       frameSrc: ["'self'", "https://accounts.google.com"] // For Google OAuth iframe
     }
@@ -186,7 +193,6 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/admin/settings', adminSettingsRoutes);
-app.use('/admin/analytics', analyticsRoutes);
 
 // ======================================================
 // 🔹 STEP 6: Global Error Handler

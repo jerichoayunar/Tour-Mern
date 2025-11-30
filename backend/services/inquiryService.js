@@ -128,7 +128,10 @@ export const createInquiry = async (inquiryData) => {
     name: name.trim(),
     email: email.trim().toLowerCase(),
     subject: subject ? subject.trim() : '',
-    message: message.trim()
+    message: message.trim(),
+    conversation: [
+      { sender: 'user', message: message.trim() }
+    ]
   });
 
   const createdInquiry = await inquiry.save();
@@ -155,6 +158,10 @@ export const updateInquiry = async (inquiryId, updateData, userId) => {
     inquiry.status = 'replied';
     inquiry.respondedBy = userId;
     inquiry.respondedAt = new Date();
+    // push admin message into conversation
+    if (!Array.isArray(inquiry.conversation)) inquiry.conversation = [];
+    inquiry.conversation.push({ sender: 'admin', message: response.trim(), createdAt: new Date() });
+    inquiry.response = response.trim();
   }
 
   const updatedInquiry = await inquiry.save();
@@ -163,6 +170,31 @@ export const updateInquiry = async (inquiryId, updateData, userId) => {
   await updatedInquiry.populate('respondedBy', 'name email');
   
   return updatedInquiry;
+};
+
+// Allow authenticated users to add a follow-up message to their own inquiry
+export const addUserReply = async (inquiryId, userEmail, message) => {
+  if (!message || !message.trim()) {
+    throw new ApiError(400, 'Message is required');
+  }
+
+  const inquiry = await Inquiry.findById(inquiryId);
+  if (!inquiry) {
+    throw new ApiError(404, 'Inquiry not found');
+  }
+
+  // Verify ownership by email
+  if (!inquiry.email || inquiry.email.toLowerCase() !== String(userEmail).toLowerCase()) {
+    throw new ApiError(403, 'You do not have permission to modify this inquiry');
+  }
+
+  if (!Array.isArray(inquiry.conversation)) inquiry.conversation = [];
+  inquiry.conversation.push({ sender: 'user', message: message.trim(), createdAt: new Date() });
+  // Mark as new so admins can see follow-up
+  inquiry.status = 'new';
+
+  const saved = await inquiry.save();
+  return saved;
 };
 
 // Delete inquiry

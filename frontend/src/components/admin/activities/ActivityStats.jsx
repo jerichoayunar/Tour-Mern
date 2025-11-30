@@ -19,6 +19,8 @@ const ActivityStats = ({ activities }) => {
         a.type === 'password_changed' ||
         a.type === 'account_suspended'
       ).length,
+      registrations: activities.filter(a => a.type === 'user_registered').length,
+      failedLogins: activities.filter(a => a.type === 'login_failed').length,
       bookings: activities.filter(a => a.type?.includes('booking')).length,
       payments: activities.filter(a => a.type?.includes('payment')).length,
       uniqueUsers: new Set(activities.map(a => a.userId?._id || a.userId).filter(Boolean)).size
@@ -69,6 +71,22 @@ const ActivityStats = ({ activities }) => {
       trend: 'logins'
     },
     {
+      title: 'Registrations',
+      value: stats.registrations,
+      description: 'New user sign-ups',
+      icon: '🆕',
+      color: 'emerald',
+      trend: 'registrations'
+    },
+    {
+      title: 'Failed Logins',
+      value: stats.failedLogins,
+      description: 'Failed authentication attempts',
+      icon: '🚫',
+      color: 'red',
+      trend: 'failed-logins'
+    },
+    {
       title: 'Security Events',
       value: stats.security,
       description: 'Security alerts',
@@ -88,7 +106,7 @@ const ActivityStats = ({ activities }) => {
       title: 'Payments',
       value: stats.payments,
       description: 'Payment processing',
-      icon: '💳',
+      icon: '�',
       color: 'amber',
       trend: 'payments'
     }
@@ -127,7 +145,7 @@ const ActivityStats = ({ activities }) => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6">
-        {statCards.map((stat, index) => (
+        {statCards.map((stat, _index) => (
           <div
             key={stat.title}
             className={`${getBgColor(stat.color)} rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 group`}

@@ -59,7 +59,7 @@ const InquiriesTable = ({
             minute: '2-digit'
           });
         }
-      } catch (e) {
+      } catch {
         // Ignore error
       }
     }

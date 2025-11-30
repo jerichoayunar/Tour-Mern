@@ -1,10 +1,12 @@
 // src/pages/user/Bookings.jsx
 import React, { useState, useContext, useEffect } from 'react';
 import { useBookings } from '../../hooks/useBookings';
+import * as bookingService from '../../services/bookingService';
 import { AuthContext } from "../../context/AuthContext";
 import BookingFilters from '../../components/user/bookings/BookingFilters';
 import BookingList from '../../components/user/bookings/BookingList';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
+import BookingDetailsModal from '../../components/user/bookings/BookingDetailsModal';
 import { LayoutDashboard, CheckCircle, Clock } from 'lucide-react';
 
 const Bookings = () => {
@@ -30,15 +32,28 @@ const Bookings = () => {
   const [bookingToDelete, setBookingToDelete] = useState(null);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [bookingToCancel, setBookingToCancel] = useState(null);
+  const [refundEstimate, setRefundEstimate] = useState(null);
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  
 
   // Load appropriate bookings based on view
   useEffect(() => {
     if (view === 'all' && isAdmin) {
       fetchBookings();
     } else {
-      fetchMyBookings();
+      fetchMyBookings(filters);
     }
-  }, [view, isAdmin]);
+  }, [view, isAdmin, fetchBookings, fetchMyBookings]);
+
+  // Refetch when filters change
+  useEffect(() => {
+    if (view === 'all' && isAdmin) {
+      fetchBookings(filters);
+    } else {
+      fetchMyBookings(filters);
+    }
+  }, [filters, view, isAdmin, fetchBookings, fetchMyBookings]);
 
   const handleStatusUpdate = async (bookingId, status) => {
     try {
@@ -59,9 +74,26 @@ const Bookings = () => {
     setDeleteModalOpen(true);
   };
 
-  const handleCancelClick = (bookingId) => {
-    setBookingToCancel(bookingId);
+  // bookingObj: full booking object from BookingCard
+  const handleCancelClick = (bookingObj) => {
+    setBookingToCancel(bookingObj);
     setCancelModalOpen(true);
+    setRefundEstimate(null);
+    // Fetch server estimate (non-blocking)
+    (async () => {
+      try {
+        const res = await bookingService.getRefundEstimate(bookingObj._id);
+        setRefundEstimate(res.data);
+      } catch (err) {
+        console.error('Failed to fetch refund estimate:', err);
+        setRefundEstimate(null);
+      }
+    })();
+  };
+
+  const handleViewDetails = (bookingObj) => {
+    setSelectedBooking(bookingObj);
+    setDetailsModalOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -78,7 +110,7 @@ const Bookings = () => {
   const confirmCancel = async () => {
     if (bookingToCancel) {
       try {
-        await cancelBooking(bookingToCancel);
+        await cancelBooking(bookingToCancel._id || bookingToCancel);
         setBookingToCancel(null);
       } catch (error) {
         console.error('Failed to cancel booking:', error);
@@ -92,14 +124,20 @@ const Bookings = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="page-bg-auth">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Bookings Management</h1>
-          <p className="text-gray-600">Manage your tour bookings and reservations</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-blue-50 text-black rounded-xl flex items-center justify-center">
+            <LayoutDashboard className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-black">Bookings</h1>
+            <p className="text-sm text-black/80">Manage and review your bookings and their statuses.</p>
+          </div>
         </div>
-        
+
         {isAdmin && (
           <div className="bg-gray-100 p-1 rounded-xl flex items-center">
             <button 
@@ -126,19 +164,19 @@ const Bookings = () => {
         )}
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar */}
-        <aside className="lg:w-1/4 space-y-6">
+      <div className="space-y-6">
+        {/* Top Filters */}
+        <div>
           <BookingFilters
             filters={filters}
             onFilterChange={updateFilters}
             onClearFilters={clearFilters}
             isAdmin={isAdmin && view === 'all'}
           />
-        </aside>
+        </div>
 
         {/* Main Content */}
-        <main className="lg:w-3/4 space-y-6">
+        <main className="space-y-6">
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
@@ -164,8 +202,8 @@ const Bookings = () => {
             </div>
             
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-              <div className="p-3 bg-amber-50 rounded-full">
-                <Clock className="w-6 h-6 text-amber-500" />
+              <div className="p-3 bg-blue-50 rounded-full">
+                <Clock className="w-6 h-6 text-blue-600" />
               </div>
               <div>
                 <div className="text-2xl font-bold text-gray-900">
@@ -183,10 +221,17 @@ const Bookings = () => {
             onStatusUpdate={isAdmin ? handleStatusUpdate : null}
             onDelete={handleDeleteClick}
             onCancel={handleCancelClick}
+            onViewDetails={handleViewDetails}
             isAdmin={isAdmin && view === 'all'}
           />
         </main>
       </div>
+
+      <BookingDetailsModal
+        booking={selectedBooking}
+        isOpen={detailsModalOpen}
+        onClose={() => { setDetailsModalOpen(false); setSelectedBooking(null); }}
+      />
 
       <ConfirmationModal
         isOpen={deleteModalOpen}
@@ -200,13 +245,91 @@ const Bookings = () => {
 
       <ConfirmationModal
         isOpen={cancelModalOpen}
-        onClose={() => setCancelModalOpen(false)}
+        onClose={() => { setCancelModalOpen(false); setRefundEstimate(null); }}
         onConfirm={confirmCancel}
         title="Cancel Booking"
-        message="Are you sure you want to cancel this booking? Cancellation fees may apply."
+        message={(() => {
+          if (!bookingToCancel) return 'Are you sure you want to cancel this booking? Cancellation fees may apply.';
+
+          // If booking is not confirmed, explicitly tell the user there is no refund eligibility.
+          if (bookingToCancel.status !== 'confirmed') {
+            return (
+              <div className="text-left">
+                <p className="mb-2">Are you sure you want to cancel this booking?</p>
+                <div className="bg-gray-50 p-3 rounded mb-2">
+                  <p className="text-sm text-gray-600">Booking: <strong>{(bookingToCancel.packages && bookingToCancel.packages.length > 0) ? bookingToCancel.packages.map(p => p.title).join(', ') : (bookingToCancel.package?.title || bookingToCancel.destinationName || 'Selected package')}</strong></p>
+                  <p className="text-sm text-gray-600">Date: <strong>{new Date(bookingToCancel.bookingDate || bookingToCancel.createdAt).toLocaleDateString()}</strong></p>
+                  <p className="text-sm text-gray-600">Guests: <strong>{bookingToCancel.guests || 1}</strong></p>
+                </div>
+                <div className="bg-blue-50 p-3 rounded">
+                  <p className="text-sm text-gray-700">This booking is not confirmed. Cancelling will not be eligible for a refund.</p>
+                  <p className="text-xs text-gray-500 mt-2">If you need assistance, contact support or an administrator.</p>
+                </div>
+              </div>
+            );
+          }
+
+          const estimate = refundEstimate;
+
+          if (!estimate) {
+            // fallback to client-side computation like before while server responds
+            const now = new Date();
+            const tourDate = new Date(bookingToCancel.bookingDate || bookingToCancel.createdAt);
+            const daysUntil = Math.ceil((tourDate - now) / (1000 * 60 * 60 * 24));
+            let refundAmount = 0;
+            let refundPercentage = 0;
+            const total = bookingToCancel.totalPrice || bookingToCancel.totalAmount || 0;
+
+            if (daysUntil >= 14) {
+              refundAmount = total;
+              refundPercentage = 100;
+            } else if (daysUntil >= 7) {
+              refundAmount = Math.floor(total * 0.5);
+              refundPercentage = 50;
+            } else {
+              refundAmount = 0;
+              refundPercentage = 0;
+            }
+
+            return (
+              <div className="text-left">
+                <p className="mb-2">Are you sure you want to cancel this booking?</p>
+                <div className="bg-gray-50 p-3 rounded mb-2">
+                  <p className="text-sm text-gray-600">Booking: <strong>{(bookingToCancel.packages && bookingToCancel.packages.length > 0) ? bookingToCancel.packages.map(p => p.title).join(', ') : (bookingToCancel.package?.title || bookingToCancel.destinationName || 'Selected package')}</strong></p>
+                  <p className="text-sm text-gray-600">Date: <strong>{new Date(bookingToCancel.bookingDate || bookingToCancel.createdAt).toLocaleDateString()}</strong></p>
+                  <p className="text-sm text-gray-600">Guests: <strong>{bookingToCancel.guests || 1}</strong></p>
+                </div>
+                <div className="bg-blue-50 p-3 rounded">
+                  <p className="text-sm text-gray-700">Estimated Refund: <strong>₱{(refundAmount || 0).toLocaleString()}</strong> ({refundPercentage}%)</p>
+                  <p className="text-xs text-gray-500 mt-2">Refund policy: Full refund if cancelled ≥14 days before; 50% if 7–13 days; no refund if &lt;7 days.</p>
+                </div>
+              </div>
+            );
+          }
+
+          // Server-provided estimate
+          return (
+            <div className="text-left">
+              <p className="mb-2">Are you sure you want to cancel this booking?</p>
+              <div className="bg-gray-50 p-3 rounded mb-2">
+                <p className="text-sm text-gray-600">Booking: <strong>{estimate.packageTitle || ((bookingToCancel.packages && bookingToCancel.packages.length > 0) ? bookingToCancel.packages.map(p => p.title).join(', ') : (bookingToCancel.package?.title || 'Selected package'))}</strong></p>
+                <p className="text-sm text-gray-600">Date: <strong>{new Date(estimate.bookingDate || bookingToCancel.bookingDate || bookingToCancel.createdAt).toLocaleDateString()}</strong></p>
+                <p className="text-sm text-gray-600">Guests: <strong>{bookingToCancel.guests || 1}</strong></p>
+              </div>
+              <div className="bg-blue-50 p-3 rounded">
+                <p className="text-sm text-gray-700">Estimated Refund: <strong>₱{(estimate.refundAmount || 0).toLocaleString()}</strong> ({estimate.refundPercentage}%)</p>
+                <p className="text-xs text-gray-500 mt-2">Refund policy: Full refund if cancelled ≥14 days before; 50% if 7–13 days; no refund if &lt;7 days.</p>
+                <p className="text-xs text-gray-500 mt-1">This estimate comes from the server and is authoritative.</p>
+              </div>
+            </div>
+          );
+        })()}
         confirmText="Cancel Booking"
         type="warning"
       />
+
+      {/* Rebook flow removed — UI for duplicating bookings has been disabled */}
+      </div>
     </div>
   );
 };

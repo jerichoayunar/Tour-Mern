@@ -31,20 +31,12 @@ const packageSchema = new mongoose.Schema({
       trim: true,
       maxlength: [100, 'Place name cannot exceed 100 characters']
     }],
-    // DAY-SPECIFIC INCLUSIONS - NOW THE ONLY INCLUSIONS
+    // Day-specific inclusions. Previously stored as boolean flags (transport/meals/stay).
+    // Migrate to an array of strings to support typed inclusions (e.g. ['Breakfast','Entrance Fee']).
+    // Keep flexible to accept legacy boolean shapes when reading.
     inclusions: {
-      transport: {
-        type: Boolean,
-        default: false
-      },
-      meals: {
-        type: Boolean,
-        default: false
-      },
-      stay: {
-        type: Boolean,
-        default: false
-      }
+      type: [String],
+      default: []
     }
   }],
   

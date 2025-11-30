@@ -92,14 +92,14 @@ const DestinationModal = ({ destination, isOpen, onClose }) => {
           {/* Image Indicators - Only show if multiple images */}
           {images.length > 1 && (
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-              {images.map((_, index) => (
+              {images.map((_, _index) => (
                 <button
-                  key={index}
-                  onClick={() => setCurrentImageIndex(index)}
+                  key={_index}
+                  onClick={() => setCurrentImageIndex(_index)}
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    index === currentImageIndex ? 'bg-white scale-125' : 'bg-white/50'
+                    _index === currentImageIndex ? 'bg-white scale-125' : 'bg-white/50'
                   }`}
-                  aria-label={`Go to image ${index + 1}`}
+                  aria-label={`Go to image ${_index + 1}`}
                 />
               ))}
             </div>
@@ -118,24 +118,18 @@ const DestinationModal = ({ destination, isOpen, onClose }) => {
             >
               <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
             </button>
-            <button
-              onClick={onClose}
-              className="p-2 bg-black/40 text-white rounded-full backdrop-blur-sm hover:bg-black/60 transition-colors"
-              aria-label="Close modal"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {/* modal already provides a close control; avoid duplicate X here */}
           </div>
 
           {/* Status Badge */}
           <div className="absolute top-4 left-4 flex flex-col gap-2">
             {isNew && (
-              <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+              <span className="bg-primary-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
                 NEW DESTINATION
               </span>
             )}
             {destination.status === 'inactive' && (
-              <span className="bg-orange-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
+              <span className="bg-blue-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
                 COMING SOON
               </span>
             )}
@@ -147,16 +141,16 @@ const DestinationModal = ({ destination, isOpen, onClose }) => {
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">{destination.name}</h2>
             <div className="flex items-center gap-2 text-lg font-semibold text-gray-700">
-              <MapPin className="w-5 h-5 text-amber-500" />
+              <MapPin className="w-5 h-5 text-primary-500" />
               {destination.location}
             </div>
           </div>
         </div>
 
         {/* Description */}
-        <div className="bg-amber-50 rounded-2xl p-6 border border-amber-100">
+        <div className="bg-primary-50 rounded-2xl p-6 border border-primary-100">
           <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-800 mb-3">
-            <Navigation className="w-5 h-5 text-amber-500" />
+            <Navigation className="w-5 h-5 text-primary-500" />
             About this Destination
           </h3>
           <p className="text-gray-700 leading-relaxed text-justify">
@@ -168,7 +162,7 @@ const DestinationModal = ({ destination, isOpen, onClose }) => {
         {mapUrl && (
           <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-800 mb-4">
-              <Map className="w-5 h-5 text-amber-500" />
+              <Map className="w-5 h-5 text-primary-500" />
               Location on Map
             </h3>
             <div className="rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-white">
