@@ -203,6 +203,30 @@ const SettingsSchema = new mongoose.Schema({
         default: '10+'
       }
     }
+  ,
+    // Core values for the About page (editable via Admin Settings)
+    values: [
+      {
+        title: { type: String, default: 'Passion for Travel', trim: true },
+        description: { type: String, default: 'We are travelers at heart — passionate about sharing Bukidnon’s natural beauty and culture with curious explorers.', trim: true },
+        icon: { type: String, default: 'Heart' }
+      },
+      {
+        title: { type: String, default: 'Safety First', trim: true },
+        description: { type: String, default: 'Your safety is our priority. We partner with certified guides and follow best practices so you can travel with confidence.', trim: true },
+        icon: { type: String, default: 'ShieldCheck' }
+      },
+      {
+        title: { type: String, default: 'Sustainable Tourism', trim: true },
+        description: { type: String, default: 'We practice responsible tourism that respects local cultures and protects the natural environment for future generations.', trim: true },
+        icon: { type: String, default: 'Globe' }
+      },
+      {
+        title: { type: String, default: 'Community Focused', trim: true },
+        description: { type: String, default: 'We create local impact by hiring community guides and partnering with small businesses and artisans.', trim: true },
+        icon: { type: String, default: 'Users' }
+      }
+    ]
   },
 
   // ========================================

@@ -20,7 +20,7 @@ const Button = ({
     secondary:
       "bg-white text-slate-700 border border-pale-slate hover:bg-platinum-50 focus:ring-slate-400 shadow-sm",
     danger:
-      "bg-danger text-white hover:bg-red-700 focus:ring-red-500 shadow-sm border border-transparent",
+      "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-sm border border-transparent",
     success:
       "bg-success text-white hover:bg-emerald-700 focus:ring-emerald-500 shadow-sm border border-transparent",
     warning:

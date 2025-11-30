@@ -79,6 +79,7 @@ export const getPublicSettings = async () => {
       whoWeAre: settings.aboutUs?.whoWeAre,
       mission: settings.aboutUs?.mission,
       vision: settings.aboutUs?.vision,
+      values: settings.aboutUs?.values,
       stats: {
         happyTravelers: settings.aboutUs?.stats?.happyTravelers,
         tourPackages: settings.aboutUs?.stats?.tourPackages,
