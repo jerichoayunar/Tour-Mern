@@ -42,16 +42,22 @@ const addAboutUsSettings = async () => {
     // Add aboutUs section
     settings.aboutUs = {
       heroTitle: 'Discover Bukidnon Tours',
-      heroSubtitle: 'Where Adventure Meets Authentic Filipino Hospitality in the Heart of Bukidnon',
-      whoWeAre: 'We are passionate about showcasing the natural beauty and rich culture of Bukidnon. Our team consists of experienced local guides and travel enthusiasts dedicated to creating unforgettable experiences.',
-      mission: 'To provide exceptional travel experiences that connect people with the natural beauty and cultural richness of Bukidnon, while promoting sustainable tourism practices that benefit local communities and preserve our environment for future generations.',
-      vision: 'To become the leading tour provider in Bukidnon, recognized for our commitment to quality, authenticity, and sustainability. We envision a future where tourism thrives in harmony with nature and culture, creating positive impacts for all.',
+      heroSubtitle: 'Authentic journeys crafted by local guides — explore Bukidnon with purpose',
+      whoWeAre: 'Founded by local travelers and guides, we are dedicated to sharing Bukidnon’s natural beauty and cultural richness through curated, meaningful experiences.',
+      mission: 'To create thoughtful, sustainable travel experiences that connect visitors with Bukidnon’s landscapes and communities, while supporting local livelihoods and preserving natural and cultural heritage.',
+      vision: 'To be the trusted partner for travelers seeking authentic experiences in Bukidnon — known for quality, responsibility, and positive local impact.',
       stats: {
         happyTravelers: '2,500+',
         tourPackages: '150+',
         destinations: '50+',
         yearsExperience: '10+'
-      }
+      },
+      values: [
+        { title: 'Passion for Travel', description: 'We are travelers at heart — passionate about sharing Bukidnon’s natural beauty and culture with curious explorers.', icon: 'Heart' },
+        { title: 'Safety First', description: 'Your safety is our priority. We partner with certified guides and follow best practices so you can travel with confidence.', icon: 'ShieldCheck' },
+        { title: 'Sustainable Tourism', description: 'We practice responsible tourism that respects local cultures and protects the natural environment for future generations.', icon: 'Globe' },
+        { title: 'Community Focused', description: 'We create local impact by hiring community guides and partnering with small businesses and artisans.', icon: 'Users' }
+      ]
     };
 
     await settings.save();

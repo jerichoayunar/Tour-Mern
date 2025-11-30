@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from '../../context/ToastContext';
+import { useSettings } from '../../context/SettingsContext';
 import { getAllSettings, updateSettings } from '../../services/settingsService';
 import Loader from '../../components/ui/Loader';
 import GeneralSettings from '../../components/admin/settings/GeneralSettings';
 import BookingSettings from '../../components/admin/settings/BookingSettings';
 import EmailSettings from '../../components/admin/settings/EmailSettings';
 import SecuritySettings from '../../components/admin/settings/SecuritySettings';
+import AboutSettings from '../../components/admin/settings/AboutSettings';
 
 const Settings = () => {
   const { showToast } = useToast();
+  const { refreshSettings } = useSettings();
   const [activeTab, setActiveTab] = useState('general');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,6 +47,8 @@ const Settings = () => {
       const resp = response?.data ?? response;
       setSettings(resp?.data ?? resp ?? null);
       showToast('Settings updated successfully', 'success');
+      // Refresh global public settings so frontend reflects updates
+      try { refreshSettings?.(); } catch (err) { /* ignore */ }
     } catch (error) {
       console.error('Error saving settings:', error);
       showToast(error.message || 'Failed to save settings', 'error');
@@ -62,6 +67,7 @@ const Settings = () => {
 
   const tabs = [
     { id: 'general', label: 'General', icon: '🏢' },
+    { id: 'about', label: 'About Page', icon: 'ℹ️' },
     { id: 'booking', label: 'Booking', icon: '📅' },
     { id: 'email', label: 'Email & Notifications', icon: '📧' },
     { id: 'security', label: 'Security', icon: '🔒' }
@@ -104,6 +110,14 @@ const Settings = () => {
             businessHoursData={settings?.businessHours}
             onSave={handleSave} 
             saving={saving} 
+          />
+        )}
+
+        {activeTab === 'about' && (
+          <AboutSettings
+            initialData={settings?.aboutUs}
+            onSave={handleSave}
+            saving={saving}
           />
         )}
         
