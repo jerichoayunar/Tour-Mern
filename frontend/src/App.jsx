@@ -38,6 +38,7 @@ const ManageUsers = lazy(() => import("./pages/admin/ManageUsers.jsx"));
 const ManageActivities = lazy(() => import("./pages/admin/ManageActivities.jsx"));
 const ManageInquiries = lazy(() => import("./pages/admin/ManageInquiries.jsx"));
 const Settings = lazy(() => import("./pages/admin/Settings.jsx"));
+const BackupsPage = lazy(() => import("./pages/admin/Backups.jsx"));
 
 // Protected Route
 import ProtectedRoute from "./components/Common/ProtectedRoute.jsx"; 
@@ -136,6 +137,11 @@ function App() {
               <Route path="settings" element={
                 <Suspense fallback={<LoadingSpinner />}>
                   <Settings />
+                </Suspense>
+              } />
+              <Route path="backups" element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <BackupsPage />
                 </Suspense>
               } />
             </Route>

@@ -14,6 +14,27 @@ import {
   FileText,
   Settings
 } from "lucide-react";
+import BackupButton from '../../components/Backup/BackupButton';
+import { useAuth } from '../../context/AuthContext';
+
+// Small admin-only action: show backup button and link to backups page
+const AdminBackupAction = () => {
+  const { isAdmin } = useAuth();
+  if (!isAdmin) return null;
+
+  return (
+    <div className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 bg-yellow-50">
+      <div className="flex-1">
+        <div className="font-medium text-gray-900">Backups</div>
+        <div className="text-xs text-gray-600">Create or manage backups</div>
+      </div>
+      <div className="flex items-center gap-2">
+        <BackupButton />
+        <a href="/admin/backups" className="text-sm text-blue-600 underline">Manage</a>
+      </div>
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({
@@ -108,35 +129,23 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-3">
             {lastUpdate && (
-              <div className="text-sm text-gray-500 hidden sm:block">
-                Updated {lastUpdate}
-              </div>
+              <div className="text-sm text-gray-500 hidden sm:block">Updated {lastUpdate}</div>
             )}
             <button
               onClick={handleRefresh}
               disabled={refreshing}
               className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
               <span className="text-sm">Refresh</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* -------------------------------------------------------------
-      | 🔹 Top Stats Cards (Revenue, Bookings, Users, Packages)    |
-      ------------------------------------------------------------- */}
-      <section className="mb-8">
-        {dashboardData.stats && <DashboardStats stats={dashboardData.stats} />}
-      </section>
+      <section className="mb-8">{dashboardData.stats && <DashboardStats stats={dashboardData.stats} />}</section>
 
-      {/* -------------------------------------------------------------
-      | 📊 Left: Analytics Charts   |  ⚡ Right: Quick Actions +   |
-      |                             |     Notifications / To-Dos  |
-      ------------------------------------------------------------- */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Left: Analytics Charts - 2/3 width */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-6">
@@ -146,25 +155,21 @@ const Dashboard = () => {
               </div>
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                  <div className="w-3 h-3 bg-blue-500 rounded" />
                   <span className="text-gray-600">Bookings</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded"></div>
+                  <div className="w-3 h-3 bg-green-500 rounded" />
                   <span className="text-gray-600">Revenue</span>
                 </div>
               </div>
             </div>
-            <DashboardCharts
-              monthlyBookings={dashboardData.stats?.monthlyBookings}
-              destinationPopularity={dashboardData.stats?.destinationPopularity}
-            />
+            <DashboardCharts monthlyBookings={dashboardData.stats?.monthlyBookings} destinationPopularity={dashboardData.stats?.destinationPopularity} />
           </div>
         </div>
 
-        {/* Right: Quick Actions & Notifications - 1/3 width */}
+        {/* Right: Quick Actions & Notifications */}
         <div className="space-y-6">
-          {/* Quick Actions */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Plus className="w-4 h-4 text-blue-600" />
@@ -172,38 +177,34 @@ const Dashboard = () => {
             </h3>
             <div className="space-y-3">
               <button className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-200 transition-colors text-left">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Plus className="w-4 h-4 text-blue-600" />
-                </div>
+                <div className="p-2 bg-blue-100 rounded-lg"><Plus className="w-4 h-4 text-blue-600" /></div>
                 <div>
                   <div className="font-medium text-gray-900">Create Booking</div>
                   <div className="text-xs text-gray-600">Add new reservation</div>
                 </div>
               </button>
-              
+
               <button className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-green-50 hover:border-green-200 transition-colors text-left">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <FileText className="w-4 h-4 text-green-600" />
-                </div>
+                <div className="p-2 bg-green-100 rounded-lg"><FileText className="w-4 h-4 text-green-600" /></div>
                 <div>
                   <div className="font-medium text-gray-900">Generate Report</div>
                   <div className="text-xs text-gray-600">Export dashboard data</div>
                 </div>
               </button>
-              
+
               <button className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-purple-50 hover:border-purple-200 transition-colors text-left">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Settings className="w-4 h-4 text-purple-600" />
-                </div>
+                <div className="p-2 bg-purple-100 rounded-lg"><Settings className="w-4 h-4 text-purple-600" /></div>
                 <div>
                   <div className="font-medium text-gray-900">Manage Packages</div>
                   <div className="text-xs text-gray-600">Update offerings</div>
                 </div>
               </button>
+
+              {/* Admin-only backup action */}
+              <AdminBackupAction />
             </div>
           </div>
 
-          {/* Notifications / To-Dos */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Bell className="w-4 h-4 text-amber-600" />
@@ -211,16 +212,16 @@ const Dashboard = () => {
             </h3>
             <div className="space-y-3">
               <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0" />
                 <div className="flex-1">
                   <div className="font-medium text-gray-900">New Booking</div>
                   <div className="text-xs text-gray-600">Sarah Johnson - Bali Package</div>
                   <div className="text-xs text-gray-500 mt-1">2 hours ago</div>
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                <div className="w-2 h-2 bg-amber-600 rounded-full mt-2 flex-shrink-0"></div>
+                <div className="w-2 h-2 bg-amber-600 rounded-full mt-2 flex-shrink-0" />
                 <div className="flex-1">
                   <div className="font-medium text-gray-900">Action Required</div>
                   <div className="text-xs text-gray-600">Review pending bookings</div>
@@ -231,7 +232,6 @@ const Dashboard = () => {
           </div>
         </div>
       </section>
-
 
       {/* Refreshing Overlay */}
       {refreshing && (
