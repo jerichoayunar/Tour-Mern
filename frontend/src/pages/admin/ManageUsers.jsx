@@ -182,8 +182,7 @@ const ManageUsers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-platinum p-6">
         {/* Header */}
         <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -252,7 +251,6 @@ const ManageUsers = () => {
             onUpdate={handleUpdateClient}
           />
         )}
-      </div>
     </div>
   );
 };

@@ -346,25 +346,101 @@ const ManageBookings = () => {
 
   // Export functionality
   const handleExport = () => {
-    (async () => {
-      try {
-        showToast('Preparing export...', 'info');
-        const res = await adminService.exportBookings('csv');
-        const blob = res.data;
-        const url = window.URL.createObjectURL(new Blob([blob]));
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `bookings_export_${new Date().toISOString().slice(0,10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        link.parentNode.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        showToast('Export downloaded', 'success');
-      } catch (error) {
-        console.error('Export failed', error);
-        showToast(error?.message || 'Export failed', 'error');
-      }
-    })();
+    try {
+      showToast('Preparing export...', 'info');
+
+      const currencyFmt = new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 });
+
+      const exportId = 'BKEXP-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2,8).toUpperCase();
+
+      const rows = [];
+      const headers = [
+        'Export Reference',
+        'Booking ID',
+        'Client Name',
+        'Client Email',
+        'Client Phone',
+        'Packages',
+        'Package Prices',
+        'Package Destinations',
+        'Total Days',
+        'Booking Date (Local)',
+        'Booking Date (ISO)',
+        'Guests',
+        'Total Price (PHP)',
+        'Status',
+        'Cancellation Requested',
+        'Special Requests',
+        'Created At (Local)',
+        'Created At (ISO)'
+      ];
+
+      rows.push(headers);
+
+      const dataToExport = Array.isArray(filteredBookings) ? filteredBookings : [];
+
+      dataToExport.forEach(b => {
+        // Package details (support populated package objects or minimal package refs)
+        const packagesArr = Array.isArray(b.packages) && b.packages.length > 0 ? b.packages : (b.package ? [b.package] : []);
+
+        const packageTitles = packagesArr.map(p => (p && (p.title || p.name)) || '').filter(Boolean).join('; ');
+        const packagePrices = packagesArr.map(p => {
+          const price = p?.price ?? p?.amount ?? '';
+          return price !== '' ? currencyFmt.format(Number(price)) : '';
+        }).filter(Boolean).join('; ');
+        const packageDestinations = packagesArr.map(p => (p && (p.destination || p.destinationName || '')) || '').filter(Boolean).join('; ');
+
+        const totalDays = b.totalDays ?? (packagesArr.length > 0 ? packagesArr.reduce((a, p) => a + (p?.duration || 0), 0) : (b.package?.duration || ''));
+
+        const bookingDateIso = b.bookingDate ? new Date(b.bookingDate).toISOString() : '';
+        const bookingDateLocal = b.bookingDate ? new Date(b.bookingDate).toLocaleString() : '';
+
+        const createdAtIso = b.createdAt ? new Date(b.createdAt).toISOString() : '';
+        const createdAtLocal = b.createdAt ? new Date(b.createdAt).toLocaleString() : '';
+
+        const totalPriceVal = Number(b.totalPrice ?? b.totalAmount ?? 0) || 0;
+
+        const row = [
+          exportId,
+          b._id || '',
+          b.clientName || b.user?.name || '',
+          b.clientEmail || b.user?.email || '',
+          b.clientPhone || b.phone || b.user?.phone || '',
+          packageTitles,
+          packagePrices,
+          packageDestinations,
+          String(totalDays),
+          bookingDateLocal,
+          bookingDateIso,
+          String(b.guests ?? ''),
+          currencyFmt.format(totalPriceVal),
+          (b.status || ''),
+          (b.cancellation?.requested ? 'Yes' : 'No'),
+          (b.specialRequests || ''),
+          createdAtLocal,
+          createdAtIso
+        ];
+
+        rows.push(row);
+      });
+
+      const escapeCsv = v => '"' + String(v).replace(/"/g, '""') + '"';
+      const csv = rows.map(r => r.map(escapeCsv).join(',')).join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `bookings_export_${exportId}_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showToast('Export downloaded', 'success');
+    } catch (error) {
+      console.error('Export failed', error);
+      showToast(error?.message || 'Export failed', 'error');
+    }
   };
 
   // ============================================================================
@@ -396,7 +472,7 @@ const ManageBookings = () => {
               disabled={refreshing}
               className="flex items-center space-x-2"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing ? <Loader size="sm" /> : <RefreshCw className="w-4 h-4" />}
               <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
             </Button>
           </div>
@@ -487,7 +563,7 @@ const ManageBookings = () => {
       {/* Loading State */}
       {loading ? (
         <Card className="p-12 text-center">
-          <Loader size="large" />
+          <Loader size="lg" />
           <p className="text-slate-500 mt-4">Loading bookings...</p>
         </Card>
       ) : (
@@ -555,7 +631,7 @@ const ManageBookings = () => {
       {/* Refreshing Overlay */}
       {refreshing && (
         <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center space-x-2 animate-pulse">
-          <RefreshCw className="w-4 h-4 animate-spin" />
+          <Loader size="sm" />
           <span>Updating...</span>
         </div>
       )}
