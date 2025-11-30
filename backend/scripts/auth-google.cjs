@@ -14,11 +14,12 @@ const TOKEN_PATHS = [
 const CONFIG_PATH = path.join(BACKEND_DIR, '.gdrive_config.json');
 
 function getOAuthClient() {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirect = process.env.GOOGLE_REDIRECT_URI;
+  // Support Drive-specific env vars while keeping backwards compatibility
+  const clientId = process.env.GOOGLE_DRIVE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET;
+  const redirect = process.env.GOOGLE_DRIVE_REDIRECT_URI || process.env.GOOGLE_REDIRECT_URI || process.env.GOOGLE_CALLBACK_URL;
   if (!clientId || !clientSecret || !redirect) {
-    console.error('Missing GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET / GOOGLE_REDIRECT_URI in backend/.env');
+    console.error('Missing GOOGLE_DRIVE_CLIENT_ID/GOOGLE_DRIVE_CLIENT_SECRET/GOOGLE_DRIVE_REDIRECT_URI (or fallback GOOGLE_CLIENT_ID/SECRET/REDIRECT) in backend/.env');
     process.exit(2);
   }
   return new google.auth.OAuth2(clientId, clientSecret, redirect);

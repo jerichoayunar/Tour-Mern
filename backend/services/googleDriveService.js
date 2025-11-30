@@ -6,9 +6,11 @@ const TOKEN_PATH = path.join(process.cwd(), '.gdrive_token.json');
 const CONFIG_PATH = path.join(process.cwd(), '.gdrive_config.json');
 
 const getOAuthClient = () => {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirect = process.env.GOOGLE_REDIRECT_URI;
+  // Prefer explicit Drive-specific environment variables, but fall back to
+  // the general GOOGLE_CLIENT_* names for backward compatibility.
+  const clientId = process.env.GOOGLE_DRIVE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_DRIVE_CLIENT_SECRET || process.env.GOOGLE_CLIENT_SECRET;
+  const redirect = process.env.GOOGLE_DRIVE_REDIRECT_URI || process.env.GOOGLE_REDIRECT_URI || process.env.GOOGLE_CALLBACK_URL;
 
   if (!clientId || !clientSecret || !redirect) {
     throw new Error('Google OAuth credentials are not configured in environment');

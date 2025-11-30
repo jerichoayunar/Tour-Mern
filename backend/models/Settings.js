@@ -594,15 +594,17 @@ const SettingsSchema = new mongoose.Schema({
   // 🔒 SECURITY & PASSWORD (Phase 4 - Future)
   // ========================================
   // Purpose: Password policies and session management
-  // security: {
-  //   minPasswordLength: { type: Number, default: 8 }
-  //   requireUppercase: { type: Boolean, default: true }
-  //   requireNumbers: { type: Boolean, default: true }
-  //   requireSpecialChars: { type: Boolean, default: false }
-  //   sessionTimeout: { type: Number, default: 24 } // hours
-  //   maxLoginAttempts: { type: Number, default: 5 }
-  //   lockoutDuration: { type: Number, default: 15 } // minutes
-  // },
+  security: {
+    minPasswordLength: { type: Number, default: 8 },
+    requireUppercase: { type: Boolean, default: true },
+    requireNumbers: { type: Boolean, default: true },
+    requireSpecialChars: { type: Boolean, default: false },
+    // sessionTimeout stored as a string compatible with JWT `expiresIn` (e.g., '30d', '24h')
+    sessionTimeout: { type: String, default: '30d' },
+    // Account lock/attempt policies
+    maxLoginAttempts: { type: Number, default: 5 },
+    lockoutDuration: { type: Number, default: 15 } // minutes
+  },
 
   // ========================================
   // 🔌 INTEGRATIONS (Phase 5 - Future)
