@@ -40,6 +40,7 @@ import { adminRoutes } from './routes/adminRoutes.js';
 import { activityRoutes } from './routes/activityRoutes.js';
 import { settingsRoutes } from './routes/settingsRoutes.js';
 import { adminSettingsRoutes } from './routes/adminSettingsRoutes.js';
+import backupRoutes from './routes/backupRoutes.js';
 
 // ======================================================
 // 🔹 STEP 1: Load environment variables (.env file)
@@ -198,6 +199,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/admin/settings', adminSettingsRoutes);
+app.use('/api/backup', backupRoutes);
 
 // ======================================================
 // 🔹 STEP 6: Global Error Handler
