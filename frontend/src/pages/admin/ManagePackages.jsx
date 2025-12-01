@@ -219,7 +219,7 @@ const ManagePackages = () => {
 
   // ------------------ RENDER COMPONENT ------------------
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-platinum p-6">
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
         <div>
@@ -289,7 +289,7 @@ const ManagePackages = () => {
       {/* Packages Table */}
       {loading ? (
         <div className="bg-white rounded-xl shadow-sm p-12 text-center">
-          <Loader size="large" />
+          <Loader size="lg" />
           <p className="text-gray-600 mt-4">Loading packages...</p>
         </div>
       ) : (
