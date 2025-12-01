@@ -67,10 +67,15 @@ const MyInquiries = () => {
     }
   };
 
-  if (loading) return <div className="p-8"><Loader /></div>;
+  if (loading) return (
+    <div className="page-bg-auth min-h-screen flex items-center">
+      <div className="p-8 w-full max-w-5xl mx-auto"><Loader /></div>
+    </div>
+  );
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-5xl">
+    <div className="page-bg-auth">
+      <div className="container mx-auto px-4 py-8 max-w-5xl">
       <div className="flex items-center gap-4 mb-4">
         <div className="w-12 h-12 bg-white/10 text-white rounded-xl flex items-center justify-center ring-1 ring-white/20">
           <Mail className="w-6 h-6 text-black" />
@@ -170,6 +175,7 @@ const MyInquiries = () => {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 };

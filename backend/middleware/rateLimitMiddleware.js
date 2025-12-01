@@ -22,6 +22,9 @@
 
 const rateLimitStore = new Map(); // ✅ In-memory storage for tracking requests
 
+// Default thresholds for IP-based login failed attempts
+const DEFAULT_IP_LOGIN_MAX = 10;
+
 export const passwordResetLimiter = (req, res, next) => {
   const ip = req.ip; // ✅ Get client IP address
   const currentTime = Date.now();
@@ -141,7 +144,7 @@ export const loginAttemptLimiter = (req, res, next) => {
   const ip = req.ip || req.connection.remoteAddress;
   const currentTime = Date.now();
   const windowMs = 15 * 60 * 1000; // 15 minutes
-  const maxFailedAttempts = 100; // Increased for testing
+  const maxFailedAttempts = DEFAULT_IP_LOGIN_MAX; // default per-IP failed login threshold
 
   const key = `login-failed-${ip}`;
   const clientData = rateLimitStore.get(key) || {
@@ -198,7 +201,7 @@ export const incrementFailedLogin = (ip) => {
   
   return {
     currentCount: clientData.count,
-    remainingAttempts: 10 - clientData.count,
+    remainingAttempts: Math.max(0, DEFAULT_IP_LOGIN_MAX - clientData.count),
     resetTime: clientData.firstAttempt + (15 * 60 * 1000)
   };
 };
@@ -217,7 +220,7 @@ export const getLoginLimitStatus = (ip) => {
   if (!clientData) {
     return {
       limited: false,
-      remainingAttempts: 10,
+      remainingAttempts: DEFAULT_IP_LOGIN_MAX,
       resetTime: Date.now() + (15 * 60 * 1000)
     };
   }
@@ -230,14 +233,14 @@ export const getLoginLimitStatus = (ip) => {
     rateLimitStore.delete(key);
     return {
       limited: false,
-      remainingAttempts: 10,
+      remainingAttempts: DEFAULT_IP_LOGIN_MAX,
       resetTime: currentTime + windowMs
     };
   }
   
   return {
-    limited: clientData.count >= 10,
-    remainingAttempts: Math.max(0, 10 - clientData.count),
+    limited: clientData.count >= DEFAULT_IP_LOGIN_MAX,
+    remainingAttempts: Math.max(0, DEFAULT_IP_LOGIN_MAX - clientData.count),
     resetTime: clientData.firstAttempt + windowMs
   };
 };

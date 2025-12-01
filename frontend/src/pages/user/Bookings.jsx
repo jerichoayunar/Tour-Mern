@@ -124,7 +124,8 @@ const Bookings = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <div className="page-bg-auth">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
@@ -328,6 +329,7 @@ const Bookings = () => {
       />
 
       {/* Rebook flow removed — UI for duplicating bookings has been disabled */}
+      </div>
     </div>
   );
 };

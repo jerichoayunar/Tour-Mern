@@ -22,7 +22,7 @@ const ActivityStats = ({ activities }) => {
       registrations: activities.filter(a => a.type === 'user_registered').length,
       failedLogins: activities.filter(a => a.type === 'login_failed').length,
       bookings: activities.filter(a => a.type?.includes('booking')).length,
-      payments: activities.filter(a => a.type?.includes('payment')).length,
+      // payments intentionally omitted from Activity Monitor per admin preference
       uniqueUsers: new Set(activities.map(a => a.userId?._id || a.userId).filter(Boolean)).size
     };
   };
@@ -46,14 +46,7 @@ const ActivityStats = ({ activities }) => {
       color: 'green',
       trend: 'recent'
     },
-    {
-      title: 'Today',
-      value: stats.today,
-      description: "Today's activities",
-      icon: '📅',
-      color: 'purple',
-      trend: 'today'
-    },
+    // 'Today' card removed per request
     {
       title: 'Active Users',
       value: stats.uniqueUsers,
@@ -102,14 +95,7 @@ const ActivityStats = ({ activities }) => {
       color: 'emerald',
       trend: 'bookings'
     },
-    {
-      title: 'Payments',
-      value: stats.payments,
-      description: 'Payment processing',
-      icon: '💳',
-      color: 'amber',
-      trend: 'payments'
-    }
+    // Payments card removed
   ];
 
   const getColorClasses = (color) => {
@@ -184,8 +170,7 @@ const ActivityStats = ({ activities }) => {
             </div>
 
             {/* Trend indicator */}
-            <div className="mt-3 flex items-center justify-between text-xs">
-              <span className="text-gray-500">Updated just now</span>
+            <div className="mt-3 flex items-center justify-end text-xs">
               {stat.value > 0 && (
                 <span className="flex items-center text-green-600 font-medium">
                   <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">

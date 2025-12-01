@@ -161,9 +161,9 @@ const PackageTable = ({
                       <img 
                         src={getImageUrl(pkg)} 
                         alt={pkg?.title || 'Package Image'}
-                        className="w-16 h-12 object-cover rounded-lg border border-gray-200"
+                        className="w-20 h-14 object-cover rounded-lg border border-gray-200"
                         onError={(e) => {
-                          e.target.src = 'https://via.placeholder.com/80x60?text=No+Image';
+                          e.target.src = 'https://via.placeholder.com/120x84?text=No+Image';
                         }}
                       />
                       <div className="min-w-0 flex-1">

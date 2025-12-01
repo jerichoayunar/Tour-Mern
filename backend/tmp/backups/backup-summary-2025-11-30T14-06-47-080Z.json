@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-11-30T14:06:49.953Z",
+  "backupFile": "tour-mern-backup-2025-11-30T14-06-47-080Z.zip",
+  "sizeBytes": 30659,
+  "collections": {
+    "packages": 2,
+    "users": 7,
+    "bookings": 3
+  },
+  "tourCounts": {
+    "total": 2,
+    "active": 2,
+    "archived": 0
+  },
+  "cloudinary": {
+    "packagesWithImage": 2
+  },
+  "sampleTours": [
+    {
+      "title": "malaybalay",
+      "price": 123,
+      "duration": 1,
+      "itineraryDays": 1,
+      "imageUrl": "https://res.cloudinary.com/dmye9rsnm/image/upload/v1764335299/tour-mern/packages/twopt2ljklaxwh9iupb2.jpg"
+    },
+    {
+      "title": "kalasungay",
+      "price": 123,
+      "duration": 1,
+      "itineraryDays": 1,
+      "imageUrl": "https://res.cloudinary.com/dmye9rsnm/image/upload/v1764335874/tour-mern/packages/h17wdjorjqyb4wyo430b.jpg"
+    }
+  ],
+  "appVersion": "1.0.0"
+}

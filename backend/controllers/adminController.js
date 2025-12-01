@@ -23,9 +23,9 @@ export const getDashboardStats = async (req, res) => {
       Package.countDocuments(),
       Booking.aggregate([
         { $match: { status: 'confirmed' } },
-        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+        { $group: { _id: null, total: { $sum: '$totalPrice' } } }
       ]),
-      // Monthly bookings data for chart
+      // Monthly bookings data for chart (include revenue)
       Booking.aggregate([
         {
           $group: {
@@ -33,7 +33,8 @@ export const getDashboardStats = async (req, res) => {
               year: { $year: '$createdAt' },
               month: { $month: '$createdAt' }
             },
-            count: { $sum: 1 }
+            count: { $sum: 1 },
+            revenue: { $sum: '$totalPrice' }
           }
         },
         { $sort: { '_id.year': 1, '_id.month': 1 } },
@@ -65,7 +66,8 @@ export const getDashboardStats = async (req, res) => {
     // Format monthly bookings data for chart
     const monthlyBookingsFormatted = monthlyBookings.map(item => ({
       month: getMonthName(item._id.month),
-      bookings: item.count
+      bookings: item.count,
+      revenue: item.revenue || 0
     }));
 
     // Format destination popularity data for chart
@@ -128,7 +130,7 @@ export const getRevenueStats = async (req, res) => {
       {
         $group: {
           _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          revenue: { $sum: '$totalAmount' }
+          revenue: { $sum: '$totalPrice' }
         }
       },
       { $sort: { _id: 1 } }
@@ -180,7 +182,7 @@ export const exportDashboardData = async (req, res) => {
       Package.countDocuments(),
       Booking.aggregate([
         { $match: { status: 'confirmed' } },
-        { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+        { $group: { _id: null, total: { $sum: '$totalPrice' } } }
       ]),
       Booking.aggregate([
         {
@@ -189,7 +191,8 @@ export const exportDashboardData = async (req, res) => {
               year: { $year: '$createdAt' },
               month: { $month: '$createdAt' }
             },
-            count: { $sum: 1 }
+            count: { $sum: 1 },
+            revenue: { $sum: '$totalPrice' }
           }
         },
         { $sort: { '_id.year': 1, '_id.month': 1 } },
@@ -219,7 +222,8 @@ export const exportDashboardData = async (req, res) => {
 
     const monthlyBookingsFormatted = monthlyBookings.map(item => ({
       month: getMonthName(item._id.month),
-      bookings: item.count
+      bookings: item.count,
+      revenue: item.revenue || 0
     }));
 
     const destinationPopularityFormatted = destinationPopularity.map(item => ({

@@ -3,6 +3,7 @@ import { activityService } from '../../services/activityService';
 import ActivityTable from '../../components/admin/activities/ActivityTable';
 import ActivityFilters from '../../components/admin/activities/ActivityFilters';
 import ActivityStats from '../../components/admin/activities/ActivityStats';
+import Loader from '../../components/ui/Loader';
 
 const ManageActivities = () => {
   const [activities, setActivities] = useState([]);
@@ -52,8 +53,14 @@ const ManageActivities = () => {
           console.warn('Failed to compute activity type counts', e);
         }
 
-        setActivities(activitiesData);
-        setFilteredActivities(activitiesData);
+        // Remove payment-related activities from the admin Activity Monitor per request
+        const cleanedActivities = activitiesData.filter(a => {
+          const t = String(a.type || '').toLowerCase();
+          return !t.includes('payment');
+        });
+
+        setActivities(cleanedActivities);
+        setFilteredActivities(cleanedActivities);
         // Also fetch server-side aggregated stats for comparison/accuracy
         try {
           const statsResp = await activityService.getActivityStats();
@@ -176,8 +183,7 @@ const ManageActivities = () => {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-platinum p-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -215,7 +221,7 @@ const ManageActivities = () => {
               >
                 {loading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <Loader size="sm" />
                     <span>Refreshing...</span>
                   </>
                 ) : (
@@ -280,7 +286,6 @@ const ManageActivities = () => {
             </p>
           </div>
         )}
-      </div>
     </div>
   );
 };

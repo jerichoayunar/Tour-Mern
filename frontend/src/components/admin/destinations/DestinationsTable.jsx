@@ -59,9 +59,9 @@ const DestinationsTable = ({
                 <img 
                   src={destination.image?.url || destination.image} 
                   alt={destination.name}
-                  className="w-12 h-12 rounded-lg object-cover"
+                  className="w-20 h-14 rounded-lg object-cover"
                   onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/50x50?text=No+Image';
+                    e.target.src = 'https://via.placeholder.com/120x84?text=No+Image';
                   }}
                 />
               </td>

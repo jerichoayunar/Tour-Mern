@@ -1,0 +1,231 @@
+{
+  "timestamp": "2025-11-30T14:35:29.058Z",
+  "backupFile": "tour-mern-backup-2025-11-30T14-35-25-877Z.zip",
+  "sizeBytes": 30733,
+  "collections": {
+    "packages": 2,
+    "users": 7,
+    "bookings": 3
+  },
+  "tourCounts": {
+    "total": 2,
+    "active": 2,
+    "archived": 0
+  },
+  "cloudinary": {
+    "packagesWithImage": 2
+  },
+  "sampleTours": [
+    {
+      "title": "malaybalay",
+      "price": 123,
+      "duration": 1,
+      "itineraryDays": 1,
+      "imageUrl": "https://res.cloudinary.com/dmye9rsnm/image/upload/v1764335299/tour-mern/packages/twopt2ljklaxwh9iupb2.jpg"
+    },
+    {
+      "title": "kalasungay",
+      "price": 123,
+      "duration": 1,
+      "itineraryDays": 1,
+      "imageUrl": "https://res.cloudinary.com/dmye9rsnm/image/upload/v1764335874/tour-mern/packages/h17wdjorjqyb4wyo430b.jpg"
+    }
+  ],
+  "users": {
+    "count": 7,
+    "samples": [
+      {
+        "_id": "68d8096199e37c517848dafa",
+        "name": "Admin User",
+        "role": "admin",
+        "createdAt": "2025-09-27T15:57:21.530Z"
+      },
+      {
+        "_id": "691c33ee9ef38f7ee276b4de",
+        "name": "Jericho Ayunar",
+        "role": "user",
+        "createdAt": "2025-11-18T08:53:02.650Z"
+      },
+      {
+        "_id": "691c7febbebb03dae77716b3",
+        "name": "Coco Ayunar",
+        "role": "user",
+        "createdAt": "2025-11-18T14:17:15.584Z"
+      },
+      {
+        "_id": "691d1670e28bcde144a46acd",
+        "name": "Jedd Brynn",
+        "role": "user",
+        "createdAt": "2025-11-19T00:59:28.387Z"
+      },
+      {
+        "_id": "691dc7ecbea066d6753796f5",
+        "name": "cacaca",
+        "role": "user",
+        "createdAt": "2025-11-19T13:36:44.069Z"
+      },
+      {
+        "_id": "6922052b456924f6fcd38a5f",
+        "name": "Test User1",
+        "role": "user",
+        "createdAt": "2025-11-22T18:47:07.497Z"
+      },
+      {
+        "_id": "692bc23e8386a288ab1f84fa",
+        "name": "jerichoayunar",
+        "role": "user",
+        "createdAt": "2025-11-30T04:04:14.536Z"
+      }
+    ]
+  },
+  "bookings": {
+    "count": 3,
+    "samples": [
+      {
+        "bookingDate": "2025-11-30T00:00:00.000Z",
+        "status": "cancelled",
+        "clientName": "Coco Ayunar",
+        "totalPrice": 246,
+        "packageTitle": "malaybalay"
+      },
+      {
+        "bookingDate": "2025-12-05T00:00:00.000Z",
+        "status": "confirmed",
+        "clientName": "Jericho V Ayunar Villaraza Ayunar",
+        "totalPrice": 615,
+        "packageTitle": "malaybalay"
+      },
+      {
+        "bookingDate": "2025-12-25T00:00:00.000Z",
+        "status": "confirmed",
+        "clientName": "Jericho V Ayunar Villaraza Ayunar",
+        "totalPrice": 615,
+        "packageTitle": "malaybalay"
+      }
+    ]
+  },
+  "destinations": {
+    "count": 14,
+    "samples": [
+      {
+        "_id": "6916f545fcaf0161dfa02525",
+        "name": "monastery",
+        "location": "Malaybalay Bukidnon",
+        "status": "active"
+      },
+      {
+        "_id": "6916f57afcaf0161dfa0252a",
+        "name": "loverslane",
+        "location": "Impasug-ong",
+        "status": "active"
+      },
+      {
+        "_id": "6916f586fcaf0161dfa0252f",
+        "name": "panika",
+        "location": "Impasug-ong",
+        "status": "active"
+      },
+      {
+        "_id": "6916f685fcaf0161dfa02538",
+        "name": "Pineapple Giant Statue",
+        "location": "Manolo",
+        "status": "active"
+      },
+      {
+        "_id": "691723f1fcaf0161dfa0261f",
+        "name": "adventure",
+        "location": "Dahilayan",
+        "status": "active"
+      },
+      {
+        "_id": "6917242cfcaf0161dfa02624",
+        "name": "Dahilayan Alpine Village",
+        "location": "Dahilayan",
+        "status": "active"
+      },
+      {
+        "_id": "69172483fcaf0161dfa02629",
+        "name": "cloudscape",
+        "location": "Malaybalay Bukidnon",
+        "status": "active"
+      },
+      {
+        "_id": "6917275cfcaf0161dfa02674",
+        "name": "Communal Ranch",
+        "location": "Impasug-ong",
+        "status": "active"
+      },
+      {
+        "_id": "691727d5fcaf0161dfa0268a",
+        "name": "Dahilayan Forest Park",
+        "location": "Dahilayan",
+        "status": "active"
+      },
+      {
+        "_id": "69172846fcaf0161dfa0269b",
+        "name": "Rotypeaks",
+        "location": "Impasug-ong",
+        "status": "active"
+      }
+    ]
+  },
+  "inquiries": {
+    "count": 11,
+    "samples": [
+      {
+        "_id": "691c622adbe425524237817e",
+        "subject": "this is the first i create",
+        "status": "read"
+      },
+      {
+        "_id": "691c623adbe4255242378180",
+        "subject": "this is the second i create",
+        "status": "read"
+      },
+      {
+        "_id": "691c63b0dbe4255242378228",
+        "subject": "this is the third i create",
+        "status": "replied"
+      },
+      {
+        "_id": "691d173fe28bcde144a46ae9",
+        "subject": "booking problem",
+        "status": "replied"
+      },
+      {
+        "_id": "691e6b82f4363e6262f11e06",
+        "subject": "booking problem",
+        "status": "read"
+      },
+      {
+        "_id": "691f158c4565de0a0f3c3ae3",
+        "subject": "about my cancellation",
+        "status": "read"
+      },
+      {
+        "_id": "6921cedf36d6a07da1c40db8",
+        "subject": "coco",
+        "status": "read"
+      },
+      {
+        "_id": "6921f7054f8ce41a7e4af2b8",
+        "subject": "test",
+        "status": "new"
+      },
+      {
+        "_id": "692285f3d73811afe10256f9",
+        "subject": "test@example.com",
+        "status": "new"
+      },
+      {
+        "_id": "692399ba750bff822db66501",
+        "subject": "",
+        "status": "read"
+      }
+    ]
+  },
+  "uploads": {
+    "files": 0
+  },
+  "appVersion": "1.0.0"
+}

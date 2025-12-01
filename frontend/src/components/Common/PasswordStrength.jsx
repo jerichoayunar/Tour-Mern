@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { calculatePasswordStrength, getStrengthColor, getStrengthText } from '../../utils/passwordStrength';
-import './PasswordStrength.css';
+import './PasswordStrength.css'
 
 /**
  * PASSWORD STRENGTH COMPONENT
@@ -37,52 +37,24 @@ function PasswordStrength({ password = '' }) {
   if (!password) return null;
 
   return (
-    <div className="password-strength">
-      {/* Strength Meter */}
-      <div className="strength-meter">
-        <div className="strength-labels">
-          <span className="strength-text">Strength: {strengthText}</span>
-          <span className="strength-score">{strength}/5</span>
-        </div>
-        
-        <div className="progress-bar">
-          <div 
-            className="progress-fill"
-            style={{
-              width: `${progressWidth}%`,
-              backgroundColor: strengthColor
-            }}
-          ></div>
-        </div>
+    <div className="pw-minimal" aria-live="polite">
+      <div className="pw-row">
+        <div className="pw-label">{strengthText}</div>
+        <div className="pw-score">{strength}/5</div>
       </div>
 
-      {/* Requirements List */}
-      <div className="requirements-list">
-        {requirements.map((req, index) => (
-          <div 
-            key={index} 
-            className={`requirement ${req.met ? 'met' : 'unmet'}`}
-          >
-            <span className="requirement-icon">
-              {req.met ? '✅' : '❌'}
-            </span>
-            <span className="requirement-text">{req.message}</span>
+      <div className="pw-bar" aria-hidden="true">
+        <div className="pw-fill" style={{ width: `${progressWidth}%`, background: strengthColor }} />
+      </div>
+
+      <div className="pw-reqs" aria-hidden="false">
+        {requirements.map((req, i) => (
+          <div key={i} className={`pw-req ${req.met ? 'met' : 'unmet'}`}>
+            <span className="pw-req-icon">{req.met ? '✓' : '✕'}</span>
+            <span className="pw-req-text">{req.message}</span>
           </div>
         ))}
       </div>
-
-      {/* Strength Suggestions */}
-      {strength < 4 && (
-        <div className="strength-suggestions">
-          <p className="suggestion-title">💡 Tips to improve:</p>
-          <ul className="suggestion-list">
-            {strength < 2 && <li>Use at least 8 characters</li>}
-            {strength < 3 && <li>Add numbers (0-9)</li>}
-            {strength < 4 && <li>Mix uppercase & lowercase letters</li>}
-            {strength < 5 && <li>Include special characters (!@#$%^&*)</li>}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }

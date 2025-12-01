@@ -1,0 +1,9 @@
+This archive contains sample, human-readable JSON exports for quick verification.
+
+Files:
+ - SUMMARY.json: counts and metadata
+ - users-sample.json: sample user records (safe fields only)
+ - tours-sample.json: sample tour/package records
+ - bookings-sample.json: sample booking records (payment info omitted)
+
+Do NOT use these files to restore production data. These are for quick verification only.

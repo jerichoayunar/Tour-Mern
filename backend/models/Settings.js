@@ -203,6 +203,30 @@ const SettingsSchema = new mongoose.Schema({
         default: '10+'
       }
     }
+  ,
+    // Core values for the About page (editable via Admin Settings)
+    values: [
+      {
+        title: { type: String, default: 'Passion for Travel', trim: true },
+        description: { type: String, default: 'We are travelers at heart — passionate about sharing Bukidnon’s natural beauty and culture with curious explorers.', trim: true },
+        icon: { type: String, default: 'Heart' }
+      },
+      {
+        title: { type: String, default: 'Safety First', trim: true },
+        description: { type: String, default: 'Your safety is our priority. We partner with certified guides and follow best practices so you can travel with confidence.', trim: true },
+        icon: { type: String, default: 'ShieldCheck' }
+      },
+      {
+        title: { type: String, default: 'Sustainable Tourism', trim: true },
+        description: { type: String, default: 'We practice responsible tourism that respects local cultures and protects the natural environment for future generations.', trim: true },
+        icon: { type: String, default: 'Globe' }
+      },
+      {
+        title: { type: String, default: 'Community Focused', trim: true },
+        description: { type: String, default: 'We create local impact by hiring community guides and partnering with small businesses and artisans.', trim: true },
+        icon: { type: String, default: 'Users' }
+      }
+    ]
   },
 
   // ========================================
@@ -570,15 +594,17 @@ const SettingsSchema = new mongoose.Schema({
   // 🔒 SECURITY & PASSWORD (Phase 4 - Future)
   // ========================================
   // Purpose: Password policies and session management
-  // security: {
-  //   minPasswordLength: { type: Number, default: 8 }
-  //   requireUppercase: { type: Boolean, default: true }
-  //   requireNumbers: { type: Boolean, default: true }
-  //   requireSpecialChars: { type: Boolean, default: false }
-  //   sessionTimeout: { type: Number, default: 24 } // hours
-  //   maxLoginAttempts: { type: Number, default: 5 }
-  //   lockoutDuration: { type: Number, default: 15 } // minutes
-  // },
+  security: {
+    minPasswordLength: { type: Number, default: 8 },
+    requireUppercase: { type: Boolean, default: true },
+    requireNumbers: { type: Boolean, default: true },
+    requireSpecialChars: { type: Boolean, default: false },
+    // sessionTimeout stored as a string compatible with JWT `expiresIn` (e.g., '30d', '24h')
+    sessionTimeout: { type: String, default: '30d' },
+    // Account lock/attempt policies
+    maxLoginAttempts: { type: Number, default: 5 },
+    lockoutDuration: { type: Number, default: 15 } // minutes
+  },
 
   // ========================================
   // 🔌 INTEGRATIONS (Phase 5 - Future)
@@ -596,6 +622,9 @@ const SettingsSchema = new mongoose.Schema({
   // 🔍 AUDIT FIELDS - Track Changes
   // ========================================
   // Purpose: Know who changed settings and when
+  read_ts: { type: Number, default: 0 },
+  write_ts: { type: Number, default: 0 },
+
   version: {
     type: Number,
     default: 1
@@ -656,25 +685,61 @@ SettingsSchema.statics.getSettings = async function() {
  *   contact: { phone: '+63 912 345 6789' }
  * }, adminUserId);
  */
-SettingsSchema.statics.updateSettings = async function(updates, userId) {
+import { getTs, readWithTS, writeWithTS } from '../utils/tsop.js';
+
+SettingsSchema.statics.updateSettings = async function(updates, userId, opts = {}) {
   // Remove system fields to prevent conflicts
   const { _id, __v, version, createdAt, updatedAt, lastUpdatedBy, ...cleanUpdates } = updates;
+  const enableTsop = Boolean(process.env.ENABLE_TSOP) || Boolean(opts.enableTsop);
+
+  if (!enableTsop) {
+    const settings = await this.findOneAndUpdate(
+      {},
+      {
+        ...cleanUpdates,
+        lastUpdatedBy: userId,
+        $inc: { version: 1 }
+      },
+      {
+        new: true,
+        upsert: true,
+        runValidators: true
+      }
+    ).populate('lastUpdatedBy', 'name email');
+    return settings;
+  }
+
+  // Prefer client-provided txTs (opts.txTs) so the UI can start a transaction at read time
+  const txTs = opts && opts.txTs ? opts.txTs : getTs();
+  const Model = this;
+  // Read with TS check (throws on read conflict)
+  const base = await readWithTS(Model, {}, txTs);
   
-  const settings = await this.findOneAndUpdate(
-    {},
-    {
-      ...cleanUpdates,
-      lastUpdatedBy: userId,
-      $inc: { version: 1 }
-    },
-    {
-      new: true,
-      upsert: true,
-      runValidators: true
+  if (!base) {
+    const created = await this.create({ ...cleanUpdates, lastUpdatedBy: userId, write_ts: txTs });
+    return created;
+  }
+
+  // Attempt write using TSOP rules
+  try {
+    const res = await writeWithTS(
+      Model,
+      { _id: base._id },
+      { $set: { ...cleanUpdates, lastUpdatedBy: userId }, $inc: { version: 1 } },
+      txTs,
+      { new: true, runValidators: true }
+    );
+    // populate lastUpdatedBy for parity with non-TSOP flow
+    await res.populate('lastUpdatedBy', 'name email').execPopulate?.();
+    return res;
+  } catch (err) {
+    if (err && err.code && err.code.startsWith('TSOP_ABORT')) {
+      const e = new Error('TSOP abort: ' + err.message);
+      e.code = err.code;
+      throw e;
     }
-  ).populate('lastUpdatedBy', 'name email');
-  
-  return settings;
+    throw err;
+  }
 };
 
 const Settings = mongoose.model('Settings', SettingsSchema);

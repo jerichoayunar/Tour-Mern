@@ -1,0 +1,140 @@
+[
+  {
+    "_id": "6929b4767b8b43de5d5ae188",
+    "package": {
+      "_id": "69299ec293b1563a0a94c136",
+      "title": "malaybalay",
+      "itinerary": [
+        {
+          "day": 1,
+          "title": "test",
+          "description": "testtesttesttest",
+          "places": [
+            "test",
+            "test1"
+          ],
+          "inclusions": [
+            "test",
+            "test1",
+            "test2",
+            "test4",
+            "test5",
+            "test6",
+            "test7",
+            "test8"
+          ],
+          "_id": "692a5a8c4a8afa9eba2dea01"
+        }
+      ],
+      "image": {
+        "url": "https://res.cloudinary.com/dmye9rsnm/image/upload/v1764335299/tour-mern/packages/twopt2ljklaxwh9iupb2.jpg",
+        "publicId": "tour-mern/packages/twopt2ljklaxwh9iupb2",
+        "isUploaded": true
+      },
+      "price": 123,
+      "duration": 1,
+      "status": "active",
+      "archived": false,
+      "archivedAt": null,
+      "archivedBy": null,
+      "archivedReason": null,
+      "createdAt": "2025-11-28T13:08:18.260Z",
+      "updatedAt": "2025-11-29T02:29:32.802Z",
+      "__v": 0
+    },
+    "bookingDate": "2025-11-30T00:00:00.000Z",
+    "status": "cancelled"
+  },
+  {
+    "_id": "692bb12dc3d4271324826910",
+    "package": {
+      "_id": "69299ec293b1563a0a94c136",
+      "title": "malaybalay",
+      "itinerary": [
+        {
+          "day": 1,
+          "title": "test",
+          "description": "testtesttesttest",
+          "places": [
+            "test",
+            "test1"
+          ],
+          "inclusions": [
+            "test",
+            "test1",
+            "test2",
+            "test4",
+            "test5",
+            "test6",
+            "test7",
+            "test8"
+          ],
+          "_id": "692a5a8c4a8afa9eba2dea01"
+        }
+      ],
+      "image": {
+        "url": "https://res.cloudinary.com/dmye9rsnm/image/upload/v1764335299/tour-mern/packages/twopt2ljklaxwh9iupb2.jpg",
+        "publicId": "tour-mern/packages/twopt2ljklaxwh9iupb2",
+        "isUploaded": true
+      },
+      "price": 123,
+      "duration": 1,
+      "status": "active",
+      "archived": false,
+      "archivedAt": null,
+      "archivedBy": null,
+      "archivedReason": null,
+      "createdAt": "2025-11-28T13:08:18.260Z",
+      "updatedAt": "2025-11-29T02:29:32.802Z",
+      "__v": 0
+    },
+    "bookingDate": "2025-12-05T00:00:00.000Z",
+    "status": "confirmed"
+  },
+  {
+    "_id": "692bb16bc3d4271324826942",
+    "package": {
+      "_id": "69299ec293b1563a0a94c136",
+      "title": "malaybalay",
+      "itinerary": [
+        {
+          "day": 1,
+          "title": "test",
+          "description": "testtesttesttest",
+          "places": [
+            "test",
+            "test1"
+          ],
+          "inclusions": [
+            "test",
+            "test1",
+            "test2",
+            "test4",
+            "test5",
+            "test6",
+            "test7",
+            "test8"
+          ],
+          "_id": "692a5a8c4a8afa9eba2dea01"
+        }
+      ],
+      "image": {
+        "url": "https://res.cloudinary.com/dmye9rsnm/image/upload/v1764335299/tour-mern/packages/twopt2ljklaxwh9iupb2.jpg",
+        "publicId": "tour-mern/packages/twopt2ljklaxwh9iupb2",
+        "isUploaded": true
+      },
+      "price": 123,
+      "duration": 1,
+      "status": "active",
+      "archived": false,
+      "archivedAt": null,
+      "archivedBy": null,
+      "archivedReason": null,
+      "createdAt": "2025-11-28T13:08:18.260Z",
+      "updatedAt": "2025-11-29T02:29:32.802Z",
+      "__v": 0
+    },
+    "bookingDate": "2025-12-25T00:00:00.000Z",
+    "status": "confirmed"
+  }
+]
