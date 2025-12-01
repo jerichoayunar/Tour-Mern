@@ -353,3 +353,12 @@
     transform: none;
   }
 }
+
+/* Shared page background used for auth and select user pages */
+.page-bg-auth {
+  background: linear-gradient(135deg, #1e3a8a 0%, #d7e6ff 100%);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  min-height: 100vh;
+}

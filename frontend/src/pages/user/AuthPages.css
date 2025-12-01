@@ -1,11 +1,14 @@
 /* pages/AuthPages.css */
 .auth-page {
-  min-height: 80vh;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   /* Replace with your brand colors */
   background: linear-gradient(135deg, #1e3a8a 0%, #d7e6ff 100%); /* Example blue palette */
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   /* OR solid color */
   /* background: #your-primary-color; */
   padding: 2rem 1rem;

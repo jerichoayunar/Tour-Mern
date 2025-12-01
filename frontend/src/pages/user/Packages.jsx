@@ -5,6 +5,8 @@ import { usePackages } from '../../hooks/usePackages';
 import PackageList from '../../components/user/packages/PackageList';
 import PackageModal from '../../components/user/packages/PackageModal';
 import PackageFilters from '../../components/user/packages/PackageFilters';
+import Modal from '../../components/ui/Modal';
+import BookingForm from '../../components/user/bookings/BookingForm';
 
 const Packages = () => {
   const { 
@@ -12,13 +14,17 @@ const Packages = () => {
     loading, 
     error, 
     fetchPackages,
-    clearFilters 
+    clearFilters: _clearFilters 
   } = usePackages();
 
   // Local state
   const [viewMode, setViewMode] = useState('grid');
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [bookingPackage, setBookingPackage] = useState(null);
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [selectedPackages, setSelectedPackages] = useState([]); // multi-select
+  const [isSelectionBookingOpen, setIsSelectionBookingOpen] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     minPrice: '',
@@ -95,6 +101,26 @@ const Packages = () => {
     setIsModalOpen(true);
   };
 
+  // Handle booking action from PackageModal
+  const handleBookNow = (pkg) => {
+    setBookingPackage(pkg);
+    setIsBookingOpen(true);
+  };
+
+  // Toggle package selection for multi-booking
+  const handleToggleSelect = (pkg) => {
+    setSelectedPackages(prev => {
+      const exists = prev.find(p => p._id === pkg._id);
+      if (exists) return prev.filter(p => p._id !== pkg._id);
+      return [...prev, pkg];
+    });
+  };
+
+  const openSelectionBooking = () => {
+    if (selectedPackages.length === 0) return;
+    setIsSelectionBookingOpen(true);
+  };
+
   // Handle close modal
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -104,6 +130,20 @@ const Packages = () => {
   // Handle filter changes from PackageFilters component
   const handleFiltersChange = (newFilters) => {
     setFilters(newFilters);
+  };
+
+  const handleClearAllFilters = () => {
+    // Clear local filter state and call hook's clear function
+    setFilters({
+      search: '',
+      minPrice: '',
+      maxPrice: '',
+      minDuration: '',
+      maxDuration: ''
+    });
+    previousFiltersRef.current = {};
+    // call the hook-provided clear function
+    if (typeof _clearFilters === 'function') _clearFilters();
   };
 
   // Scroll to content function
@@ -132,7 +172,8 @@ const Packages = () => {
       <div 
         className="fixed inset-0 bg-cover bg-center bg-no-repeat z-0"
         style={{ 
-          backgroundImage: "url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80')",
+          // Replaced with a non-snow mountain image (tropical/green mountain)
+          backgroundImage: "url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=2340&q=80')",
           ...backgroundStyle
         }}
       >
@@ -153,14 +194,14 @@ const Packages = () => {
           >
             {/* Minimal Badge */}
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2 mb-6">
-              <Sparkles size={16} className="text-amber-400" />
+              <Sparkles size={16} className="text-blue-300" />
               <span className="font-medium text-xs tracking-widest uppercase">Premium Travel Experiences</span>
             </div>
 
             {/* Clean Heading */}
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 leading-tight">
               <span className="block text-white">Discover</span>
-              <span className="block bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent mt-2">
+              <span className="block bg-gradient-to-r from-blue-300 to-blue-400 bg-clip-text text-transparent mt-2">
                 Your Journey
               </span>
             </h1>
@@ -198,6 +239,7 @@ const Packages = () => {
             <PackageFilters
               filters={filters}
               onFiltersChange={handleFiltersChange}
+              onClearAll={handleClearAllFilters}
             />
           </div>
 
@@ -210,6 +252,8 @@ const Packages = () => {
               onViewDetails={handleViewDetails}
               viewMode={viewMode}
               onViewModeChange={setViewMode}
+              activeFiltersCount={Object.values(filters).filter(v => v).length}
+              onClearFilters={handleClearAllFilters}
             />
           </div>
         </div>
@@ -220,7 +264,71 @@ const Packages = () => {
         package={selectedPackage}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
+        onBook={handleBookNow}
+        onToggleSelect={handleToggleSelect}
       />
+
+      {/* Booking Modal */}
+      {isBookingOpen && bookingPackage && (
+        <Modal
+          isOpen={isBookingOpen}
+          onClose={() => { setIsBookingOpen(false); setBookingPackage(null); }}
+          size="lg"
+        >
+          <BookingForm
+            package={bookingPackage}
+            onSuccess={() => { setIsBookingOpen(false); setBookingPackage(null); }}
+            onCancel={() => { setIsBookingOpen(false); setBookingPackage(null); }}
+          />
+        </Modal>
+      )}
+
+      {/* Booking Modal for multiple selected packages */}
+      {isSelectionBookingOpen && selectedPackages.length > 0 && (
+        <Modal
+          isOpen={isSelectionBookingOpen}
+          onClose={() => { setIsSelectionBookingOpen(false); setSelectedPackages([]); }}
+          size="lg"
+        >
+          <BookingForm
+            packages={selectedPackages}
+            onSuccess={() => { setIsSelectionBookingOpen(false); setSelectedPackages([]); }}
+            onCancel={() => { setIsSelectionBookingOpen(false); setSelectedPackages([]); }}
+          />
+        </Modal>
+      )}
+
+      {/* Floating selection summary */}
+      {selectedPackages.length > 0 && (
+        <div className="fixed right-6 bottom-6 z-50 bg-white/95 rounded-2xl shadow-2xl p-4 border border-slate-200 w-80">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-semibold text-slate-800">Selected Packages</div>
+            <div className="text-xs text-slate-500 rounded-full px-2 py-0.5 bg-slate-100">{selectedPackages.length}</div>
+          </div>
+          <div className="text-sm text-slate-900 mb-3 max-h-36 overflow-auto">
+            {selectedPackages.map(p => (
+              <div key={p._id} className="flex items-center justify-between py-1 border-b last:border-b-0 border-transparent hover:border-slate-100">
+                <div className="truncate font-medium text-slate-800">{p.title}</div>
+                <div className="text-xs text-slate-500">{p.duration}d</div>
+              </div>
+            ))}
+          </div>
+            <div className="flex gap-2">
+            <button
+              onClick={() => setSelectedPackages([])}
+              className="flex-1 px-3 py-2 rounded-xl bg-slate-100 text-slate-700 text-sm border border-slate-100"
+            >
+              Clear
+            </button>
+            <button
+              onClick={openSelectionBooking}
+                className="flex-1 px-3 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white text-sm font-semibold shadow-md"
+            >
+              Book Selected
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

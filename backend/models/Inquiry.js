@@ -60,6 +60,47 @@ const inquirySchema = mongoose.Schema(
     },
     respondedAt: {
       type: Date
+    },
+    conversation: {
+      type: [
+        {
+          sender: {
+            type: String,
+            enum: ['user', 'admin'],
+            required: true
+          },
+          message: {
+            type: String,
+            required: true,
+            trim: true,
+            maxlength: [2000, 'Conversation message cannot be more than 2000 characters']
+          },
+          createdAt: {
+            type: Date,
+            default: Date.now
+          }
+        }
+      ],
+      default: []
+    },
+    // Archive fields (soft delete)
+    archived: {
+      type: Boolean,
+      default: false,
+      index: true
+    },
+    archivedAt: {
+      type: Date,
+      default: null
+    },
+    archivedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    archivedReason: {
+      type: String,
+      default: null
     }
   },
   {

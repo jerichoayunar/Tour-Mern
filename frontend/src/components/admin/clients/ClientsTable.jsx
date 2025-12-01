@@ -4,10 +4,13 @@ import { clientService } from '../../../services/clientService';
 const ClientsTable = ({ 
   clients, 
   filters, 
+  showArchived,
   onFiltersChange, 
   onViewClient, 
-  onUpdateClient, 
-  onDeleteClient, 
+  onUpdateClient: _onUpdateClient, 
+  onArchiveClient,
+  onRestoreClient,
+  onPermanentDelete,
   onRefresh 
 }) => {
   const [sortField, setSortField] = useState('createdAt');
@@ -64,22 +67,14 @@ const ClientsTable = ({
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div>
             <h2 className="text-xl font-bold text-gray-900">
-              All Clients ({sortedClients.length})
+              {showArchived ? 'Archived Clients' : 'Active Clients'} ({sortedClients.length})
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Manage and view all client accounts
+              {showArchived ? 'View and manage archived accounts' : 'Manage and view all client accounts'}
             </p>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-            <input
-              type="text"
-              placeholder="Search clients..."
-              value={filters.search}
-              onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64"
-            />
-            
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-end">
             <select
               value={filters.status}
               onChange={(e) => onFiltersChange({ ...filters, status: e.target.value })}
@@ -89,17 +84,6 @@ const ClientsTable = ({
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
               <option value="suspended">Suspended</option>
-            </select>
-
-            <select
-              value={filters.role}
-              onChange={(e) => onFiltersChange({ ...filters, role: e.target.value })}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="all">All Roles</option>
-              <option value="user">User</option>
-              <option value="premium">Premium</option>
-              <option value="agent">Agent</option>
             </select>
 
             <button
@@ -202,13 +186,33 @@ const ClientsTable = ({
                       <span>👁️</span>
                       View
                     </button>
-                    <button
-                      onClick={() => onDeleteClient(client.id)}
-                      className="text-red-600 hover:text-red-900 font-medium flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
-                    >
-                      <span>🗑️</span>
-                      Delete
-                    </button>
+                    
+                    {showArchived ? (
+                      <>
+                        <button
+                          onClick={() => onRestoreClient(client.id)}
+                          className="text-green-600 hover:text-green-900 font-medium flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-green-50 transition-colors"
+                        >
+                          <span>🔄</span>
+                          Restore
+                        </button>
+                        <button
+                          onClick={() => onPermanentDelete(client.id)}
+                          className="text-red-600 hover:text-red-900 font-medium flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
+                        >
+                          <span>🗑️</span>
+                          Delete Forever
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => onArchiveClient(client.id)}
+                        className="text-orange-600 hover:text-orange-900 font-medium flex items-center gap-2 px-3 py-1 rounded-lg hover:bg-orange-50 transition-colors"
+                      >
+                        <span>📦</span>
+                        Archive
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>

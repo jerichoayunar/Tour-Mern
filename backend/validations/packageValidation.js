@@ -34,12 +34,15 @@ const itineraryItemSchema = Joi.object({
       'string.max': 'Place name cannot exceed 100 characters'
     }),
   
-  // DAY-SPECIFIC INCLUSIONS - REQUIRED
-  inclusions: Joi.object({
-    transport: Joi.boolean().default(false),
-    meals: Joi.boolean().default(false),
-    stay: Joi.boolean().default(false)
-  }).required(),
+  // DAY-SPECIFIC INCLUSIONS - either legacy object (transport/meals/stay) or new array of strings
+  inclusions: Joi.alternatives().try(
+    Joi.object({
+      transport: Joi.boolean().default(false),
+      meals: Joi.boolean().default(false),
+      stay: Joi.boolean().default(false)
+    }),
+    Joi.array().items(Joi.string().max(100).trim()).default([])
+  ).required(),
   
   _id: Joi.any().optional()
 }).unknown(true);

@@ -1,45 +1,21 @@
 import Package from '../models/Package.js';
 import ApiError from '../utils/ApiError.js';
-import { cloudinary } from '../utils/cloudinary.js';
-
-// Cloudinary upload function
-const uploadImageToCloudinary = async (file) => {
-  try {
-    const b64 = Buffer.from(file.buffer).toString('base64');
-    const dataURI = `data:${file.mimetype};base64,${b64}`;
-    
-    const uploadResult = await cloudinary.uploader.upload(dataURI, {
-      folder: 'tour-mern/packages',
-      transformation: [
-        { width: 800, height: 600, crop: 'limit', quality: 'auto' }
-      ]
-    });
-
-    return {
-      url: uploadResult.secure_url,
-      publicId: uploadResult.public_id,
-      isUploaded: true
-    };
-  } catch (error) {
-    throw new ApiError(500, 'Failed to upload image to Cloudinary');
-  }
-};
-
-// Cloudinary delete function
-const deleteImageFromCloudinary = async (publicId) => {
-  try {
-    if (publicId) {
-      await cloudinary.uploader.destroy(publicId);
-    }
-  } catch (error) {
-    console.error('Failed to delete image from Cloudinary:', error);
-  }
-};
+import { uploadToCloudinary, deleteFromCloudinary } from './uploadService.js';
 
 // Get all packages with optional filtering - UPDATED (no global inclusions)
 export const getPackages = async (query = {}) => {
-  const { status, minPrice, maxPrice, minDuration, maxDuration, search } = query;
+  const { status, minPrice, maxPrice, minDuration, maxDuration, search, includeArchived, onlyArchived } = query;
   const filter = {};
+
+  // Archive filtering
+  if (onlyArchived === 'true') {
+    filter.archived = true;
+  } else if (includeArchived !== 'true') {
+    filter.$or = [
+      { archived: false },
+      { archived: { $exists: false } }
+    ];
+  }
 
   // Filter by status
   if (status) filter.status = status;
@@ -110,16 +86,22 @@ export const createPackage = async (data, file = null) => {
   };
 
   if (file) {
-    imageData = await uploadImageToCloudinary(file);
+    imageData = await uploadToCloudinary(file.buffer, 'tour-mern/packages');
   } else if (image) {
     imageData.url = image;
     imageData.isUploaded = false;
   }
 
   // Ensure all itinerary days have inclusions
+  const normalizeInclusions = (inc) => {
+    if (Array.isArray(inc)) return inc;
+    if (inc && typeof inc === 'object') return Object.keys(inc).filter(k => inc[k]);
+    return [];
+  };
+
   const processedItinerary = itinerary.map(day => ({
     ...day,
-    inclusions: day.inclusions || { transport: false, meals: false, stay: false }
+    inclusions: normalizeInclusions(day.inclusions)
   }));
 
   const pkg = await Package.create({
@@ -169,9 +151,9 @@ export const updatePackage = async (packageId, updateData, file = null) => {
 
   if (file) {
     if (pkg.image.isUploaded && pkg.image.publicId) {
-      await deleteImageFromCloudinary(pkg.image.publicId);
+      await deleteFromCloudinary(pkg.image.publicId);
     }
-    imageData = await uploadImageToCloudinary(file);
+    imageData = await uploadToCloudinary(file.buffer, 'tour-mern/packages');
   } else if (updateData.image !== undefined) {
     if (updateData.image === '') {
       imageData = {
@@ -181,7 +163,7 @@ export const updatePackage = async (packageId, updateData, file = null) => {
       };
     } else if (updateData.image !== pkg.image.url) {
       if (pkg.image.isUploaded && pkg.image.publicId) {
-        await deleteImageFromCloudinary(pkg.image.publicId);
+        await deleteFromCloudinary(pkg.image.publicId);
       }
       imageData = {
         url: updateData.image,
@@ -194,9 +176,15 @@ export const updatePackage = async (packageId, updateData, file = null) => {
   // Process itinerary with inclusions
   let processedItinerary = updateData.itinerary;
   if (updateData.itinerary) {
+    const normalizeInclusionsLocal = (inc) => {
+      if (Array.isArray(inc)) return inc;
+      if (inc && typeof inc === 'object') return Object.keys(inc).filter(k => inc[k]);
+      return [];
+    };
+
     processedItinerary = updateData.itinerary.map(day => ({
       ...day,
-      inclusions: day.inclusions || { transport: false, meals: false, stay: false }
+      inclusions: normalizeInclusionsLocal(day.inclusions)
     }));
   }
 
@@ -228,7 +216,82 @@ export const deletePackage = async (packageId) => {
   }
 
   if (pkg.image.isUploaded && pkg.image.publicId) {
-    await deleteImageFromCloudinary(pkg.image.publicId);
+    await deleteFromCloudinary(pkg.image.publicId);
+  }
+
+  await Package.findByIdAndDelete(packageId);
+};
+
+// Archive package (soft delete)
+export const archivePackage = async (packageId, adminId, reason = null) => {
+  const pkg = await Package.findById(packageId);
+
+  if (!pkg) {
+    throw new ApiError(404, 'Package not found');
+  }
+
+  if (pkg.archived) {
+    throw new ApiError(400, 'Package is already archived');
+  }
+
+  const archivedPackage = await Package.findByIdAndUpdate(
+    packageId,
+    {
+      $set: {
+        archived: true,
+        archivedAt: new Date(),
+        archivedBy: adminId,
+        archivedReason: reason
+      }
+    },
+    { new: true, runValidators: true }
+  ).populate('archivedBy', 'name email');
+
+  return archivedPackage;
+};
+
+// Restore archived package
+export const restorePackage = async (packageId) => {
+  const pkg = await Package.findById(packageId);
+
+  if (!pkg) {
+    throw new ApiError(404, 'Package not found');
+  }
+
+  if (!pkg.archived) {
+    throw new ApiError(400, 'Package is not archived');
+  }
+
+  const restoredPackage = await Package.findByIdAndUpdate(
+    packageId,
+    {
+      $set: {
+        archived: false,
+        archivedAt: null,
+        archivedBy: null,
+        archivedReason: null
+      }
+    },
+    { new: true, runValidators: true }
+  );
+
+  return restoredPackage;
+};
+
+// Permanently delete package (only for archived packages)
+export const permanentDeletePackage = async (packageId) => {
+  const pkg = await Package.findById(packageId);
+
+  if (!pkg) {
+    throw new ApiError(404, 'Package not found');
+  }
+
+  if (!pkg.archived) {
+    throw new ApiError(400, 'Package must be archived before permanent deletion');
+  }
+
+  if (pkg.image.isUploaded && pkg.image.publicId) {
+    await deleteFromCloudinary(pkg.image.publicId);
   }
 
   await Package.findByIdAndDelete(packageId);

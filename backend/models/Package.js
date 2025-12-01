@@ -31,20 +31,12 @@ const packageSchema = new mongoose.Schema({
       trim: true,
       maxlength: [100, 'Place name cannot exceed 100 characters']
     }],
-    // DAY-SPECIFIC INCLUSIONS - NOW THE ONLY INCLUSIONS
+    // Day-specific inclusions. Previously stored as boolean flags (transport/meals/stay).
+    // Migrate to an array of strings to support typed inclusions (e.g. ['Breakfast','Entrance Fee']).
+    // Keep flexible to accept legacy boolean shapes when reading.
     inclusions: {
-      transport: {
-        type: Boolean,
-        default: false
-      },
-      meals: {
-        type: Boolean,
-        default: false
-      },
-      stay: {
-        type: Boolean,
-        default: false
-      }
+      type: [String],
+      default: []
     }
   }],
   
@@ -81,6 +73,26 @@ const packageSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'inactive'],
     default: 'active'
+  },
+  
+  // Archive fields (soft delete)
+  archived: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  archivedAt: {
+    type: Date,
+    default: null
+  },
+  archivedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  archivedReason: {
+    type: String,
+    default: null
   }
 }, { 
   timestamps: true 
@@ -89,6 +101,7 @@ const packageSchema = new mongoose.Schema({
 // Index for better search performance
 packageSchema.index({ title: 'text' });
 packageSchema.index({ status: 1, price: 1 });
+packageSchema.index({ price: 1, duration: 1 }); // Compound index for filtering
 packageSchema.index({ createdAt: -1 });
 
 export default mongoose.model('Package', packageSchema);

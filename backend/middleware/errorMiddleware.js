@@ -12,8 +12,8 @@
 export const errorHandler = (err, req, res, next) => {
   console.error('❌ ERROR HANDLER:', err.stack || err);
 
-  // Determine HTTP status code
-  const statusCode = res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
+  // Determine HTTP status code (prefer err.statusCode / err.status when present)
+  const statusCode = (err && (err.statusCode || err.status)) || (res.statusCode && res.statusCode !== 200 ? res.statusCode : 500);
 
   res.status(statusCode).json({
     success: false,

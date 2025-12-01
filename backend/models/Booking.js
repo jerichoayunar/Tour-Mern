@@ -11,6 +11,11 @@ const bookingSchema = new mongoose.Schema({
     ref: 'Package', 
     required: [true, 'Package is required']
   },
+  // Support multiple packages in one booking (optional)
+  packages: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Package'
+  }],
   clientName: {
     type: String,
     required: [true, 'Client name is required'],
@@ -41,6 +46,12 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     required: [true, 'Total price is required']
   },
+  // Total combined duration (in days) for single or multi-package bookings
+  totalDays: {
+    type: Number,
+    default: 0,
+    index: true
+  },
   status: {
     type: String,
     enum: ['pending', 'confirmed', 'cancelled'],
@@ -49,6 +60,63 @@ const bookingSchema = new mongoose.Schema({
   specialRequests: {
     type: String,
     default: ''
+  },
+  // ============================================================================
+  // 🔹 CANCELLATION & REFUND TRACKING
+  // ============================================================================
+  cancellation: {
+    cancelledAt: Date,
+    cancelledBy: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: null
+    },
+    reason: String,
+    refundAmount: Number,
+    refundStatus: {
+      type: String,
+      enum: ['pending', 'processed', 'rejected'],
+      default: 'pending'
+    },
+    refundProcessedAt: Date
+    ,
+    // Support cancellation requests for confirmed bookings
+    requested: {
+      type: Boolean,
+      default: false
+    },
+    requestedAt: Date,
+    requestedBy: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: null
+    }
+  },
+  // ============================================================================
+  // 🔹 ARCHIVE SYSTEM (Soft Delete)
+  // ============================================================================
+  // Admin notes for internal use
+  adminNotes: {
+    type: String,
+    default: ''
+  },
+  archived: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  archivedAt: {
+    type: Date,
+    default: null
+  },
+  archivedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  archivedReason: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true

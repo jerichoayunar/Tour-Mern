@@ -5,7 +5,10 @@ import {
   getDestination,
   createDestination,
   updateDestination,
-  deleteDestination
+  deleteDestination,
+  archiveDestination,
+  restoreDestination,
+  permanentDeleteDestination
 } from '../controllers/destinationController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { validateRequest } from '../middleware/validateMiddleware.js';
@@ -41,5 +44,10 @@ router.put(
 );
 
 router.delete('/:id', deleteDestination);
+
+// Archive routes
+router.put('/:id/archive', archiveDestination);
+router.put('/:id/restore', restoreDestination);
+router.delete('/:id/permanent', permanentDeleteDestination);
 
 export { router as destinationRoutes };

@@ -60,9 +60,25 @@ const userSchema = new mongoose.Schema(
       sparse: true, // allows multiple nulls
     },
 
+    // ==================================================
+    // 🔹 GITHUB LOGIN FIELDS
+    // ==================================================
+    githubId: {
+      type: String,
+      sparse: true,
+    },
+    githubUsername: {
+      type: String,
+      default: null,
+    },
+    githubProfileUrl: {
+      type: String,
+      default: null,
+    },
+
     loginMethod: {
       type: String,
-      enum: ['local', 'google'],
+      enum: ['local', 'google', 'github'],
       default: 'local',
     },
 
@@ -131,6 +147,28 @@ const userSchema = new mongoose.Schema(
     // ==================================================
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+
+    // ==================================================
+    // 🔹 ARCHIVE FIELDS (Soft Delete System)
+    // ==================================================
+    archived: {
+      type: Boolean,
+      default: false,
+      index: true // For filtering queries
+    },
+    archivedAt: {
+      type: Date,
+      default: null
+    },
+    archivedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    archivedReason: {
+      type: String,
+      default: null
+    }
   },
   {
     timestamps: true, // Auto add createdAt and updatedAt
@@ -212,12 +250,38 @@ userSchema.methods.incrementLoginAttempts = function () {
  */
 userSchema.methods.resetLoginAttempts = function () {
   return this.updateOne({
-    $set: { 
+    $set: {
       loginAttempts: 0,
-      // lastLogin: new Date() - Removed to avoid schema change
+      failedLoginAttempts: 0
     },
-    $unset: { lockUntil: 1 }
+    $unset: { lockUntil: 1, accountLockedUntil: 1 }
   });
+};
+
+// ======================================================
+// 🔹 INCREMENT FAILED LOGIN ATTEMPTS (Unified)
+// ======================================================
+/**
+ * Increments failedLoginAttempts and sets `accountLockedUntil` when threshold reached.
+ * Returns an object { locked: boolean, remainingAttempts: number, lockUntil: Date|null }
+ */
+userSchema.methods.incrementFailedLoginAttempts = async function (maxAttempts = 5, lockoutMinutes = 15) {
+  // If already locked by an earlier action, return current lock state
+  if (this.accountLockedUntil && this.accountLockedUntil > Date.now()) {
+    return { locked: true, remainingAttempts: 0, lockUntil: this.accountLockedUntil };
+  }
+
+  this.failedLoginAttempts = (this.failedLoginAttempts || 0) + 1;
+  this.lastLoginAttempt = new Date();
+
+  if (this.failedLoginAttempts >= maxAttempts) {
+    this.accountLockedUntil = new Date(Date.now() + lockoutMinutes * 60 * 1000);
+    await this.save({ validateBeforeSave: false });
+    return { locked: true, remainingAttempts: 0, lockUntil: this.accountLockedUntil };
+  }
+
+  await this.save({ validateBeforeSave: false });
+  return { locked: false, remainingAttempts: Math.max(0, maxAttempts - this.failedLoginAttempts), lockUntil: null };
 };
 
 // ======================================================

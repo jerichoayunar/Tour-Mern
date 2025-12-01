@@ -5,6 +5,9 @@ import {
   getClient,
   updateClient,
   deleteClient,
+  archiveClient,
+  restoreClient,
+  permanentDeleteClient,
   getClientStats
 } from '../controllers/clientController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
@@ -21,6 +24,9 @@ router.get('/', getClients);
 router.get('/stats', getClientStats);
 router.get('/:id', getClient);
 router.put('/:id', validateRequest(updateClientSchema), updateClient);
+router.put('/:id/archive', archiveClient);
+router.put('/:id/restore', restoreClient);
 router.delete('/:id', deleteClient);
+router.delete('/:id/permanent', permanentDeleteClient);
 
 export { router as clientRoutes };

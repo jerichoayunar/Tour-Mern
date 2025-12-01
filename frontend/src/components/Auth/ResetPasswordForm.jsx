@@ -1,10 +1,10 @@
 // components/Auth/ResetPasswordForm.jsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../../services/authService';
 import './AuthForms.css';
 
-function ResetPasswordForm({ token, onTokenError }) {
+function ResetPasswordForm({ token, onTokenError: _onTokenError }) {
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({

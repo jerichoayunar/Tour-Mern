@@ -23,7 +23,7 @@ function LoginForm({ onSwitchToRegister, onClose }) {
   // ======================================================
   // 🔹 HOOKS & CONTEXT
   // ======================================================
-  const { login, loading, error, clearError } = useAuth();
+  const { login, loading, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
   
   // ======================================================
@@ -97,7 +97,7 @@ function LoginForm({ onSwitchToRegister, onClose }) {
     }
     
     // Clear global authentication error
-    if (error) clearError();
+    if (authError) clearError();
   };
 
   /**
@@ -161,7 +161,7 @@ function LoginForm({ onSwitchToRegister, onClose }) {
     // Execute reCAPTCHA for security
     try {
       await executeRecaptcha();
-    } catch (error) {
+    } catch {
       setRecaptchaError('Please complete the security verification');
       return;
     }
@@ -229,7 +229,23 @@ function LoginForm({ onSwitchToRegister, onClose }) {
       localStorage.setItem('preAuthPath', window.location.pathname);
       
       // Redirect to backend Google OAuth endpoint
-      window.location.href = 'http://localhost:5000/api/auth/google';
+      // Use Vite env (if provided) and normalize root (strip trailing /api if present)
+      const viteApi = import.meta?.env?.VITE_API_URL;
+      const backendRoot = viteApi ? viteApi.replace(/\/api\/?$/i, '') : 'http://localhost:5000';
+      window.location.href = `${backendRoot}/api/auth/google`;
+    }
+  };
+
+  /**
+   * Handle GitHub OAuth login redirect
+   */
+  const handleGithubLogin = () => {
+    if (!loading) {
+      // Store current page to redirect back after login
+      localStorage.setItem('preAuthPath', window.location.pathname);
+      const viteApi = import.meta?.env?.VITE_API_URL;
+      const backendRoot = viteApi ? viteApi.replace(/\/api\/?$/i, '') : 'http://localhost:5000';
+      window.location.href = `${backendRoot}/api/auth/github`;
     }
   };
 
@@ -249,11 +265,11 @@ function LoginForm({ onSwitchToRegister, onClose }) {
       {/* ================================================== */}
       {/* 🔹 GLOBAL ERROR DISPLAY */}
       {/* ================================================== */}
-      {error && (
-        <div className="error-message modern-error">
-          {error}
-        </div>
-      )}
+      {authError && (
+            <div className="error-message modern-error">
+              {authError}
+            </div>
+          )}
 
       {/* ================================================== */}
       {/* 🔹 EMAIL FIELD */}
@@ -343,6 +359,7 @@ function LoginForm({ onSwitchToRegister, onClose }) {
           <input 
             type="checkbox" 
             id="rememberMe"
+        
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
             className="remember-me-checkbox"
@@ -415,31 +432,45 @@ function LoginForm({ onSwitchToRegister, onClose }) {
       {/* ================================================== */}
       {/* 🔹 GOOGLE LOGIN BUTTON */}
       {/* ================================================== */}
-      <div className="flex-row">
-        <button 
-          className="btn google" 
-          type="button" 
+      <div className="social-buttons" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <button
+          type="button"
+          className="btn google"
           onClick={handleGoogleLogin}
           disabled={loading}
+          aria-label="Continue with Google"
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px' }}
         >
-          <svg
-            version="1.1"
-            width="20"
-            id="Layer_1"
-            xmlns="http://www.w3.org/2000/svg"
-            xmlnsXlink="http://www.w3.org/1999/xlink"
-            x="0px"
-            y="0px"
-            viewBox="0 0 512 512"
-            style={{ enableBackground: 'new 0 0 512 512' }}
-            xmlSpace="preserve"
-          >
-            <path style={{ fill: '#FBBB00' }} d="M113.47,309.408L95.648,375.94l-65.139,1.378C11.042,341.211,0,299.9,0,256 c0-42.451,10.324-82.483,28.624-117.732h0.014l57.992,10.632l25.404,57.644c-5.317,15.501-8.215,32.141-8.215,49.456 C103.821,274.792,107.225,292.797,113.47,309.408z"></path>
-            <path style={{ fill: '#518EF8' }} d="M507.527,208.176C510.467,223.662,512,239.655,512,256c0,18.328-1.927,36.206-5.598,53.451 c-12.462,58.683-45.025,109.925-90.134,146.187l-0.014-0.014l-73.044-3.727l-10.338-64.535 c29.932-17.554,53.324-45.025,65.646-77.911h-136.89V208.176h138.887L507.527,208.176L507.527,208.176z"></path>
-            <path style={{ fill: '#28B446' }} d="M416.253,455.624l0.014,0.014C372.396,490.901,316.666,512,256,512 c-97.491,0-182.252-54.491-225.491-134.681l82.961-67.91c21.619,57.698,77.278,98.771,142.53,98.771 c28.047,0,54.323-7.582,76.87-20.818L416.253,455.624z"></path>
-            <path style={{ fill: '#F14336' }} d="M419.404,58.936l-82.933,67.896c-23.335-14.586-50.919-23.012-80.471-23.012 c-66.729,0-123.429,42.957-143.965,102.724l-83.397-68.276h-0.014C71.23,56.123,157.06,0,256,0 C318.115,0,375.068,22.126,419.404,58.936z"></path>
-          </svg>
-          Continue with Google
+          <span aria-hidden style={{ display: 'inline-flex', width: 20, height: 20 }}>
+            <svg
+              version="1.1"
+              width="20"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 512 512"
+            >
+              <path style={{ fill: '#FBBB00' }} d="M113.47,309.408L95.648,375.94l-65.139,1.378C11.042,341.211,0,299.9,0,256 c0-42.451,10.324-82.483,28.624-117.732h0.014l57.992,10.632l25.404,57.644c-5.317,15.501-8.215,32.141-8.215,49.456 C103.821,274.792,107.225,292.797,113.47,309.408z" />
+              <path style={{ fill: '#518EF8' }} d="M507.527,208.176C510.467,223.662,512,239.655,512,256c0,18.328-1.927,36.206-5.598,53.451 c-12.462,58.683-45.025,109.925-90.134,146.187l-0.014-0.014l-73.044-3.727l-10.338-64.535 c29.932-17.554,53.324-45.025,65.646-77.911h-136.89V208.176h138.887L507.527,208.176L507.527,208.176z" />
+              <path style={{ fill: '#28B446' }} d="M416.253,455.624l0.014,0.014C372.396,490.901,316.666,512,256,512 c-97.491,0-182.252-54.491-225.491-134.681l82.961-67.91c21.619,57.698,77.278,98.771,142.53,98.771 c28.047,0,54.323-7.582,76.87-20.818L416.253,455.624z" />
+              <path style={{ fill: '#F14336' }} d="M419.404,58.936l-82.933,67.896c-23.335-14.586-50.919-23.012-80.471-23.012 c-66.729,0-123.429,42.957-143.965,102.724l-83.397-68.276h-0.014C71.23,56.123,157.06,0,256,0 C318.115,0,375.068,22.126,419.404,58.936z" />
+            </svg>
+          </span>
+          <span style={{ fontWeight: 600 }}>Continue with Google</span>
+        </button>
+
+        <button
+          type="button"
+          className="btn github"
+          onClick={handleGithubLogin}
+          disabled={loading}
+          aria-label="Continue with GitHub"
+          style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 12px' }}
+        >
+          <span aria-hidden style={{ display: 'inline-flex', width: 20, height: 20 }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.727-4.042-1.416-4.042-1.416-.546-1.387-1.333-1.757-1.333-1.757-1.089-.744.084-.729.084-.729 1.205.084 1.84 1.236 1.84 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.42-1.305.762-1.605-2.665-.303-5.466-1.332-5.466-5.93 0-1.31.468-2.38 1.236-3.22-.124-.303-.536-1.523.116-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.289-1.552 3.295-1.23 3.295-1.23.654 1.653.242 2.873.119 3.176.77.84 1.235 1.91 1.235 3.22 0 4.61-2.807 5.624-5.479 5.921.431.371.815 1.102.815 2.222 0 1.606-.015 2.896-.015 3.286 0 .32.216.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+            </svg>
+          </span>
+          <span style={{ fontWeight: 600 }}>Continue with GitHub</span>
         </button>
       </div>
 

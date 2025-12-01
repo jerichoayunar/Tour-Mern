@@ -26,7 +26,7 @@ import './AuthForms.css';
 
 function RegisterForm({ onSwitchToLogin, onClose }) {
   const { register, loading, error, clearError, operationLoading } = useAuth();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -41,8 +41,8 @@ function RegisterForm({ onSwitchToLogin, onClose }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [recaptchaToken, setRecaptchaToken] = useState('');
-  const [recaptchaError, setRecaptchaError] = useState('');
+  const [_recaptchaToken, _setRecaptchaToken] = useState('');
+  const [_recaptchaError, _setRecaptchaError] = useState('');
 
   // ✅ Get specific loading state
   const isRegistering = operationLoading?.register || loading;
@@ -161,17 +161,17 @@ function RegisterForm({ onSwitchToLogin, onClose }) {
         window.grecaptcha.ready(() => {
           window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'register' })
             .then((token) => {
-              setRecaptchaToken(token);
-              setRecaptchaError('');
+              _setRecaptchaToken(token);
+              _setRecaptchaError('');
               resolve(token);
             })
             .catch((error) => {
-              setRecaptchaError('Failed to load reCAPTCHA. Please refresh the page.');
+              _setRecaptchaError('Failed to load reCAPTCHA. Please refresh the page.');
               reject(error);
             });
         });
       } else {
-        setRecaptchaError('reCAPTCHA not loaded. Please refresh the page.');
+        _setRecaptchaError('reCAPTCHA not loaded. Please refresh the page.');
         reject(new Error('reCAPTCHA not loaded'));
       }
     });
@@ -183,7 +183,7 @@ function RegisterForm({ onSwitchToLogin, onClose }) {
     
     // Clear previous errors
     clearError();
-    setRecaptchaError('');
+    _setRecaptchaError('');
     
     if (!validateForm()) {
       console.log('❌ Form validation failed');
@@ -237,7 +237,7 @@ function RegisterForm({ onSwitchToLogin, onClose }) {
       console.error('🔍 Registration error:', error);
       
       if (error.message.includes('reCAPTCHA')) {
-        setRecaptchaError('Security verification failed. Please refresh and try again.');
+        _setRecaptchaError('Security verification failed. Please refresh and try again.');
       }
     }
   };

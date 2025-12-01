@@ -23,6 +23,12 @@ const statusConfig = {
     icon: "❌",
     description: "Booking has been cancelled"
   },
+  requested: {
+    label: "Cancellation Requested",
+    styles: "bg-amber-50 text-amber-800 border border-amber-200",
+    icon: "⚠️",
+    description: "Client has requested cancellation — admin review needed"
+  },
   // 🛠️ NOTE: Backend doesn't currently support 'completed' status
   // Uncomment when backend adds support for completed status
   /*

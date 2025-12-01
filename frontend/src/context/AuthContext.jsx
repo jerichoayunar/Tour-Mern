@@ -17,7 +17,7 @@
  * - ToastContext (for user notifications)
  */
 
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { authService } from '../services/authService';
 import { useToast } from './ToastContext';
 
@@ -59,19 +59,52 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
+      // If a token exists, try to set a cached user immediately to avoid
+      // UI logout flash on reload. We'll still verify the token with the
+      // backend in the background and only clear auth if the token is
+      // explicitly rejected (401).
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            setUser(JSON.parse(storedUser));
+          } catch (e) {
+            console.debug('Failed to parse stored user', e);
+          }
+        }
+      } catch (e) {
+        console.debug('Error reading stored user', e);
+      }
+
       try {
         // Verify token with backend and get user data
         const response = await authService.getMe();
-        
-        // If backend confirms valid token, set user data
-        if (response.success && response.data) {
-          setUser(response.data);
+        const resp = response?.data ?? response;
+
+        // If backend confirms valid token, set user data and persist
+        if (resp.success && resp.data) {
+          setUser(resp.data);
+          try {
+            localStorage.setItem('user', JSON.stringify(resp.data));
+          } catch (e) {
+            console.warn('Failed to persist user to localStorage', e);
+          }
         }
       } catch (err) {
-        console.error('Auth check failed:', err);
-        // Token is invalid, clear it
-        authService.clearLocalAuth();
-        showToast('Session expired. Please sign in again.', 'info');
+        console.debug('Auth check error:', err);
+        // If token is invalid/expired (401), clear local auth to avoid
+        // keeping an invalid session. For other errors, keep the cached
+        // user (if any) to avoid logging the user out on transient issues.
+        const status = err?.response?.status;
+        if (status === 401) {
+          authService.clearLocalAuth();
+          setUser(null);
+        } else {
+          const errorMessage = 'Failed to verify session — please check your connection';
+          setError(errorMessage);
+          // Don't loudly toast on every reload verification failure
+          console.debug(errorMessage, err);
+        }
       } finally {
         // Always stop loading regardless of success/error
         setLoading(false);
@@ -87,22 +120,38 @@ export const AuthProvider = ({ children }) => {
    * - Stores token automatically on success
    * - Updates global user state
    */
-  const login = async (credentials) => {
+  const login = useCallback(async (credentials) => {
     try {
       setError(null);
       setOperationLoading(prev => ({ ...prev, login: true }));
       
       const response = await authService.login(credentials);
+      // Support multiple response shapes:
+      // 1) Normalized service response: { success, data: { ...user }, message }
+      // 2) Direct user object returned as response.data (legacy consumers)
+      let resp = response?.data ?? response;
 
-      if (response.success && response.data) {
-        setUser(response.data);
+      if (resp && resp.success && resp.data) {
+        // Normalized shape
+        setUser(resp.data);
+        try { localStorage.setItem('user', JSON.stringify(resp.data)); } catch (err) { console.debug('Failed to persist user to localStorage', err); }
         showToast('Signed in successfully!', 'success');
-        return { success: true, user: response.data };
-      } else {
-        setError(response.message);
-        showToast(response.message || 'Login failed', 'error');
-        return { success: false, message: response.message };
+        return response;
       }
+
+      // If the response already contains the user object (no wrapper)
+      if (resp && (resp._id || resp.email)) {
+        setUser(resp);
+        try { localStorage.setItem('user', JSON.stringify(resp)); } catch (err) { console.debug('Failed to persist user to localStorage', err); }
+        showToast('Signed in successfully!', 'success');
+        return { success: true, data: resp };
+      }
+
+      // Fallback: treat as failure with message if available
+      const message = (resp && resp.message) || (response && response.message) || 'Login failed';
+      setError(message);
+      showToast(message, 'error');
+      return response;
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Login failed';
       setError(errorMessage);
@@ -111,36 +160,37 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setOperationLoading(prev => ({ ...prev, login: false }));
     }
-  };
+  }, [showToast]);
 
   /**
    * REGISTER NEW USER
    * - Creates new user account
    * - Auto-logins after successful registration
    */
-  const register = async (userData) => {
+  const register = useCallback(async (userData) => {
     try {
       setError(null);
       setOperationLoading(prev => ({ ...prev, register: true }));
       
       const response = await authService.register(userData);
+      const resp = response?.data ?? response;
 
-      if (response.success) {
+      if (resp.success) {
         const loginResult = await login({
           email: userData.email,
           password: userData.password,
           recaptchaToken: userData.recaptchaToken 
         });
-        
+
         if (loginResult.success) {
           showToast(`Welcome to TourMERN, ${userData.name}!`, 'success');
         }
         return loginResult;
-      } else {
-        setError(response.message);
-        showToast(response.message || 'Registration failed', 'error');
-        return { success: false, message: response.message };
       }
+
+      setError(resp.message);
+      showToast(resp.message || 'Registration failed', 'error');
+      return response;
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
       setError(errorMessage);
@@ -149,7 +199,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setOperationLoading(prev => ({ ...prev, register: false }));
     }
-  };
+  }, [login, showToast]);
 
   /**
    * GOOGLE OAUTH LOGIN
@@ -157,22 +207,24 @@ export const AuthProvider = ({ children }) => {
    * - Verifies Google token with backend
    * - Sets user data on success
    */
-  const googleLogin = async (googleToken) => {
+  const googleLogin = useCallback(async (googleToken) => {
     try {
       setError(null);
       setOperationLoading(prev => ({ ...prev, google: true }));
       
       const response = await authService.googleLogin(googleToken);
+      const resp = response?.data ?? response;
 
-      if (response.success && response.data) {
-        setUser(response.data);
+      if (resp.success && resp.data) {
+        setUser(resp.data);
+        try { localStorage.setItem('user', JSON.stringify(resp.data)); } catch (err) { console.debug('Failed to persist user to localStorage', err); }
         showToast('Google sign in successful! Welcome back!', 'success');
-        return { success: true, user: response.data };
-      } else {
-        setError(response.message);
-        showToast(response.message || 'Google sign in failed', 'error');
-        return { success: false, message: response.message };
+        return response;
       }
+
+      setError(resp.message);
+      showToast(resp.message || 'Google sign in failed', 'error');
+      return response;
     } catch (err) {
       const errorMessage = err.response?.data?.message || 'Google sign in failed';
       setError(errorMessage);
@@ -181,14 +233,14 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setOperationLoading(prev => ({ ...prev, google: false }));
     }
-  };
+  }, [showToast]);
 
   /**
    * HANDLE GOOGLE OAUTH CALLBACK
    * - Processes the redirect from Google OAuth
    * - Extracts token from URL and completes login
    */
-  const handleGoogleCallback = async () => {
+  const handleGoogleCallback = useCallback(async () => {
     try {
       setOperationLoading(prev => ({ ...prev, google: true }));
       
@@ -205,9 +257,9 @@ export const AuthProvider = ({ children }) => {
         setUser(user);
         
         // Store in localStorage for persistence
-        localStorage.setItem('user', JSON.stringify(user));
+        try { localStorage.setItem('user', JSON.stringify(user)); } catch (err) { console.debug('Failed to persist user to localStorage', err); }
         if (user.token) {
-          localStorage.setItem('token', user.token);
+          try { localStorage.setItem('token', user.token); } catch (err) { console.debug('Failed to persist token to localStorage', err); }
         }
         
         showToast('Google sign in successful!', 'success');
@@ -218,7 +270,8 @@ export const AuthProvider = ({ children }) => {
         showToast(errorMessage, 'error');
         return { success: false, message: errorMessage };
       }
-    } catch (error) {
+    } catch (err) {
+      console.debug('handleGoogleCallback error', err);
       const errorMessage = 'Failed to process Google sign in';
       setError(errorMessage);
       showToast(errorMessage, 'error');
@@ -226,27 +279,34 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setOperationLoading(prev => ({ ...prev, google: false }));
     }
-  };
+  }, [googleLogin, showToast]);
 
   /**
    * INITIATE GOOGLE OAUTH FLOW
    * - Redirects user to Google OAuth
    * - Should be called when user clicks "Continue with Google"
    */
-  const initiateGoogleLogin = () => {
+  const initiateGoogleLogin = useCallback(() => {
     try {
       // Store current page to redirect back after login
       const currentPath = window.location.pathname;
       localStorage.setItem('preAuthPath', currentPath);
       
       // Redirect to backend Google OAuth endpoint
-      const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-      window.location.href = `${backendUrl}/api/auth/google`;
+      // Use Vite env var if available, otherwise default to localhost.
+      // Normalize so that if VITE_API_URL contains '/api' we strip it.
+      const viteApi = import.meta?.env?.VITE_API_URL;
+      const backendRoot = viteApi
+        ? viteApi.replace(/\/api\/?$/i, '')
+        : 'http://localhost:5000';
+
+      window.location.href = `${backendRoot}/api/auth/google`;
       
     } catch (error) {
+      console.debug('initiateGoogleLogin error:', error);
       showToast('Failed to start Google sign in', 'error');
     }
-  };
+  }, [showToast]);
 
   /**
    * LOGOUT USER - CLEAN VERSION
@@ -254,7 +314,7 @@ export const AuthProvider = ({ children }) => {
    * - Clears ALL local storage to prevent auto-login
    * - Returns to unauthenticated state
    */
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       setOperationLoading(prev => ({ ...prev, logout: true }));
       
@@ -274,6 +334,14 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       
       showToast('Signed out successfully', 'info');
+        
+        // Redirect to landing page to fully exit authenticated areas
+        try {
+          // Use full navigation to ensure all state is cleared
+          window.location.href = '/';
+        } catch (e) {
+          console.debug('Redirect to landing page failed', e);
+        }
       
     } catch (error) {
       console.error('Logout error:', error);
@@ -284,29 +352,29 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setOperationLoading(prev => ({ ...prev, logout: false }));
     }
-  };
+  }, [showToast]);
 
   /**
    * CLEAR ERRORS
    * - Manually clear error messages
    */
-  const clearError = () => setError(null);
+  const clearError = useCallback(() => setError(null), []);
 
   /**
    * UPDATE USER PROFILE
    * - Updates user data in context and localStorage
    */
-  const updateUser = (updatedUserData) => {
+  const updateUser = useCallback((updatedUserData) => {
     setUser(prev => {
       const newUser = { ...prev, ...updatedUserData };
       // Update localStorage
       localStorage.setItem('user', JSON.stringify(newUser));
       return newUser;
     });
-  };
+  }, []);
 
   // Value provided to all components using this context
-  const value = {
+  const value = useMemo(() => ({
     // State
     user,
     setUser,
@@ -330,7 +398,35 @@ export const AuthProvider = ({ children }) => {
     // Utility methods
     clearError,
     updateUser,
-  };
+    // Utility: require authentication and redirect to login when missing
+    requireAuthRedirect: (returnPath = null) => {
+      const target = returnPath || (typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/');
+      if (user) return true;
+      try {
+        showToast('Please login to continue', 'info');
+      } catch {
+        // ignore errors from toast in non-browser environments
+      }
+      const encoded = encodeURIComponent(target);
+      // Using window.href to ensure redirect works outside of router hooks
+      window.location.href = `/login?return=${encoded}`;
+      return false;
+    }
+  }), [
+    user, 
+    loading, 
+    error, 
+    operationLoading, 
+    login, 
+    register, 
+    logout, 
+    googleLogin, 
+    handleGoogleCallback, 
+    initiateGoogleLogin, 
+    clearError, 
+    updateUser,
+    showToast
+  ]);
 
   return (
     <AuthContext.Provider value={value}>

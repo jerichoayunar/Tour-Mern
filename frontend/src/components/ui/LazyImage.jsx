@@ -6,23 +6,24 @@ const LazyImage = ({ src, alt, className, ...props }) => {
   const imgRef = useRef();
 
   useEffect(() => {
+    const node = imgRef.current;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsInView(true);
-          observer.unobserve(imgRef.current);
+          if (node) observer.unobserve(node);
         }
       },
       { threshold: 0.1 }
     );
 
-    if (imgRef.current) {
-      observer.observe(imgRef.current);
+    if (node) {
+      observer.observe(node);
     }
 
     return () => {
-      if (imgRef.current) {
-        observer.unobserve(imgRef.current);
+      if (node) {
+        observer.unobserve(node);
       }
     };
   }, []);

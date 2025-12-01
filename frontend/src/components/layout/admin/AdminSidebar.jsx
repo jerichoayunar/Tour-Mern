@@ -23,7 +23,6 @@ const menuItems = [
   { label: "Clients", icon: <Users size={20} />, path: "/admin/clients" }, 
   { label: "Activity Monitor", icon: <Activity size={20} />, path: "/admin/activities" },
   { label: "Inquiries", icon: <MessageSquare size={20} />, path: "/admin/inquiries" },
-  { label: "Analytics", icon: <BarChart3 size={20} />, path: "/admin/analytics" },
   { label: "Settings", icon: <Settings size={20} />, path: "/admin/settings" },
 ];
 

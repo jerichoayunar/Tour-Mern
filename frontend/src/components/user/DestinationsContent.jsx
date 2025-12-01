@@ -81,8 +81,8 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
             <div className="h-4 bg-gray-200 rounded w-96 mx-auto animate-pulse"></div>
           </div>
           <div className="flex gap-6 overflow-hidden">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex-shrink-0 w-80 bg-white rounded-2xl shadow-lg p-6 animate-pulse border">
+              {[...Array(4)].map((_, _i) => (
+                <div key={_i} className="flex-shrink-0 w-80 bg-white rounded-2xl shadow-lg p-6 animate-pulse border">
                 <div className="h-48 bg-gray-200 rounded-xl mb-4"></div>
                 <div className="h-6 bg-gray-200 rounded w-3/4 mb-3"></div>
                 <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
@@ -142,7 +142,8 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
           {showLeftArrow && (
             <button
               onClick={() => scroll('prev')}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 group"
+              aria-label="Scroll left"
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-3 shadow-sm hover:shadow-md transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <ChevronLeft className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
             </button>
@@ -151,7 +152,8 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
           {showRightArrow && (
             <button
               onClick={() => scroll('next')}
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-3 shadow-lg hover:shadow-xl transition-all duration-300 group"
+              aria-label="Scroll right"
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 bg-white hover:bg-gray-50 border border-gray-200 rounded-full p-3 shadow-sm hover:shadow-md transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-gray-900" />
             </button>
@@ -170,7 +172,7 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
             {featuredDestinations.map((destination, index) => (
               <div
                 key={destination._id}
-                className="flex-shrink-0 w-80 snap-start group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 overflow-hidden cursor-pointer transform hover:-translate-y-2 border border-gray-100"
+                className="flex-shrink-0 w-80 snap-start group bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-500 overflow-hidden cursor-pointer transform hover:-translate-y-1 border border-gray-100"
               >
                 {/* Image Section */}
                 <div className="relative h-48 overflow-hidden">
@@ -200,7 +202,7 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
                 </div>
 
                 {/* Content */}
-                <div className="p-6">
+                  <div className="p-6">
                   <p className="text-gray-600 leading-relaxed mb-4 line-clamp-3 text-[15px]">
                     {destination.description || 'Experience the beauty and adventure of this amazing destination.'}
                   </p>
@@ -218,11 +220,12 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
                   {/* CTA Button */}
                   <Link
                     to="/destinations"
-                    className="block w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:from-blue-600 hover:to-blue-700 group/btn"
+                    aria-label={`Explore ${destination.name}`}
+                    className="block w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 transform hover:scale-105 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
                     <span className="flex items-center justify-center gap-2">
                       Explore Destination
-                      <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform duration-300" />
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" />
                     </span>
                   </Link>
                 </div>
@@ -233,12 +236,13 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
 
         {/* Scroll Indicators */}
         <div className="flex justify-center items-center gap-2 mt-8">
-          {featuredDestinations.slice(0, 6).map((_, index) => (
+          {featuredDestinations.slice(0, 6).map((_, _i) => (
             <button
-              key={index}
-              onClick={() => scrollToIndex(index * 2)}
+              key={_i}
+              onClick={() => scrollToIndex(_i * 2)}
+              aria-label={`Go to slide ${_i + 1}`}
               className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                Math.floor(activeIndex / 2) === index
+                Math.floor(activeIndex / 2) === _i
                   ? 'bg-blue-500 w-6'
                   : 'bg-gray-300 hover:bg-gray-400'
               }`}
@@ -250,10 +254,10 @@ const DestinationsContent = ({ destinations = [], loading, error }) => {
         <div className="text-center mt-12">
           <Link
             to="/destinations"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-200 group"
+            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-200 group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           >
             View all destinations
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" />
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" />
           </Link>
         </div>
       </div>

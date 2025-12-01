@@ -1,0 +1,79 @@
+[
+  {
+    "_id": "69299ec293b1563a0a94c136",
+    "title": "malaybalay",
+    "itinerary": [
+      {
+        "day": 1,
+        "title": "test",
+        "description": "testtesttesttest",
+        "places": [
+          "test",
+          "test1"
+        ],
+        "inclusions": [
+          "test",
+          "test1",
+          "test2",
+          "test4",
+          "test5",
+          "test6",
+          "test7",
+          "test8"
+        ],
+        "_id": "692a5a8c4a8afa9eba2dea01"
+      }
+    ],
+    "image": {
+      "url": "https://res.cloudinary.com/dmye9rsnm/image/upload/v1764335299/tour-mern/packages/twopt2ljklaxwh9iupb2.jpg",
+      "publicId": "tour-mern/packages/twopt2ljklaxwh9iupb2",
+      "isUploaded": true
+    },
+    "price": 123,
+    "duration": 1,
+    "status": "active",
+    "archived": false,
+    "archivedAt": null,
+    "archivedBy": null,
+    "archivedReason": null,
+    "createdAt": "2025-11-28T13:08:18.260Z",
+    "updatedAt": "2025-11-29T02:29:32.802Z",
+    "__v": 0
+  },
+  {
+    "_id": "6929a10193b1563a0a94c15f",
+    "title": "kalasungay",
+    "itinerary": [
+      {
+        "day": 1,
+        "title": "testtest",
+        "description": "testtesttesttest",
+        "places": [
+          "8-9 am test"
+        ],
+        "inclusions": [
+          "testtest",
+          "testtest1",
+          "testtest2",
+          "testtest3"
+        ],
+        "_id": "692a5a874a8afa9eba2de9f7"
+      }
+    ],
+    "image": {
+      "url": "https://res.cloudinary.com/dmye9rsnm/image/upload/v1764335874/tour-mern/packages/h17wdjorjqyb4wyo430b.jpg",
+      "publicId": "tour-mern/packages/h17wdjorjqyb4wyo430b",
+      "isUploaded": true
+    },
+    "price": 123,
+    "duration": 1,
+    "status": "active",
+    "archived": false,
+    "archivedAt": null,
+    "archivedBy": null,
+    "archivedReason": null,
+    "createdAt": "2025-11-28T13:17:53.528Z",
+    "updatedAt": "2025-11-29T02:29:27.072Z",
+    "__v": 0
+  }
+]

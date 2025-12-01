@@ -11,12 +11,14 @@ const PackageList = ({
   viewMode = 'grid',
   onViewModeChange,
   sortBy = 'featured',
-  onSortChange
+  onSortChange,
+  activeFiltersCount = 0,
+  onClearFilters // optional handler to clear filters
 }) => {
   // Simplified Empty State
   if (!loading && packages.length === 0 && !error) {
     return (
-      <div className="text-center py-16 bg-white rounded-2xl shadow-lg border border-gray-200/60">
+      <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200/60">
         <div className="text-gray-300 mb-6">
           <Frown size={60} className="mx-auto" />
         </div>
@@ -27,10 +29,10 @@ const PackageList = ({
           We couldn't find any tour packages matching your search. 
           Try adjusting your filters or explore our featured collections.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-xl font-medium transition-colors duration-200"
+            className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-6 py-2 rounded-xl font-medium transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Explore All Packages
           </button>
@@ -45,7 +47,7 @@ const PackageList = ({
   // Simplified Error State
   if (error && !loading) {
     return (
-      <div className="text-center py-16 bg-white rounded-2xl shadow-lg border border-gray-200/60">
+      <div className="text-center py-16 bg-white rounded-2xl shadow-sm border border-gray-200/60">
         <div className="text-rose-400 mb-6">
           <Frown size={60} className="mx-auto" />
         </div>
@@ -58,7 +60,7 @@ const PackageList = ({
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-xl font-medium transition-colors duration-200"
+            className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-6 py-2 rounded-xl font-medium transition-all duration-200 shadow-md hover:shadow-lg"
           >
             Try Again
           </button>
@@ -119,8 +121,8 @@ const PackageList = ({
 
                 {/* Simple Inclusion Summary Skeleton */}
                 <div className="flex justify-between px-2">
-                  {[...Array(3)].map((_, i) => (
-                    <div key={i} className="text-center">
+                  {[...Array(3)].map((_, _i) => (
+                            <div key={_i} className="text-center">
                       <div className="w-8 h-8 bg-gray-200 rounded-full mx-auto mb-1 animate-pulse"></div>
                       <div className="h-2 bg-gray-200 rounded w-6 mx-auto animate-pulse"></div>
                     </div>
@@ -152,9 +154,23 @@ const PackageList = ({
                 }
               </p>
             </div>
-            
-            {/* Simplified Controls */}
+
+            {/* Controls + Active Filters */}
             <div className="flex items-center gap-4">
+              {activeFiltersCount > 0 && (
+                <div className="flex items-center gap-3">
+                  <div className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100">
+                    {activeFiltersCount} filter{activeFiltersCount !== 1 ? 's' : ''} applied
+                  </div>
+                  <button
+                    onClick={() => typeof onClearFilters === 'function' && onClearFilters()}
+                    className="text-sm text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition"
+                  >
+                    Clear Filters
+                  </button>
+                </div>
+              )}
+
               {/* Optional Sort Dropdown */}
               {onSortChange && (
                 <div className="flex items-center gap-2">
@@ -210,10 +226,10 @@ const PackageList = ({
         ? 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6' 
         : 'flex flex-col gap-4'
       }>
-        {packages.map((pkg, index) => (
+        {packages.map((pkg, _index) => (
           <div
             key={pkg._id}
-            className="transition-all duration-300 hover:shadow-lg"
+            className="transition-all duration-300 hover:shadow-md h-full"
           >
             <PackageCard 
               package={pkg} 

@@ -1,7 +1,9 @@
 // frontend/src/components/admin/clients/ClientDetailsModal.jsx
-import React, { useState, useEffect } from 'react';
-import { clientService } from '../../../services/clientService';
+import React, { useState, useEffect, useCallback } from 'react';
+// import { clientService } from '../../../services/clientService';
 import { activityService } from '../../../services/activityService';
+import bookingService from '../../../services/bookingService';
+import Button from '../../ui/Button';
 
 const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -18,11 +20,6 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
     page: 1,
     limit: 20
   });
-  const [activityPagination, setActivityPagination] = useState({
-    total: 0,
-    pages: 0,
-    currentPage: 1
-  });
   const [activityStats, setActivityStats] = useState({
     total: 0,
     logins: 0,
@@ -30,8 +27,12 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
     recent: 0
   });
 
+  // Booking history state
+  const [bookingHistory, setBookingHistory] = useState([]);
+  const [bookingLoading, setBookingLoading] = useState(false);
+
   // Filter activities based on current filters
-  const filterActivities = (activities) => {
+  const filterActivities = useCallback((activities) => {
     let filtered = [...activities];
     
     // Filter by type
@@ -49,7 +50,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
     }
     
     return filtered;
-  };
+  }, [activityFilters.type, activityFilters.search]);
 
   useEffect(() => {
     if (client) {
@@ -63,34 +64,47 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
     }
   }, [client]);
 
-  // Fetch activities when activity tab is active
-  useEffect(() => {
-    if (isOpen && client && activeTab === 'activity') {
-      fetchUserActivities();
-    }
-  }, [activeTab, client, isOpen]);
+  // NOTE: effects that call fetch functions are declared later (after functions)
 
   // Fixed activity fetching
-  const fetchUserActivities = async () => {
+  const fetchUserActivities = useCallback(async () => {
     try {
       setActivityLoading(true);
       console.log('🔄 Fetching activities for user:', client.id);
-      
-      const response = await activityService.getUserActivities(client.id);
+      // request a larger page to include more historical activities for filtering
+      const response = await activityService.getUserActivities(client.id, {
+        limit: 200,
+        page: activityFilters.page || 1,
+        search: activityFilters.search || undefined
+      });
       console.log('📦 API Response:', response);
-      
-      // Handle different response structures
+
+      // Normalize response into an array of activities
+      const resp = response?.data ?? response;
       let activitiesData = [];
-      
-      if (response.activities) {
-        activitiesData = response.activities;
-      } else if (Array.isArray(response)) {
-        activitiesData = response;
-      } else if (response.data) {
-        activitiesData = response.data;
+
+      if (Array.isArray(resp)) {
+        activitiesData = resp;
+      } else if (resp && resp.success !== undefined) {
+        // canonical shape { success, data }
+        activitiesData = resp.data ?? resp.activities ?? resp.items ?? [];
+      } else {
+        activitiesData = resp?.activities ?? resp?.data ?? resp?.items ?? [];
+      }
+
+      if (!Array.isArray(activitiesData)) {
+        // Fallback: scan object values for first array
+        const candidates = [];
+        if (resp && typeof resp === 'object') {
+          Object.values(resp).forEach(v => {
+            if (Array.isArray(v)) candidates.push(v);
+            if (v && typeof v === 'object') Object.values(v).forEach(nv => { if (Array.isArray(nv)) candidates.push(nv); });
+          });
+        }
+        activitiesData = candidates.length > 0 ? candidates[0] : [];
       }
       
-      const transformedActivities = activitiesData.map(activity => 
+      const transformedActivities = activitiesData.map(activity =>
         activityService.transformActivityData(activity)
       );
       
@@ -101,11 +115,6 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
       console.log('🔍 Filtered activities:', filteredActivities);
       
       setActivities(filteredActivities);
-      setActivityPagination({
-        total: filteredActivities.length,
-        pages: 1,
-        currentPage: 1
-      });
       
       // Calculate statistics from ALL activities (not filtered)
       calculateActivityStats(transformedActivities);
@@ -122,7 +131,63 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
     } finally {
       setActivityLoading(false);
     }
-  };
+  }, [client?.id, activityFilters.page, activityFilters.search, filterActivities]);
+
+  // Fetch client bookings (admin view)
+  const fetchClientBookings = useCallback(async () => {
+    try {
+      setBookingLoading(true);
+      console.log('🔄 Fetching bookings for user:', client.id);
+
+      const response = await bookingService.getBookings({ userId: client.id });
+      console.log('📦 Bookings API Response:', response);
+
+      // Normalize response into an array of bookings
+      const resp = response?.data ?? response;
+      let bookingsData = [];
+
+      if (Array.isArray(resp)) {
+        bookingsData = resp;
+      } else if (resp && resp.success !== undefined) {
+        bookingsData = resp.data ?? resp.bookings ?? resp.items ?? [];
+      } else {
+        bookingsData = resp?.bookings ?? resp?.data ?? resp?.items ?? [];
+      }
+
+      if (!Array.isArray(bookingsData)) {
+        const candidates = [];
+        if (resp && typeof resp === 'object') {
+          Object.values(resp).forEach(v => {
+            if (Array.isArray(v)) candidates.push(v);
+            if (v && typeof v === 'object') Object.values(v).forEach(nv => { if (Array.isArray(nv)) candidates.push(nv); });
+          });
+        }
+        bookingsData = candidates.length > 0 ? candidates[0] : [];
+      }
+
+      console.log('🔎 Resolved bookings array length:', bookingsData.length);
+      setBookingHistory(bookingsData);
+    } catch (error) {
+      console.error('❌ Failed to fetch client bookings:', error);
+      setBookingHistory([]);
+    } finally {
+      setBookingLoading(false);
+    }
+  }, [client?.id]);
+
+  // Fetch activities when activity tab is active (run after fetchUserActivities is defined)
+  useEffect(() => {
+    if (isOpen && client && activeTab === 'activity') {
+      fetchUserActivities();
+    }
+  }, [activeTab, client, isOpen, fetchUserActivities]);
+
+  // Fetch booking history when bookings tab is active (run after fetchClientBookings is defined)
+  useEffect(() => {
+    if (isOpen && client && activeTab === 'bookings') {
+      fetchClientBookings();
+    }
+  }, [activeTab, client, isOpen, fetchClientBookings]);
 
   // Calculate activity statistics
   const calculateActivityStats = (activities) => {
@@ -149,13 +214,18 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
     }));
     
     // Re-filter existing activities when filter changes
+    // For type/search/page changes, fetch latest user activities from server
+    if (['type', 'search', 'page'].includes(key)) {
+      // update filters state first, then fetch
+      setTimeout(() => {
+        fetchUserActivities();
+      }, 0);
+      return;
+    }
+
     if (activities.length > 0) {
       const filtered = filterActivities(activities);
       setActivities(filtered);
-      setActivityPagination(prev => ({
-        ...prev,
-        total: filtered.length
-      }));
     }
   };
 
@@ -172,7 +242,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
       setLoading(true);
       await onUpdate(client.id, formData);
       setIsEditing(false);
-    } catch (error) {
+    } catch {
       // Error handling is done in the parent component
     } finally {
       setLoading(false);
@@ -216,9 +286,9 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
 
   const getRoleBadge = (role) => {
     const roleConfig = {
-      user: 'bg-blue-100 text-blue-800 border-blue-200',
-      premium: 'bg-purple-100 text-purple-800 border-purple-200',
-      agent: 'bg-orange-100 text-orange-800 border-orange-200'
+      user: 'bg-stone-100 text-stone-800 border-stone-200',
+      premium: 'bg-primary-100 text-primary-800 border-primary-200',
+      agent: 'bg-blue-100 text-blue-800 border-blue-200'
     };
 
     return (
@@ -228,16 +298,41 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
     );
   };
 
+  // Booking status badge
+  const getBookingBadge = (status) => {
+    const cfg = {
+      pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      confirmed: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      cancelled: 'bg-rose-100 text-rose-800 border-rose-200',
+      completed: 'bg-sky-100 text-sky-800 border-sky-200'
+    };
+    return (
+      <span className={`px-3 py-1 rounded-full text-sm font-medium border ${cfg[status] || 'bg-gray-100 text-gray-800'}`}>
+        {status?.charAt(0).toUpperCase() + status?.slice(1)}
+      </span>
+    );
+  };
+
+  // Format a number as Philippine Peso currency
+  const formatPeso = (value) => {
+    const n = Number(value) || 0;
+    try {
+      return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP', maximumFractionDigits: 0 }).format(n);
+    } catch {
+      return `₱${n.toLocaleString()}`;
+    }
+  };
+
   // Get color class safely
   const getColorClass = (color) => {
     const colorMap = {
-      blue: 'bg-blue-100 text-blue-600',
-      green: 'bg-green-100 text-green-600',
-      red: 'bg-red-100 text-red-600',
-      orange: 'bg-orange-100 text-orange-600',
-      purple: 'bg-purple-100 text-purple-600',
+      blue: 'bg-stone-100 text-stone-600',
+      green: 'bg-emerald-100 text-emerald-600',
+      red: 'bg-rose-100 text-rose-600',
+      cyan: 'bg-cyan-100 text-cyan-600',
+      purple: 'bg-primary-100 text-primary-600',
       yellow: 'bg-yellow-100 text-yellow-600',
-      indigo: 'bg-indigo-100 text-indigo-600',
+      indigo: 'bg-stone-100 text-stone-600',
       gray: 'bg-gray-100 text-gray-600'
     };
     return colorMap[color] || 'bg-gray-100 text-gray-600';
@@ -269,7 +364,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
   return (
     <>
       <div 
-        className="fixed inset-0 bg-black/60 z-40"
+        className="fixed inset-0 bg-black/40 z-40 backdrop-blur-sm"
         onClick={onClose}
       />
       
@@ -279,7 +374,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
           <div className="flex justify-between items-start p-6 border-b border-gray-200">
             <div className="flex-1">
               <div className="flex items-center space-x-4 mb-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-white text-xl font-bold">
                   {client.name?.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -303,36 +398,29 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
             <div className="flex items-center space-x-3">
               {isEditing ? (
                 <>
-                  <button
+                  <Button
+                    variant="secondary"
                     onClick={handleCancel}
                     disabled={loading}
-                    className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="primary"
                     onClick={handleSave}
-                    disabled={loading}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2 transition-colors"
+                    isLoading={loading}
                   >
-                    {loading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>Saving...</span>
-                      </>
-                    ) : (
-                      'Save'
-                    )}
-                  </button>
+                    Save
+                  </Button>
                 </>
               ) : (
                 <>
-                  <button
+                  <Button
+                    variant="primary"
                     onClick={() => setIsEditing(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Edit
-                  </button>
+                  </Button>
                   <button
                     onClick={onClose}
                     className="text-gray-400 hover:text-gray-600 transition-colors text-2xl p-2"
@@ -401,7 +489,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                           name="name"
                           value={formData.name}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                       ) : (
                         <p className="text-gray-900">{client.name}</p>
@@ -416,7 +504,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                           name="email"
                           value={formData.email}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                       ) : (
                         <p className="text-gray-900">{client.email}</p>
@@ -431,7 +519,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                           name="phone"
                           value={formData.phone}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                       ) : (
                         <p className="text-gray-900">{client.phone || 'Not provided'}</p>
@@ -452,7 +540,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                           name="status"
                           value={formData.status}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         >
                           <option value="active">Active</option>
                           <option value="inactive">Inactive</option>
@@ -470,7 +558,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                           name="role"
                           value={formData.role}
                           onChange={handleInputChange}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         >
                           <option value="user">User</option>
                           <option value="premium">Premium User</option>
@@ -487,7 +575,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                         <span className={`px-3 py-1 rounded-full text-sm ${
                           client.loginMethod === 'google' 
                             ? 'bg-red-100 text-red-800 border border-red-200' 
-                            : 'bg-blue-100 text-blue-800 border border-blue-200'
+                            : 'bg-stone-100 text-stone-800 border border-stone-200'
                         }`}>
                           {client.loginMethod === 'google' ? 'Google' : 'Email'}
                         </span>
@@ -540,7 +628,7 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                     <select 
                       value={activityFilters.type}
                       onChange={(e) => handleFilterChange('type', e.target.value)}
-                      className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
                       <option value="">All Activities</option>
                       <option value="login">Login Only</option>
@@ -551,13 +639,14 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
                       <option value="login_failed">Failed Logins</option>
                     </select>
                     
-                    <button 
+                    <Button 
                       onClick={fetchUserActivities}
                       disabled={activityLoading}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2 transition-colors"
+                      variant="primary"
+                      className="flex items-center space-x-2"
                     >
                       <span>Refresh</span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -690,23 +779,87 @@ const ClientDetailsModal = ({ client, isOpen, onClose, onUpdate }) => {
 
             {/* TAB 3: BOOKINGS */}
             {activeTab === 'bookings' && (
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">📦</span>
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Booking History</h3>
-                {client.bookingCount > 0 ? (
-                  <>
-                    <p className="text-gray-600">Booking history integration coming soon</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      {client.bookingCount} total bookings • ${client.totalSpent?.toLocaleString() || '0'} total spent
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Booking History</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {client?.bookingCount > 0 ? `${client.bookingCount} total bookings` : 'Booking history'}
+                      {client?.totalSpent != null && ` • ${formatPeso(client.totalSpent)} total spent`}
                     </p>
-                  </>
+                  </div>
+                  <div>
+                    <Button onClick={fetchClientBookings} disabled={bookingLoading} variant="secondary">Refresh</Button>
+                  </div>
+                </div>
+
+                {bookingLoading ? (
+                  <div className="space-y-4">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="p-4 bg-white rounded-lg border border-gray-200 animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : bookingHistory.length > 0 ? (
+                  <div className="space-y-4 max-h-80 overflow-y-auto">
+                    {bookingHistory.map((booking) => {
+                      const titles = booking.packages && booking.packages.length > 0
+                        ? booking.packages.map(p => p.title).join(', ')
+                        : (booking.package?.title || booking.destination?.name || booking.reference || `Booking #${booking.id || booking._id || booking.bookingId}`);
+
+                      const totalDaysVal = (booking.totalDays != null)
+                        ? booking.totalDays
+                        : (booking.packages && booking.packages.length > 0
+                          ? booking.packages.reduce((a, p) => a + (p.duration || 0), 0)
+                          : booking.package?.duration);
+
+                      const pkgs = booking.packages || [];
+                      const hasPkgs = pkgs.length > 0;
+                      const transport = hasPkgs ? pkgs.some(p => p.transport) : !!booking.package?.transport;
+                      const meals = hasPkgs ? pkgs.some(p => p.meals) : !!booking.package?.meals;
+                      const stay = hasPkgs ? pkgs.some(p => p.stay) : !!booking.package?.stay;
+                      const parts = [];
+                      if (transport) parts.push('🚗 Transport');
+                      if (meals) parts.push('🍽️ Meals');
+                      if (stay) parts.push('🏨 Stay');
+
+                      return (
+                        <div key={booking.id || booking._id || booking.bookingId || Math.random()} className="p-4 bg-white rounded-lg border border-gray-200 hover:shadow-sm transition-shadow">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 pr-4">
+                              <div>
+                                <div>
+                                  <div className="font-medium text-gray-900">{titles}</div>
+                                  <div className="text-sm text-gray-500">{booking.customerName || booking.clientName || client.name}</div>
+                                  <div className="mt-2 text-xs text-gray-500">
+                                    {totalDaysVal != null && (
+                                      <span className="mr-3">⏳ {totalDaysVal} day{totalDaysVal !== 1 ? 's' : ''}</span>
+                                    )}
+                                    {parts.length > 0 && <span>{parts.join(' • ')}</span>}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm text-gray-500">{booking.checkIn ? new Date(booking.checkIn).toLocaleDateString() : booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : ''}</div>
+                              <div className="mt-2">{getBookingBadge(booking.status || booking.state)}</div>
+                            </div>
+                          </div>
+                          <div className="mt-3 text-sm text-gray-600">Total: {formatPeso(booking.totalPrice ?? booking.totalAmount ?? booking.total ?? booking.amount)}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 ) : (
-                  <>
+                  <div className="text-center py-8 bg-white rounded-lg border border-gray-200">
+                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-2xl">📦</span>
+                    </div>
                     <p className="text-gray-600">No bookings yet</p>
                     <p className="text-sm text-gray-500 mt-2">This client hasn't made any bookings</p>
-                  </>
+                  </div>
                 )}
               </div>
             )}
