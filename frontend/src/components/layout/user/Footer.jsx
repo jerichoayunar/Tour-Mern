@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useSettings } from "../../../context/SettingsContext";
 
 // Simple SVG Icons to replace lucide-react imports
 const MapPinIcon = ({ className = "w-5 h-5" }) => (
@@ -44,10 +45,12 @@ const TiktokIcon = ({ className = "w-5 h-5" }) => (
 );
 
 function Footer() {
+  const { settings } = useSettings();
+
   return (
-    <footer className="bg-slate-900/90 backdrop-blur-lg border-t border-slate-700/50 relative overflow-hidden">
+    <footer className="bg-slate-950/90 backdrop-blur-lg border-t border-slate-800/50 relative overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-purple-900/10 to-slate-900/30 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-900/10 via-slate-900/8 to-slate-950/30 pointer-events-none"></div>
       
       <div className="relative z-10 container mx-auto px-4 py-12">
         {/* Main Footer Content */}
@@ -56,157 +59,155 @@ function Footer() {
           {/* Company Info */}
           <div className="lg:col-span-2">
             <h3 className="text-2xl font-bold text-white mb-4">
-              Bukidnon Tours
-              <span className="block text-amber-400 text-sm font-normal mt-1">Adventure Awards</span>
+              {settings?.general?.siteName || "Bukidnon Tours"}
+              <span className="block text-primary-400 text-sm font-normal mt-1">
+                {settings?.general?.tagline || "Adventure Awaits"}
+              </span>
             </h3>
             
             {/* Logo and Brand */}
             <div className="flex items-center gap-4 mb-6 group cursor-pointer">
               <div className="relative">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-lg flex items-center justify-center transform group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-500 shadow-md flex items-center justify-center transform group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
                   <img
-                    src="/images/destinations/bukidnonupdates.jpg"
-                    alt="ExploreBukidnon"
+                    src={settings?.general?.logo || "/images/destinations/bukidnonupdates.jpg"}
+                    alt={settings?.general?.siteName || "ExploreBukidnon"}
                     className="w-12 h-12 object-cover rounded-xl"
                   />
                 </div>
-                <div className="absolute inset-0 rounded-2xl bg-amber-400/20 blur-md group-hover:blur-lg transition-all duration-300 -z-10"></div>
+                <div className="absolute inset-0 rounded-2xl bg-blue-400/20 blur-md group-hover:blur-lg transition-all duration-300 -z-10"></div>
               </div>
 
               <div className="flex flex-col">
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent tracking-tight group-hover:scale-105 transition-transform duration-300">
-                  ExploreBukidnon
+                <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-400 bg-clip-text text-transparent tracking-tight group-hover:scale-105 transition-transform duration-300">
+                  {settings?.general?.siteName || "ExploreBukidnon"}
                 </h3>
-                <p className="text-sm text-slate-300 font-medium mt-1 tracking-wide">
+                <p className="text-slate-400 font-medium mt-1 tracking-wide">
                   Travel & Adventures
                 </p>
               </div>
             </div>
 
             {/* Description */}
-            <p className="text-slate-300 mb-6 leading-relaxed max-w-md border-l-4 border-amber-400 pl-4">
-              Your trusted partner for exploring breathtaking landscapes and rich cultural experiences 
-              across Bukidnon's scenic highlands.
+            <p className="text-slate-400 mb-6 leading-relaxed max-w-md border-l-4 border-blue-500 pl-4">
+              {settings?.general?.description || "Your trusted partner for exploring breathtaking landscapes and rich cultural experiences across Bukidnon's scenic highlands."}
             </p>
 
             {/* Contact Info */}
             <div className="space-y-3">
               <div className="flex items-center gap-3 group">
-                <MapPinIcon className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
-                <span className="text-slate-300 text-sm group-hover:text-white transition-colors">
-                  Bukidnon, Philippines
+                <MapPinIcon className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />
+                <span className="text-slate-400 text-sm group-hover:text-white transition-colors">
+                  {settings?.contact?.address || "Bukidnon, Philippines"}
                 </span>
               </div>
 
               <div className="flex items-center gap-3 group">
-                <PhoneIcon className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
-                <span className="text-slate-300 text-sm group-hover:text-white transition-colors">
-                  +63 912 345 6789
+                <PhoneIcon className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />
+                <span className="text-slate-400 text-sm group-hover:text-white transition-colors">
+                  {settings?.contact?.phone || "+63 912 345 6789"}
                 </span>
               </div>
 
               <div className="flex items-center gap-3 group">
-                <MailIcon className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
-                <span className="text-slate-300 text-sm group-hover:text-white transition-colors">
-                  @Bukidnon Update's
+                <MailIcon className="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" />
+                <span className="text-slate-400 text-sm group-hover:text-white transition-colors">
+                  {settings?.contact?.supportEmail || "info@bukidnontours.com"}
                 </span>
               </div>
             </div>
+
+            {/* Business Hours moved under Quick Links (see below) */}
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="text-lg font-semibold text-white mb-6 relative inline-block">
+              <h4 className="text-lg font-semibold text-white mb-6 relative inline-block">
               Quick Links
-              <div className="absolute bottom-0 left-0 w-8 h-0.5 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full"></div>
+              <div className="absolute bottom-0 left-0 w-8 h-0.5 bg-gradient-to-r from-blue-400 to-blue-400 rounded-full"></div>
             </h4>
             <ul className="space-y-3">
               {[
                 { to: "/packages", label: "Packages" },
                 { to: "/destinations", label: "Destinations" },
                 { to: "/inquiry", label: "Send Inquiry" },
-                { to: "/about", label: "About Us" },
-                { to: "/contact", label: "Contact" }
+                { to: "/about", label: "About Us" }
               ].map((link) => (
                 <li key={link.to}>
                   <Link 
                     to={link.to}
-                    className="text-slate-300 hover:text-amber-400 transition-all duration-300 flex items-center gap-2 group"
+                    className="text-slate-400 hover:text-blue-400 transition-all duration-300 flex items-center gap-2 group"
                   >
-                    <span className="w-1.5 h-1.5 bg-amber-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                     {link.label}
                   </Link>
                 </li>
               ))}
             </ul>
+            {/* Business Hours (placed under Quick Links) */}
+            <div className="mt-6">
+              <h4 className="text-lg font-semibold text-white mb-6 relative inline-block">Business Hours</h4>
+              <div className="text-slate-400 text-sm space-y-1">
+                <div>Mon–Fri: {settings?.businessHours?.weekday || '1:00 AM - 1:00 PM'}</div>
+                <div>Saturday: {settings?.businessHours?.saturday || '3:00 AM - 3:00 PM'}</div>
+                <div>Sunday: {settings?.businessHours?.sunday || 'Appointment'}</div>
+                <div className="mt-1">Timezone: {settings?.businessHours?.timezone || 'Asia/Manila'}</div>
+              </div>
+            </div>
           </div>
 
           {/* Follow Us & Legal */}
           <div>
-            <h4 className="text-lg font-semibold text-white mb-6 relative inline-block">
+              <h4 className="text-lg font-semibold text-white mb-6 relative inline-block">
               Follow Us
-              <div className="absolute bottom-0 left-0 w-8 h-0.5 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full"></div>
+              <div className="absolute bottom-0 left-0 w-8 h-0.5 bg-gradient-to-r from-blue-400 to-blue-400 rounded-full"></div>
             </h4>
             
             {/* Social Links */}
             <div className="flex gap-3 mb-6">
               {[
                 { 
-                  href: "https://www.facebook.com/bukidnonupdates", 
+                  href: settings?.socialMedia?.facebook || "https://www.facebook.com/bukidnonupdates", 
                   icon: FacebookIcon, 
                   color: "hover:bg-blue-600 hover:border-blue-600",
                   label: "Facebook"
                 },
                 { 
-                  href: "https://www.tiktok.com/@bukidnonupdates", 
+                  href: settings?.socialMedia?.tiktok || "https://www.tiktok.com/@bukidnonupdates", 
                   icon: TiktokIcon, 
                   color: "hover:bg-black hover:border-black",
                   label: "TikTok"
                 },
                 { 
-                  href: "https://www.instagram.com/bukidnonupdatess", 
+                  href: settings?.socialMedia?.instagram || "https://www.instagram.com/bukidnonupdatess", 
                   icon: InstagramIcon, 
-                  color: "hover:bg-gradient-to-r hover:from-purple-600 hover:via-pink-600 hover:to-orange-500 hover:border-transparent",
+                  color: "hover:bg-gradient-to-r hover:from-purple-600 hover:via-pink-600 hover:to-rose-500 hover:border-transparent",
                   label: "Instagram"
                 }
-              ].map((social, index) => (
+              ].map((social, _index) => (
                 <a
-                  key={index}
+                  key={_index}
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`w-12 h-12 border-2 border-slate-600 rounded-xl flex items-center justify-center text-slate-300 transition-all duration-300 transform hover:scale-110 hover:text-white ${social.color} group`}
+                  className={`w-12 h-12 border-2 border-slate-700 rounded-xl flex items-center justify-center text-slate-400 transition-all duration-300 transform hover:scale-110 hover:text-white ${social.color} group`}
                   aria-label={social.label}
                 >
                   <social.icon className="w-5 h-5" />
                 </a>
               ))}
             </div>
-
-            {/* Legal Links */}
-            <div className="space-y-2">
-              {['Privacy Policy', 'Terms of Service', 'Cookies'].map((link) => (
-                <div key={link}>
-                  <Link 
-                    to={`/${link.toLowerCase().replace(' ', '-')}`}
-                    className="text-slate-400 hover:text-slate-300 text-sm transition-colors duration-200"
-                  >
-                    {link}
-                  </Link>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-slate-700/50 mt-8 pt-6">
+        <div className="border-t border-slate-800/50 mt-8 pt-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-slate-400 text-sm">
-              © 2024 Bukidnon Tours. All rights reserved.
+            <p className="text-slate-500 text-sm">
+              © {new Date().getFullYear()} {settings?.general?.siteName || "Bukidnon Tours"}. All rights reserved.
             </p>
             <div className="flex items-center gap-2 mt-2 md:mt-0">
-              <span className="text-slate-400 text-sm">ExploreBukidnon Travel & Adventures</span>
+              <span className="text-slate-500 text-sm">ExploreBukidnon Travel & Adventures</span>
             </div>
           </div>
         </div>

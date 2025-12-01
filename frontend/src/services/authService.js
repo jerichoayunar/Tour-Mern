@@ -21,13 +21,23 @@
 
 import api from './api';
 
+const normalizeResponse = (response) => {
+  const payload = response?.data || {};
+  return {
+    success: payload.success,
+    data: payload.data ?? payload,
+    message: payload.message,
+    token: payload.data?.token ?? payload.token
+  };
+};
+
 export const authService = {
   /**
    * REGISTER NEW USER
    */
   register: async (userData) => {
     const response = await api.post('/auth/register', userData);
-    return response.data; // Return exactly what backend sends
+    return normalizeResponse(response);
   },
 
   /**
@@ -35,14 +45,35 @@ export const authService = {
    */
   login: async (credentials) => {
     const response = await api.post('/auth/login', credentials);
-    const result = response.data;
-    
-    if (result.success && result.data?.token) {
+    const resp = response?.data ?? response;
+
+    if (resp.success && resp.data?.token) {
       // Store token automatically
-      localStorage.setItem('token', result.data.token);
+      localStorage.setItem('token', resp.data.token);
     }
-    
-    return result; // Return backend response exactly as-is
+    return normalizeResponse(response);
+  },
+
+  /**
+   * GOOGLE LOGIN (token-based)
+   * - Stores the token and returns the user profile from `/auth/me`
+   * - This supports the OAuth redirect flow where the backend returns
+   *   `token` in the URL and the frontend must persist it and fetch profile
+   */
+  googleLogin: async (token) => {
+    if (!token) throw new Error('No google token provided');
+    // Persist token for subsequent requests
+    localStorage.setItem('token', token);
+    try {
+      // fetch the current user using the token
+      const response = await api.get('/auth/me');
+      return normalizeResponse(response);
+    } catch (err) {
+      // If fetching profile fails, clear token and rethrow
+      localStorage.removeItem('token');
+      const message = err?.response?.data?.message || err?.message || String(err);
+      throw { success: false, message, response: { data: { message } } };
+    }
   },
 
   /**
@@ -50,17 +81,18 @@ export const authService = {
    */
   getMe: async () => {
     const response = await api.get('/auth/me');
-    return response.data; // Return backend response exactly as-is
+    return normalizeResponse(response);
   },
 
 logout: async () => {
   try {
     // Call backend logout endpoint to record activity
     const response = await api.post('/auth/logout');
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
     console.log('Backend logout call failed:', error);
-    throw error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 },
 
@@ -75,26 +107,28 @@ clearLocalAuth: () => {
  * FORGOT PASSWORD - FIXED
  */
   forgotPassword: async (requestData) => {
-  console.log('🔍 authService.forgotPassword called with:', { 
-    email: requestData.email, 
+  console.log('🔍 authService.forgotPassword called with:', {
+    email: requestData.email,
     hasToken: !!requestData.recaptchaToken,
-    tokenLength: requestData.recaptchaToken?.length 
+    tokenLength: requestData.recaptchaToken?.length
   });
-  
-  try {
-    const response = await api.post('/auth/forgot-password', requestData);
-    console.log('🔍 authService response:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('🔍 authService error:', error.response?.data || error.message);
-    throw error;
-  }
+
+    try {
+      const response = await api.post('/auth/forgot-password', requestData);
+      const resp = response?.data ?? response;
+      console.log('🔍 authService response:', resp);
+      return normalizeResponse(response);
+    } catch (error) {
+      console.error('🔍 authService error:', error.response?.data || error.message);
+      const message = error?.response?.data?.message || error?.message || String(error);
+      throw { success: false, message, response: { data: { message } } };
+    }
 },
 
   // Add to authService.js
   resetPassword: async (resetData) => {
     const response = await api.post('/auth/reset-password', resetData);
-    return response.data;
+    return normalizeResponse(response);
   },
 
   /**
@@ -102,7 +136,7 @@ clearLocalAuth: () => {
    */
   changePassword: async (passwordData) => {
     const response = await api.put('/auth/change-password', passwordData);
-    return response.data;
+    return normalizeResponse(response);
   },
 
   /**
@@ -110,5 +144,27 @@ clearLocalAuth: () => {
    */
   getStoredToken: () => {
     return localStorage.getItem('token');
+  },
+
+  /**
+   * UPDATE USER PROFILE
+   */
+  updateProfile: async (profileData) => {
+    const response = await api.put('/users/profile', profileData);
+    return normalizeResponse(response);
   }
 };
+
+export const {
+  register,
+  login,
+  googleLogin,
+  getMe,
+  logout,
+  clearLocalAuth,
+  forgotPassword,
+  resetPassword,
+  changePassword,
+  updateProfile,
+  getStoredToken
+} = authService;

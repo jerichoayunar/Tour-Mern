@@ -63,7 +63,8 @@ export const calculatePasswordStrength = (password) => {
   if (hasUppercase) score += 1;
 
   // Requirement 5: Contains special characters
-  const hasSpecialChars = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+  // Match any non-word and non-space character as a special character
+  const hasSpecialChars = /[^\w\s]/.test(password);
   requirements.push({
     message: 'Contains special characters',
     met: hasSpecialChars
@@ -153,7 +154,7 @@ export const getPasswordSuggestions = (password) => {
     if (!/[a-z]/.test(password) || !/[A-Z]/.test(password)) {
       suggestions.push('Mix uppercase and lowercase letters');
     }
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    if (!/[^\w\s]/.test(password)) {
       suggestions.push('Include special characters (!@#$%^&*)');
     }
   }

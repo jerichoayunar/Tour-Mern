@@ -17,25 +17,42 @@ const createAdmin = async () => {
     console.log('🔍 Checking for existing admin user...');
 
     // Look for an existing admin user by email
-    const adminExists = await User.findOne({ email: 'admin@tourbook.com' });
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@tourbook.com';
+    const adminExists = await User.findOne({ email: adminEmail });
 
     if (!adminExists) {
-      // If no admin found, create one automatically
+      // Use env values when provided, otherwise fall back to safe defaults
+      const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+      const adminPhone = process.env.ADMIN_PHONE || '09123456789'; // valid PH format
+      const adminAddress = process.env.ADMIN_ADDRESS || 'Admin HQ';
+
+      // If no admin found, create one automatically with required fields
       await User.create({
-        name: 'Admin User',
-        email: 'admin@tourbook.com',
-        password: 'admin123', // Auto-hashed by User model middleware
+        name: process.env.ADMIN_NAME || 'Admin User',
+        email: adminEmail,
+        password: adminPassword, // Auto-hashed by User model middleware
         role: 'admin',
+        phone: adminPhone,
+        address: adminAddress,
+        loginMethod: 'local',
       });
 
       console.log('✅ Admin user created successfully!');
-      console.log('📧 Email: admin@tourbook.com');
-      console.log('🔑 Password: admin123');
+      console.log(`📧 Email: ${adminEmail}`);
+      console.log(`🔑 Password: ${adminPassword}`);
     } else {
       console.log('ℹ️ Admin user already exists — skipping creation.');
     }
   } catch (error) {
-    console.error('❌ Error creating admin:', error.message);
+    // Print detailed validation errors when available
+    console.error('❌ Error creating admin:');
+    if (error && error.name === 'ValidationError') {
+      for (const key in error.errors) {
+        console.error(` - ${key}: ${error.errors[key].message}`);
+      }
+    } else {
+      console.error(error);
+    }
   }
 };
 

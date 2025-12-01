@@ -5,6 +5,7 @@ import { Search, X, Calendar } from 'lucide-react';
 const PackageFilters = ({ 
   filters, 
   onFiltersChange, 
+  onClearAll, // optional handler passed from parent to clear filters globally
   className = '' 
 }) => {
   const [localFilters, setLocalFilters] = useState(filters || {});
@@ -44,6 +45,7 @@ const PackageFilters = ({
     };
     setLocalFilters(clearedFilters);
     onFiltersChange(clearedFilters);
+    if (typeof onClearAll === 'function') onClearAll();
   };
 
   // Handle price range selection
@@ -52,21 +54,21 @@ const PackageFilters = ({
     let maxPrice = '';
     
     switch (value) {
-      case '5000':
+      case '1000':
         minPrice = '0';
-        maxPrice = '5000';
+        maxPrice = '1000';
         break;
-      case '10000':
+      case '2000':
         minPrice = '0';
-        maxPrice = '10000';
+        maxPrice = '2000';
         break;
-      case '20000':
+      case '3000':
         minPrice = '0';
-        maxPrice = '20000';
+        maxPrice = '3000';
         break;
-      case '50000':
+      case '4000':
         minPrice = '0';
-        maxPrice = '50000';
+        maxPrice = '4000';
         break;
       default:
         minPrice = '';
@@ -125,10 +127,10 @@ const PackageFilters = ({
   // Price range filter
   if (localFilters.minPrice || localFilters.maxPrice) {
     let priceLabel = '';
-    if (localFilters.maxPrice === '5000') priceLabel = 'Under ₱5,000';
-    else if (localFilters.maxPrice === '10000') priceLabel = 'Under ₱10,000';
-    else if (localFilters.maxPrice === '20000') priceLabel = 'Under ₱20,000';
-    else if (localFilters.maxPrice === '50000') priceLabel = 'Under ₱50,000';
+    if (localFilters.maxPrice === '1000') priceLabel = 'Under ₱1,000';
+    else if (localFilters.maxPrice === '2000') priceLabel = 'Under ₱2,000';
+    else if (localFilters.maxPrice === '3000') priceLabel = 'Under ₱3,000';
+    else if (localFilters.maxPrice === '4000') priceLabel = 'Under ₱4,000';
     else if (localFilters.minPrice && localFilters.maxPrice) priceLabel = `₱${localFilters.minPrice}-${localFilters.maxPrice}`;
     else if (localFilters.minPrice) priceLabel = `From ₱${localFilters.minPrice}`;
     else if (localFilters.maxPrice) priceLabel = `Up to ₱${localFilters.maxPrice}`;
@@ -154,10 +156,10 @@ const PackageFilters = ({
 
   // Get current price range value for dropdown
   const getCurrentPriceRange = () => {
-    if (localFilters.minPrice === '0' && localFilters.maxPrice === '5000') return '5000';
-    if (localFilters.minPrice === '0' && localFilters.maxPrice === '10000') return '10000';
-    if (localFilters.minPrice === '0' && localFilters.maxPrice === '20000') return '20000';
-    if (localFilters.minPrice === '0' && localFilters.maxPrice === '50000') return '50000';
+    if (localFilters.minPrice === '0' && localFilters.maxPrice === '1000') return '1000';
+    if (localFilters.minPrice === '0' && localFilters.maxPrice === '2000') return '2000';
+    if (localFilters.minPrice === '0' && localFilters.maxPrice === '3000') return '3000';
+    if (localFilters.minPrice === '0' && localFilters.maxPrice === '4000') return '4000';
     return '';
   };
 
@@ -171,19 +173,21 @@ const PackageFilters = ({
   };
 
   return (
-    <div className={`bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8 ${className}`}>
+    <div className={`bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 ${className}`}>
       {/* Main Filter Row */}
       <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
         {/* Search Bar */}
         <div className="flex-1 max-w-lg">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
             <input
               type="text"
+              aria-label="Search packages"
+              title="Search packages, destinations, or activities"
               placeholder="Search packages, destinations, or activities..."
               value={localFilters.search || ''}
               onChange={(e) => handleFilterChange('search', e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 placeholder-gray-400"
+              className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-gray-700 placeholder-gray-500 text-sm"
             />
           </div>
         </div>
@@ -193,26 +197,30 @@ const PackageFilters = ({
           {/* Price Filter */}
           <div className="relative">
             <select
+              aria-label="Price range"
+              title="Price range"
               value={getCurrentPriceRange()}
               onChange={(e) => handlePriceRangeChange(e.target.value)}
-              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[160px]"
+              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-gray-700 appearance-none cursor-pointer min-w-[160px] text-sm"
             >
               <option value="">Any Price</option>
-              <option value="5000">Under ₱5,000</option>
-              <option value="10000">Under ₱10,000</option>
-              <option value="20000">Under ₱20,000</option>
-              <option value="50000">Under ₱50,000</option>
+              <option value="1000">Under ₱1,000</option>
+              <option value="2000">Under ₱2,000</option>
+              <option value="3000">Under ₱3,000</option>
+              <option value="4000">Under ₱4,000</option>
             </select>
             {/* Replaced DollarSign with Peso symbol */}
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm font-medium">₱</span>
+            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm font-medium">₱</span>
           </div>
 
           {/* Duration Filter */}
           <div className="relative">
             <select
+              aria-label="Duration range"
+              title="Duration range"
               value={getCurrentDurationRange()}
               onChange={(e) => handleDurationRangeChange(e.target.value)}
-              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white appearance-none cursor-pointer min-w-[160px]"
+              className="pl-10 pr-8 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-gray-700 appearance-none cursor-pointer min-w-[160px] text-sm"
             >
               <option value="">Any Duration</option>
               <option value="3">1-3 Days</option>
@@ -220,7 +228,7 @@ const PackageFilters = ({
               <option value="14">8-14 Days</option>
               <option value="30">15+ Days</option>
             </select>
-            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
           </div>
 
           {/* Clear Filters */}
@@ -249,12 +257,12 @@ const PackageFilters = ({
                   key={`${filter.type}-${index}`}
                   onClick={() => clearFilter(filter.type)}
                   className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 group border ${
-                    filter.type === 'search' 
-                      ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
-                      : filter.type === 'priceRange'
-                      ? 'bg-green-50 text-green-700 border-green-100 hover:bg-green-100'
-                      : 'bg-purple-50 text-purple-700 border-purple-100 hover:bg-purple-100'
-                  }`}
+                          filter.type === 'search' 
+                            ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
+                            : filter.type === 'priceRange'
+                            ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
+                            : 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100'
+                        }`}
                 >
                   <span>{filter.label}</span>
                   <X className="w-3 h-3 group-hover:scale-110 transition-transform" />

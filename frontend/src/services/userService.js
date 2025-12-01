@@ -1,6 +1,15 @@
 // src/services/userService.js - USES /api/clients ENDPOINTS
 import api from './api';
 
+const normalizeResponse = (response) => {
+  const payload = response?.data || {};
+  return {
+    success: payload.success,
+    data: payload.data ?? payload,
+    message: payload.message
+  };
+};
+
 export const userService = {
   /**
    * ADMIN: Get all users (from /api/clients)
@@ -8,9 +17,10 @@ export const userService = {
   getUsers: async (params = {}) => {
     try {
       const response = await api.get('/clients', { params });
-      return response.data;
+      return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+        const message = error?.response?.data?.message || error?.message || String(error);
+        throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -20,9 +30,10 @@ export const userService = {
   getUserById: async (userId) => {
     try {
       const response = await api.get(`/clients/${userId}`);
-      return response.data;
+      return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+        const message = error?.response?.data?.message || error?.message || String(error);
+        throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -32,9 +43,10 @@ export const userService = {
   updateUser: async (userId, userData) => {
     try {
       const response = await api.put(`/clients/${userId}`, userData);
-      return response.data;
+      return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+        const message = error?.response?.data?.message || error?.message || String(error);
+        throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -44,9 +56,10 @@ export const userService = {
   deleteUser: async (userId) => {
     try {
       const response = await api.delete(`/clients/${userId}`);
-      return response.data;
+      return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+        const message = error?.response?.data?.message || error?.message || String(error);
+        throw { success: false, message, response: { data: { message } } };
     }
   },
 
@@ -56,9 +69,10 @@ export const userService = {
   getUserStats: async () => {
     try {
       const response = await api.get('/clients/stats');
-      return response.data;
+      return normalizeResponse(response);
     } catch (error) {
-      throw error.response?.data || error.message;
+        const message = error?.response?.data?.message || error?.message || String(error);
+        throw { success: false, message, response: { data: { message } } };
     }
   }
 };

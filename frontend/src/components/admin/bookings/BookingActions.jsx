@@ -2,7 +2,15 @@ import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Button from "../../ui/Button";
 
-const BookingActions = ({ booking, onViewDetails, onStatusUpdate }) => {
+const BookingActions = ({ 
+  booking, 
+  onViewDetails, 
+  onStatusUpdate,
+  isArchived = false,
+  onArchive,
+  onRestore,
+  onDeletePermanent
+}) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
@@ -28,11 +36,58 @@ const BookingActions = ({ booking, onViewDetails, onStatusUpdate }) => {
     await onStatusUpdate(booking._id, newStatus);
   };
 
-  const availableStatuses = [
-    { value: "pending", label: "⏳ Mark as Pending", color: "text-yellow-600 hover:bg-yellow-50" },
-    { value: "confirmed", label: "✅ Confirm Booking", color: "text-green-600 hover:bg-green-50" },
-    { value: "cancelled", label: "❌ Cancel Booking", color: "text-red-600 hover:bg-red-50" },
-  ].filter((s) => s.value !== booking.status);
+  const handleArchiveClick = () => {
+    setShowDropdown(false);
+    onArchive(booking);
+  };
+
+  const handleRestoreClick = () => {
+    setShowDropdown(false);
+    onRestore(booking);
+  };
+
+  const handleDeleteClick = () => {
+    setShowDropdown(false);
+    onDeletePermanent(booking);
+  };
+
+  // Define available actions based on archive status
+  let actions = [];
+
+  if (isArchived) {
+    actions = [
+      { 
+        label: "♻️ Restore Booking", 
+        onClick: handleRestoreClick,
+        color: "text-green-600 hover:bg-green-50" 
+      },
+      { 
+        label: "🗑️ Delete Permanently", 
+        onClick: handleDeleteClick,
+        color: "text-red-600 hover:bg-red-50" 
+      }
+    ];
+  } else {
+    // Standard status updates
+    const statusActions = [
+      { value: "pending", label: "⏳ Mark as Pending", color: "text-yellow-600 hover:bg-yellow-50" },
+      { value: "confirmed", label: "✅ Confirm Booking", color: "text-green-600 hover:bg-green-50" },
+      { value: "cancelled", label: "❌ Cancel Booking", color: "text-red-600 hover:bg-red-50" },
+    ].filter((s) => s.value !== booking.status).map(s => ({
+      label: s.label,
+      onClick: () => handleStatusChange(s.value),
+      color: s.color
+    }));
+
+    actions = [
+      ...statusActions,
+      { 
+        label: "📦 Archive Booking", 
+        onClick: handleArchiveClick,
+        color: "text-gray-600 hover:bg-gray-50 border-t border-gray-100" 
+      }
+    ];
+  }
 
   const dropdown = showDropdown ? (
     <div
@@ -44,13 +99,13 @@ const BookingActions = ({ booking, onViewDetails, onStatusUpdate }) => {
         left: buttonRef.current?.getBoundingClientRect().left + window.scrollX,
       }}
     >
-      {availableStatuses.map((status) => (
+      {actions.map((action, index) => (
         <button
-          key={status.value}
-          onClick={() => handleStatusChange(status.value)}
-          className={`w-full text-left px-4 py-2.5 text-sm transition-colors duration-150 ${status.color} first:rounded-t-lg last:rounded-b-lg`}
+          key={index}
+          onClick={action.onClick}
+          className={`w-full text-left px-4 py-2.5 text-sm transition-colors duration-150 ${action.color} first:rounded-t-lg last:rounded-b-lg`}
         >
-          {status.label}
+          {action.label}
         </button>
       ))}
     </div>

@@ -3,6 +3,7 @@ import { activityService } from '../../services/activityService';
 import ActivityTable from '../../components/admin/activities/ActivityTable';
 import ActivityFilters from '../../components/admin/activities/ActivityFilters';
 import ActivityStats from '../../components/admin/activities/ActivityStats';
+import Loader from '../../components/ui/Loader';
 
 const ManageActivities = () => {
   const [activities, setActivities] = useState([]);
@@ -10,6 +11,9 @@ const ManageActivities = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [_serverStats, setServerStats] = useState(null);
+  const [activeType, setActiveType] = useState('');
+  const [serverResultCount, setServerResultCount] = useState(null);
 
   // Fetch activities
   const fetchActivities = async () => {
@@ -18,11 +22,55 @@ const ManageActivities = () => {
       setError(null);
       
       const response = await activityService.getAllActivities();
-      
+
+      // Our activityService now normalizes to { success, data: [activities], pagination }
       if (response && response.success) {
-        const activitiesData = response.activities || [];
-        setActivities(activitiesData);
-        setFilteredActivities(activitiesData);
+        const resp = response?.data ?? response;
+        let activitiesData = Array.isArray(resp)
+          ? resp
+          : (resp && resp.success !== undefined)
+            ? (Array.isArray(resp.data) ? resp.data : [])
+            : (Array.isArray(resp?.data) ? resp.data : []);
+
+        // Debug: log counts for important types to assist troubleshooting
+        try {
+          const counts = activitiesData.reduce((acc, a) => {
+            const type = a.type || a?.data?.type || 'unknown';
+            acc[type] = (acc[type] || 0) + 1;
+            return acc;
+          }, {});
+          console.log('🔢 Activity type counts:', {
+            user_registered: counts['user_registered'] || 0,
+            login_failed: counts['login_failed'] || 0,
+            password_changed: counts['password_changed'] || 0,
+            login: counts['login'] || 0
+          });
+          // Log distinct types and sample entries to help mapping
+          const distinctTypes = Object.keys(counts).sort().reduce((o, k) => (o[k] = counts[k], o), {});
+          console.log('🧭 Distinct activity types present:', distinctTypes);
+          console.log('📄 Sample activities (first 5):', activitiesData.slice(0,5));
+        } catch (e) {
+          console.warn('Failed to compute activity type counts', e);
+        }
+
+        // Remove payment-related activities from the admin Activity Monitor per request
+        const cleanedActivities = activitiesData.filter(a => {
+          const t = String(a.type || '').toLowerCase();
+          return !t.includes('payment');
+        });
+
+        setActivities(cleanedActivities);
+        setFilteredActivities(cleanedActivities);
+        // Also fetch server-side aggregated stats for comparison/accuracy
+        try {
+          const statsResp = await activityService.getActivityStats();
+          if (statsResp && statsResp.success) {
+            setServerStats(statsResp.data || statsResp);
+            console.log('📊 Server activity stats:', statsResp.data || statsResp);
+          }
+        } catch (e) {
+          console.warn('Failed to fetch server stats', e);
+        }
         setLastUpdated(new Date());
       } else {
         setActivities([]);
@@ -42,8 +90,47 @@ const ManageActivities = () => {
     setFilteredActivities(filteredActivities);
   }, []);
 
+  // Handle server-side type selection (when admin chooses an activity type)
+  const handleTypeSelect = useCallback(async (type) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      if (!type) {
+        // empty type -> reload default activities
+        setActiveType('');
+        setServerResultCount(null);
+        await fetchActivities();
+        return;
+      }
+
+      setActiveType(type);
+
+      // Request server for activities of that type
+      const resp = await activityService.getActivitiesByType(type, { limit: 200 });
+
+      const activitiesArray = Array.isArray(resp?.data) ? resp.data : (Array.isArray(resp) ? resp : []);
+      setActivities(activitiesArray);
+      setFilteredActivities(activitiesArray);
+      setServerResultCount(Array.isArray(activitiesArray) ? activitiesArray.length : 0);
+      setLastUpdated(new Date());
+    } catch (e) {
+      console.warn('Failed to fetch activities by type', e);
+      setError('Failed to load activities for selected type');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchActivities();
+
+    // Poll for updates every 30 seconds to keep the monitor fresh
+    const interval = setInterval(() => {
+      fetchActivities();
+    }, 30_000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const formatLastUpdated = () => {
@@ -66,7 +153,7 @@ const ManageActivities = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+      <div className="min-h-screen bg-linear-to-br from-gray-50 to-gray-100 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Activity Monitor</h1>
@@ -96,8 +183,7 @@ const ManageActivities = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 sm:p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-platinum p-6">
         {/* Header */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -109,16 +195,24 @@ const ManageActivities = () => {
             </div>
             
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              {lastUpdated && (
+                  {lastUpdated && (
                 <div className="text-sm text-gray-500 bg-white px-3 py-2 rounded-lg border border-gray-200">
                   <span className="flex items-center space-x-2">
                     <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span>Updated {formatLastUpdated()}</span>
+                        <span>Updated {formatLastUpdated()}</span>
                   </span>
                 </div>
               )}
+                  {activeType && (
+                    <div className="text-sm text-gray-700 bg-white px-3 py-2 rounded-lg border border-gray-200 ml-2">
+                      <span className="font-medium">Showing</span>
+                      <span className="ml-2">{serverResultCount ?? 0}</span>
+                      <span className="ml-2 text-gray-500">results for</span>
+                      <span className="ml-2 font-medium">{activeType}</span>
+                    </div>
+                  )}
               
               <button
                 onClick={fetchActivities}
@@ -127,7 +221,7 @@ const ManageActivities = () => {
               >
                 {loading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <Loader size="sm" />
                     <span>Refreshing...</span>
                   </>
                 ) : (
@@ -153,6 +247,7 @@ const ManageActivities = () => {
           <ActivityFilters 
             activities={activities} 
             onFilterChange={handleFilterChange}
+            onTypeSelect={handleTypeSelect}
           />
         </div>
 
@@ -191,7 +286,6 @@ const ManageActivities = () => {
             </p>
           </div>
         )}
-      </div>
     </div>
   );
 };

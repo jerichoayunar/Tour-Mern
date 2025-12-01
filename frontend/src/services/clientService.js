@@ -1,12 +1,23 @@
 import api from './api';
 
+const normalizeResponse = (response) => {
+  const payload = response?.data || {};
+  return {
+    success: payload.success,
+    data: payload.data ?? payload,
+    message: payload.message,
+    token: payload.data?.token ?? payload.token
+  };
+};
+
 // Get all clients with filtering and pagination
 export const getClients = async (params = {}) => {
   try {
     const response = await api.get('/clients', { params });
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -14,9 +25,10 @@ export const getClients = async (params = {}) => {
 export const getClient = async (clientId) => {
   try {
     const response = await api.get(`/clients/${clientId}`);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -24,9 +36,10 @@ export const getClient = async (clientId) => {
 export const updateClient = async (clientId, clientData) => {
   try {
     const response = await api.put(`/clients/${clientId}`, clientData);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -34,9 +47,43 @@ export const updateClient = async (clientId, clientData) => {
 export const deleteClient = async (clientId) => {
   try {
     const response = await api.delete(`/clients/${clientId}`);
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
+  }
+};
+
+// Archive client
+export const archiveClient = async (clientId, reason = null) => {
+  try {
+    const response = await api.put(`/clients/${clientId}/archive`, { reason });
+    return normalizeResponse(response);
+  } catch (error) {
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
+  }
+};
+
+// Restore client
+export const restoreClient = async (clientId) => {
+  try {
+    const response = await api.put(`/clients/${clientId}/restore`);
+    return normalizeResponse(response);
+  } catch (error) {
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
+  }
+};
+
+// Permanently delete client
+export const permanentDeleteClient = async (clientId) => {
+  try {
+    const response = await api.delete(`/clients/${clientId}/permanent`);
+    return normalizeResponse(response);
+  } catch (error) {
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -44,9 +91,10 @@ export const deleteClient = async (clientId) => {
 export const getClientStats = async () => {
   try {
     const response = await api.get('/clients/stats');
-    return response.data;
+    return normalizeResponse(response);
   } catch (error) {
-    throw error.response?.data || error;
+    const message = error?.response?.data?.message || error?.message || String(error);
+    throw { success: false, message, response: { data: { message } } };
   }
 };
 
@@ -57,6 +105,9 @@ export const clientService = {
   getClient,
   updateClient,
   deleteClient,
+  archiveClient,
+  restoreClient,
+  permanentDeleteClient,
   getClientStats,
 
   // Utility functions for frontend
@@ -74,7 +125,11 @@ export const clientService = {
     updatedAt: client.updatedAt,
     lastLogin: client.lastLogin,
     bookingCount: client.bookingCount || 0,
-    totalSpent: client.totalSpent || 0
+    totalSpent: client.totalSpent || 0,
+    archived: client.archived || false,
+    archivedAt: client.archivedAt,
+    archivedBy: client.archivedBy,
+    archivedReason: client.archivedReason
   }),
 
   // Filter clients by various criteria

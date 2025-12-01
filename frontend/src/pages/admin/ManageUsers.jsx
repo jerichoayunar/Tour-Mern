@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { clientService } from '../../services/clientService';
 import ClientsTable from '../../components/admin/clients/ClientsTable';
 import ClientDetailsModal from '../../components/admin/clients/ClientDetailsModal';
 import AdminStatsCard from '../../components/admin/AdminStatsCard';
 import Loader from "../../components/ui/Loader";
+import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import { useToast } from '../../context/ToastContext';
 
 const ManageUsers = () => {
@@ -13,57 +14,71 @@ const ManageUsers = () => {
   const [loading, setLoading] = useState(true);
   const [selectedClient, setSelectedClient] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
     status: 'all',
     role: 'all',
     loginMethod: 'all'
   });
-  const { addToast } = useToast();
+  const { showToast } = useToast();
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    type: 'danger',
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    onConfirm: null
+  });
 
   // Fetch clients and stats on component mount
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  // Apply filters when clients or filters change
-  useEffect(() => {
-    if (clients.length > 0) {
-      const filtered = clientService.filterClients(clients, filters);
-      setFilteredClients(filtered);
-    }
-  }, [clients, filters]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      const params = {
+        onlyArchived: showArchived
+      };
+      
       const [clientsResponse, statsResponse] = await Promise.all([
-        clientService.getClients(),
+        clientService.getClients(params),
         clientService.getClientStats()
       ]);
-      
-      setClients(clientsResponse.data.map(clientService.transformClientData));
-      setStats(statsResponse.data);
+
+      // clientService already returns parsed data (not axios response)
+      const respClients = clientsResponse?.data ?? clientsResponse;
+      const clientsData = Array.isArray(respClients) ? respClients : (respClients && respClients.success !== undefined ? (Array.isArray(respClients.data) ? respClients.data : []) : []);
+      setClients(clientsData.map(clientService.transformClientData));
+
+      const statsResp = statsResponse?.data ?? statsResponse;
+      const statsData = statsResp && statsResp.success !== undefined ? (statsResp.data ?? statsResp) : statsResp ?? null;
+      setStats(statsData);
     } catch (error) {
-      addToast({
-        type: 'error',
-        message: error.message || 'Failed to fetch clients data'
-      });
+      showToast(error.message || 'Failed to fetch clients data', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, [showArchived, showToast]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]); // Refetch when archive mode changes
+
+  // Apply filters when clients or filters change
+  useEffect(() => {
+    const filtered = clientService.filterClients(clients, filters);
+    setFilteredClients(filtered);
+  }, [clients, filters]);
+
+  
 
   const handleViewClient = async (clientId) => {
     try {
       const response = await clientService.getClient(clientId);
-      setSelectedClient(clientService.transformClientData(response.data));
+      const clientData = response?.data ?? response;
+      setSelectedClient(clientService.transformClientData(clientData));
       setIsModalOpen(true);
     } catch (error) {
-      addToast({
-        type: 'error',
-        message: error.message || 'Failed to fetch client details'
-      });
+      showToast(error.message || 'Failed to fetch client details', 'error');
     }
   };
 
@@ -74,54 +89,84 @@ const ManageUsers = () => {
       // Update local state
       setClients(prev => prev.map(client => 
         client.id === clientId 
-          ? clientService.transformClientData(response.data)
+          ? clientService.transformClientData(response?.data ?? response)
           : client
       ));
       
-      addToast({
-        type: 'success',
-        message: 'Client updated successfully'
-      });
+      showToast('Client updated successfully', 'success');
 
       // Refresh stats
       const statsResponse = await clientService.getClientStats();
-      setStats(statsResponse.data);
+      setStats(statsResponse?.data ?? statsResponse ?? null);
 
-      return response.data;
+      return response?.data ?? response;
     } catch (error) {
-      addToast({
-        type: 'error',
-        message: error.message || 'Failed to update client'
-      });
+      showToast(error.message || 'Failed to update client', 'error');
       throw error;
     }
   };
 
-  const handleDeleteClient = async (clientId) => {
-    if (!window.confirm('Are you sure you want to delete this client? This action cannot be undone.')) {
-      return;
-    }
+  const handleArchiveClient = async (clientId) => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'warning',
+      title: 'Archive Client',
+      message: 'Are you sure you want to archive this client? They will be hidden from the main list but can be restored later.',
+      confirmText: 'Archive',
+      onConfirm: async () => {
+        try {
+          await clientService.archiveClient(clientId);
+          setClients(prev => prev.filter(client => client.id !== clientId));
+          showToast('Client archived successfully', 'success');
+          const statsResponse = await clientService.getClientStats();
+          setStats(statsResponse?.data ?? statsResponse ?? null);
+        } catch (error) {
+          showToast(error.message || 'Failed to archive client', 'error');
+        }
+      }
+    });
+  };
 
-    try {
-      await clientService.deleteClient(clientId);
-      
-      // Update local state
-      setClients(prev => prev.filter(client => client.id !== clientId));
-      
-      addToast({
-        type: 'success',
-        message: 'Client deleted successfully'
-      });
+  const handleRestoreClient = async (clientId) => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'info',
+      title: 'Restore Client',
+      message: 'Are you sure you want to restore this client? They will become active again.',
+      confirmText: 'Restore',
+      onConfirm: async () => {
+        try {
+          await clientService.restoreClient(clientId);
+          setClients(prev => prev.filter(client => client.id !== clientId));
+          showToast('Client restored successfully', 'success');
+          const statsResponse = await clientService.getClientStats();
+          setStats(statsResponse?.data ?? statsResponse ?? null);
+        } catch (error) {
+          showToast(error.message || 'Failed to restore client', 'error');
+        }
+      }
+    });
+  };
 
-      // Refresh stats
-      const statsResponse = await clientService.getClientStats();
-      setStats(statsResponse.data);
-    } catch (error) {
-      addToast({
-        type: 'error',
-        message: error.message || 'Failed to delete client'
-      });
-    }
+  const handlePermanentDelete = async (clientId) => {
+    setConfirmationModal({
+      isOpen: true,
+      type: 'danger',
+      title: 'Permanently Delete Client',
+      message: 'This will permanently delete the client and cannot be undone. Continue?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          await clientService.permanentDeleteClient(clientId);
+          setClients(prev => prev.filter(client => client.id !== clientId));
+          showToast('Client permanently deleted', 'success');
+          const statsResponse = await clientService.getClientStats();
+          setStats(statsResponse?.data ?? statsResponse ?? null);
+        } catch (error) {
+          showToast(error.message || 'Failed to delete client', 'error');
+        }
+      }
+    });
   };
 
   const handleFiltersChange = (newFilters) => {
@@ -137,64 +182,62 @@ const ManageUsers = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-platinum p-6">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Client Management
-          </h1>
-          <p className="text-lg text-gray-600">
-            Manage and monitor your clients
-          </p>
+        <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Client Management
+            </h1>
+            <p className="text-lg text-gray-600">
+              Manage and monitor your clients
+            </p>
+          </div>
+          
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-colors ${
+              showArchived 
+                ? 'bg-gray-800 text-white hover:bg-gray-700' 
+                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            {showArchived ? '← Back to Active Clients' : '📦 View Archived Clients'}
+            {stats?.archivedClients > 0 && !showArchived && (
+              <span className="bg-gray-200 text-gray-800 text-xs px-2 py-0.5 rounded-full">
+                {stats.archivedClients}
+              </span>
+            )}
+          </button>
         </div>
 
-        {/* Statistics Cards Grid */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <AdminStatsCard
-              title="Total Clients"
-              value={stats.totalClients}
-              trend={stats.growthRate}
-              icon="👥"
-              color="blue"
-            />
-            <AdminStatsCard
-              title="New Clients (30 days)"
-              value={stats.newClientsLast30Days}
-              trend="Last month"
-              icon="🆕"
-              color="green"
-            />
-            <AdminStatsCard
-              title="Active Clients"
-              value={stats.byStatus?.active || 0}
-              trend={`${stats.byStatus?.inactive || 0} inactive`}
-              icon="✅"
-              color="green"
-            />
-            <AdminStatsCard
-              title="Google Users"
-              value={stats.byLoginMethod?.google || 0}
-              trend={`${stats.byLoginMethod?.local || 0} local`}
-              icon="🔐"
-              color="purple"
-            />
-          </div>
-        )}
+        {/* Statistics Cards removed per request to declutter admin clients view */}
 
         {/* Clients Table Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <ClientsTable
             clients={filteredClients}
             filters={filters}
+            showArchived={showArchived}
             onFiltersChange={handleFiltersChange}
             onViewClient={handleViewClient}
             onUpdateClient={handleUpdateClient}
-            onDeleteClient={handleDeleteClient}
+            onArchiveClient={handleArchiveClient}
+            onRestoreClient={handleRestoreClient}
+            onPermanentDelete={handlePermanentDelete}
             onRefresh={fetchData}
           />
         </div>
+
+        <ConfirmationModal
+          isOpen={confirmationModal.isOpen}
+          onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={confirmationModal.onConfirm}
+          title={confirmationModal.title}
+          message={confirmationModal.message}
+          type={confirmationModal.type}
+          confirmText={confirmationModal.confirmText}
+        />
 
         {/* Client Details Modal */}
         {isModalOpen && selectedClient && (
@@ -208,7 +251,6 @@ const ManageUsers = () => {
             onUpdate={handleUpdateClient}
           />
         )}
-      </div>
     </div>
   );
 };

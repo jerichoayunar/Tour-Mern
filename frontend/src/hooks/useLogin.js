@@ -41,7 +41,9 @@ export const useLogin = () => {
     }
 
     // Perform login
+    console.log('🔍 Login attempt debug:', { email: formData.email, hasRecaptcha: !!recaptchaToken, recaptchaLength: recaptchaToken?.length });
     const result = await login({ ...formData, recaptchaToken });
+    console.log('🔍 Login result:', result);
     
     if (result.success && rememberMe) {
       // Handle remember me logic

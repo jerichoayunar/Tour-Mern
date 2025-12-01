@@ -1,5 +1,6 @@
 // controllers/inquiryController.js
 import * as inquiryService from '../services/inquiryService.js';
+import emailService from '../services/emailService.js';
 
 // @desc    Get all inquiries (with search, filter, and sort)
 // @route   GET /api/inquiries
@@ -47,6 +48,36 @@ export const createInquiry = async (req, res, next) => {
   }
 };
 
+// @desc    Get inquiries for the authenticated user
+// @route   GET /api/inquiries/my
+// @access  Private (authenticated users)
+export const getMyInquiries = async (req, res, next) => {
+  try {
+    const email = req.user?.email;
+    const result = await inquiryService.getInquiries({ ...req.query, email });
+    res.status(200).json({
+      success: true,
+      ...result
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Add a follow-up message to the user's own inquiry
+// @route   POST /api/inquiries/:id/reply
+// @access  Private (authenticated users)
+export const addUserReply = async (req, res, next) => {
+  try {
+    const inquiryId = req.params.id;
+    const message = req.body.message;
+    const updated = await inquiryService.addUserReply(inquiryId, req.user?.email, message);
+    res.status(200).json({ success: true, data: updated });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Update inquiry status/response
 // @route   PUT /api/inquiries/:id
 // @access  Private/Admin
@@ -57,6 +88,16 @@ export const updateInquiry = async (req, res, next) => {
       req.body, 
       req.user._id
     );
+
+    // ✅ SEND INQUIRY RESPONSE EMAIL if response is provided
+    if (req.body.response && req.body.response.trim()) {
+      try {
+        await emailService.sendInquiryResponse(inquiry);
+      } catch (emailError) {
+        console.log('Email sending failed (non-critical):', emailError.message);
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: 'Inquiry updated successfully!',
@@ -108,6 +149,59 @@ export const markAsRead = async (req, res, next) => {
       success: true,
       message: 'Inquiry marked as read!',
       data: inquiry,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Archive inquiry (soft delete)
+// @route   PUT /api/inquiries/:id/archive
+// @access  Private/Admin
+export const archiveInquiry = async (req, res, next) => {
+  try {
+    const { reason } = req.body;
+    const inquiry = await inquiryService.archiveInquiry(
+      req.params.id,
+      req.user._id,
+      reason
+    );
+    res.status(200).json({
+      success: true,
+      message: 'Inquiry archived successfully!',
+      data: inquiry,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Restore archived inquiry
+// @route   PUT /api/inquiries/:id/restore
+// @access  Private/Admin
+export const restoreInquiry = async (req, res, next) => {
+  try {
+    const inquiry = await inquiryService.restoreInquiry(req.params.id);
+    res.status(200).json({
+      success: true,
+      message: 'Inquiry restored successfully!',
+      data: inquiry,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Permanently delete inquiry (archived only)
+// @route   DELETE /api/inquiries/:id/permanent
+// @access  Private/Admin
+export const permanentDeleteInquiry = async (req, res, next) => {
+  try {
+    await inquiryService.permanentDeleteInquiry(req.params.id);
+    res.status(200).json({
+      success: true,
+      message: 'Inquiry permanently deleted!',
+      data: {},
     });
   } catch (error) {
     next(error);

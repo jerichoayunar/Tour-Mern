@@ -19,8 +19,10 @@ const ActivityStats = ({ activities }) => {
         a.type === 'password_changed' ||
         a.type === 'account_suspended'
       ).length,
+      registrations: activities.filter(a => a.type === 'user_registered').length,
+      failedLogins: activities.filter(a => a.type === 'login_failed').length,
       bookings: activities.filter(a => a.type?.includes('booking')).length,
-      payments: activities.filter(a => a.type?.includes('payment')).length,
+      // payments intentionally omitted from Activity Monitor per admin preference
       uniqueUsers: new Set(activities.map(a => a.userId?._id || a.userId).filter(Boolean)).size
     };
   };
@@ -44,14 +46,7 @@ const ActivityStats = ({ activities }) => {
       color: 'green',
       trend: 'recent'
     },
-    {
-      title: 'Today',
-      value: stats.today,
-      description: "Today's activities",
-      icon: '📅',
-      color: 'purple',
-      trend: 'today'
-    },
+    // 'Today' card removed per request
     {
       title: 'Active Users',
       value: stats.uniqueUsers,
@@ -69,6 +64,22 @@ const ActivityStats = ({ activities }) => {
       trend: 'logins'
     },
     {
+      title: 'Registrations',
+      value: stats.registrations,
+      description: 'New user sign-ups',
+      icon: '🆕',
+      color: 'emerald',
+      trend: 'registrations'
+    },
+    {
+      title: 'Failed Logins',
+      value: stats.failedLogins,
+      description: 'Failed authentication attempts',
+      icon: '🚫',
+      color: 'red',
+      trend: 'failed-logins'
+    },
+    {
       title: 'Security Events',
       value: stats.security,
       description: 'Security alerts',
@@ -84,14 +95,7 @@ const ActivityStats = ({ activities }) => {
       color: 'emerald',
       trend: 'bookings'
     },
-    {
-      title: 'Payments',
-      value: stats.payments,
-      description: 'Payment processing',
-      icon: '💳',
-      color: 'amber',
-      trend: 'payments'
-    }
+    // Payments card removed
   ];
 
   const getColorClasses = (color) => {
@@ -127,7 +131,7 @@ const ActivityStats = ({ activities }) => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-6">
-        {statCards.map((stat, index) => (
+        {statCards.map((stat, _index) => (
           <div
             key={stat.title}
             className={`${getBgColor(stat.color)} rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 group`}
@@ -166,8 +170,7 @@ const ActivityStats = ({ activities }) => {
             </div>
 
             {/* Trend indicator */}
-            <div className="mt-3 flex items-center justify-between text-xs">
-              <span className="text-gray-500">Updated just now</span>
+            <div className="mt-3 flex items-center justify-end text-xs">
               {stat.value > 0 && (
                 <span className="flex items-center text-green-600 font-medium">
                   <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">

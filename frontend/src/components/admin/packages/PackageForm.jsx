@@ -25,11 +25,14 @@ const PackageForm = ({ initialData = null, onSubmit, onCancel }) => {
             title: day.title || "",
             description: day.description || "",
             places: Array.isArray(day.places) ? day.places : [""],
-            inclusions: {
-              transport: day.inclusions?.transport || false,
-              meals: day.inclusions?.meals || false,
-              stay: day.inclusions?.stay || false
-            }
+            // support new array-of-strings inclusions, or migrate legacy object inclusions
+            inclusions: Array.isArray(day.inclusions)
+              ? day.inclusions
+              : (day.inclusions && typeof day.inclusions === 'object')
+                ? Object.keys(day.inclusions).filter(k => day.inclusions[k])
+                : [],
+            // temporary input buffer for adding new tags per day
+            newInclusionInput: ""
           }))
         : [];
 
@@ -91,18 +94,54 @@ const PackageForm = ({ initialData = null, onSubmit, onCancel }) => {
     setFormData(prev => ({ ...prev, itinerary: updatedItinerary }));
   };
 
-  const handleInclusionChange = (dayIndex, inclusionType, value) => {
+  const handleAddInclusion = (dayIndex, value) => {
+    const val = String(value || '').trim();
+    if (!val) return;
+
     const updatedItinerary = [...formData.itinerary];
     const currentDay = updatedItinerary[dayIndex] || {};
-    
+    const currentInclusions = Array.isArray(currentDay.inclusions) ? [...currentDay.inclusions] : [];
+
+    if (!currentInclusions.includes(val)) {
+      currentInclusions.push(val);
+    }
+
     updatedItinerary[dayIndex] = {
       ...currentDay,
-      inclusions: {
-        ...(currentDay.inclusions || { transport: false, meals: false, stay: false }),
-        [inclusionType]: value
-      }
+      inclusions: currentInclusions,
+      newInclusionInput: ""
     };
     setFormData(prev => ({ ...prev, itinerary: updatedItinerary }));
+  };
+
+  const handleRemoveInclusion = (dayIndex, tagIndex) => {
+    const updatedItinerary = [...formData.itinerary];
+    const currentDay = updatedItinerary[dayIndex] || {};
+    const currentInclusions = Array.isArray(currentDay.inclusions) ? [...currentDay.inclusions] : [];
+    currentInclusions.splice(tagIndex, 1);
+    updatedItinerary[dayIndex] = {
+      ...currentDay,
+      inclusions: currentInclusions
+    };
+    setFormData(prev => ({ ...prev, itinerary: updatedItinerary }));
+  };
+
+  const handleInclusionInputChange = (dayIndex, value) => {
+    const updatedItinerary = [...formData.itinerary];
+    const currentDay = updatedItinerary[dayIndex] || {};
+    updatedItinerary[dayIndex] = {
+      ...currentDay,
+      newInclusionInput: value
+    };
+    setFormData(prev => ({ ...prev, itinerary: updatedItinerary }));
+  };
+
+  const handleInclusionKeyDown = (e, dayIndex) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const val = (e.target.value || '').replace(/,$/, '').trim();
+      if (val) handleAddInclusion(dayIndex, val);
+    }
   };
 
   const addItineraryDay = () => {
@@ -111,11 +150,8 @@ const PackageForm = ({ initialData = null, onSubmit, onCancel }) => {
       title: "",
       description: "",
       places: [""],
-      inclusions: {
-        transport: false,
-        meals: false,
-        stay: false
-      }
+      inclusions: [],
+      newInclusionInput: ""
     };
     setFormData(prev => ({
       ...prev,
@@ -210,23 +246,34 @@ const PackageForm = ({ initialData = null, onSubmit, onCancel }) => {
           return;
         }
         
-        if (!day.inclusions) {
-          day.inclusions = { transport: false, meals: false, stay: false };
+        if (!Array.isArray(day.inclusions)) {
+          if (day.inclusions && typeof day.inclusions === 'object') {
+            day.inclusions = Object.keys(day.inclusions).filter(k => day.inclusions[k]);
+          } else {
+            day.inclusions = [];
+          }
         }
-        
+
         if (!Array.isArray(day.places)) {
           day.places = [""];
         }
       }
 
+      const sanitizedItinerary = formData.itinerary.map(d => ({
+        day: d.day,
+        title: d.title,
+        description: d.description,
+        places: Array.isArray(d.places) ? d.places : [""],
+        inclusions: Array.isArray(d.inclusions) ? d.inclusions : []
+      }));
+
       const submitData = new FormData();
-      
       submitData.append('title', formData.title);
       submitData.append('price', Number(formData.price));
       submitData.append('duration', Number(formData.duration));
       // REMOVED: Global inclusion appends
       submitData.append('status', formData.status);
-      submitData.append('itinerary', JSON.stringify(formData.itinerary));
+      submitData.append('itinerary', JSON.stringify(sanitizedItinerary));
 
       if (imageFile) {
         submitData.append('image', imageFile);
@@ -292,7 +339,6 @@ const PackageForm = ({ initialData = null, onSubmit, onCancel }) => {
               const dayTitle = dayData.title || "";
               const dayDescription = dayData.description || "";
               const dayNumber = dayData.day || index + 1;
-              const inclusions = dayData.inclusions || { transport: false, meals: false, stay: false };
               const places = Array.isArray(dayData.places) ? dayData.places : [""];
               
               return (
@@ -343,43 +389,45 @@ const PackageForm = ({ initialData = null, onSubmit, onCancel }) => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Day {dayNumber} Inclusions
                       </label>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <label className="flex items-center space-x-2 p-2 bg-white rounded border border-blue-100 hover:bg-blue-50 transition-colors">
+                      <div>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {Array.isArray(dayData.inclusions) && dayData.inclusions.length > 0 ? (
+                            dayData.inclusions.map((tag, tIdx) => (
+                              <span key={tIdx} className="inline-flex items-center bg-white border border-blue-100 rounded-md px-2 py-1 text-sm">
+                                <span className="text-gray-700">{tag}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveInclusion(index, tIdx)}
+                                  className="ml-2 text-red-600 hover:text-red-700 text-xs"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))
+                          ) : (
+                            <div className="text-sm text-gray-500">No inclusions added for this day.</div>
+                          )}
+                        </div>
+
+                        <div className="flex gap-2">
                           <input
-                            type="checkbox"
-                            checked={inclusions.transport || false}
-                            onChange={(e) => handleInclusionChange(index, 'transport', e.target.checked)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            type="text"
+                            value={dayData.newInclusionInput || ""}
+                            onChange={(e) => handleInclusionInputChange(index, e.target.value)}
+                            onKeyDown={(e) => handleInclusionKeyDown(e, index)}
+                            className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            placeholder="Add inclusion (press Enter or comma) e.g., Transport"
                           />
-                          <div>
-                            <span className="text-sm font-medium text-gray-700">🚗 Transport</span>
-                            <p className="text-xs text-gray-500">Transportation for this day</p>
-                          </div>
-                        </label>
-                        <label className="flex items-center space-x-2 p-2 bg-white rounded border border-blue-100 hover:bg-blue-50 transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={inclusions.meals || false}
-                            onChange={(e) => handleInclusionChange(index, 'meals', e.target.checked)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <div>
-                            <span className="text-sm font-medium text-gray-700">🍽️ Meals</span>
-                            <p className="text-xs text-gray-500">Meals included this day</p>
-                          </div>
-                        </label>
-                        <label className="flex items-center space-x-2 p-2 bg-white rounded border border-blue-100 hover:bg-blue-50 transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={inclusions.stay || false}
-                            onChange={(e) => handleInclusionChange(index, 'stay', e.target.checked)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <div>
-                            <span className="text-sm font-medium text-gray-700">🏨 Stay</span>
-                            <p className="text-xs text-gray-500">Accommodation for this day</p>
-                          </div>
-                        </label>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => handleAddInclusion(index, dayData.newInclusionInput)}
+                            className="text-sm px-3"
+                          >
+                            Add
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">Common tags: Transport, Meals, Stay. Press Enter or comma to add quickly.</p>
                       </div>
                     </div>
 

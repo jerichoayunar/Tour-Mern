@@ -7,7 +7,11 @@ const BookingsTable = ({
   bookings, 
   onViewDetails, 
   onStatusUpdate, 
-  showResultsCount = true 
+  showResultsCount = true,
+  isArchived = false,
+  onArchive,
+  onRestore,
+  onDeletePermanent
 }) => {
   // ============================================================================
   // 🎯 FORMATTING FUNCTIONS
@@ -44,8 +48,10 @@ const BookingsTable = ({
   });
 
   const getPackageInfo = (booking) => ({
-    name: booking.package?.title || booking.package?.name || "—",
-    duration: booking.package?.duration
+    name: booking.packages && booking.packages.length > 0
+      ? booking.packages.map(p => p.title).join(', ')
+      : (booking.package?.title || booking.package?.name || '—'),
+    duration: booking.totalDays || (booking.packages && booking.packages.length > 0 ? booking.packages.reduce((a,p) => a + (p.duration||0),0) : booking.package?.duration)
   });
 
   // ============================================================================
@@ -123,7 +129,8 @@ const BookingsTable = ({
 
         {/* STATUS */}
         <td className="px-6 py-4 text-center">
-          <BookingStatusBadge status={booking.status} />
+          {/* Show 'requested' badge when a cancellation request is pending */}
+          <BookingStatusBadge status={booking.cancellation?.requested === true ? 'requested' : booking.status} />
         </td>
 
         {/* ACTIONS */}
@@ -133,6 +140,10 @@ const BookingsTable = ({
               booking={booking}
               onViewDetails={onViewDetails}
               onStatusUpdate={onStatusUpdate}
+              isArchived={isArchived}
+              onArchive={onArchive}
+              onRestore={onRestore}
+              onDeletePermanent={onDeletePermanent}
             />
           </div>
         </td>

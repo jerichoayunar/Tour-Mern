@@ -64,6 +64,54 @@ export const deleteClient = async (req, res, next) => {
   }
 };
 
+// @desc    Archive client (soft delete)
+// @route   PUT /api/clients/:id/archive
+// @access  Private/Admin
+export const archiveClient = async (req, res, next) => {
+  try {
+    const client = await clientService.archiveClient(req.params.id, req.user._id, req.body.reason);
+    res.status(200).json({
+      success: true,
+      message: 'Client archived successfully!',
+      data: client,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Restore archived client
+// @route   PUT /api/clients/:id/restore
+// @access  Private/Admin
+export const restoreClient = async (req, res, next) => {
+  try {
+    const client = await clientService.restoreClient(req.params.id);
+    res.status(200).json({
+      success: true,
+      message: 'Client restored successfully!',
+      data: client,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Permanently delete client
+// @route   DELETE /api/clients/:id/permanent
+// @access  Private/Admin
+export const permanentDeleteClient = async (req, res, next) => {
+  try {
+    await clientService.permanentDeleteClient(req.params.id);
+    res.status(200).json({
+      success: true,
+      message: 'Client permanently deleted!',
+      data: {},
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Get client statistics
 // @route   GET /api/clients/stats
 // @access  Private/Admin

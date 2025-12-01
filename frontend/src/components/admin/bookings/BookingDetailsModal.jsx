@@ -1,7 +1,10 @@
 // src/components/admin/bookings/BookingDetailsModal.jsx - FIXED HOOK ORDER
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Button from "../../ui/Button";
 import BookingStatusBadge from "./BookingStatusBadge";
+import * as bookingService from '../../../services/bookingService';
+import { useToast } from '../../../context/ToastContext';
+import { useBooking } from '../../../context/BookingContext';
 
 const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
   // ============================================================================
@@ -9,13 +12,14 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
   // ============================================================================
   const [activeTab, setActiveTab] = useState("details");
   const [adminNotes, setAdminNotes] = useState("");
+  const [_savingNotes, setSavingNotes] = useState(false);
+  const { showToast } = useToast();
+  const { updateBookingLocal } = useBooking();
 
-  // 🛠️ FIX: Initialize adminNotes based on booking, but do it unconditionally
-  useState(() => {
-    if (booking?.adminNotes) {
-      setAdminNotes(booking.adminNotes);
-    }
-  });
+  // Initialize adminNotes when booking changes
+  useEffect(() => {
+    setAdminNotes(booking?.adminNotes || "");
+  }, [booking]);
 
   // ============================================================================
   // 🎯 MEMOIZED DATA FOR PERFORMANCE - MUST BE CALLED UNCONDITIONALLY
@@ -41,10 +45,16 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
     const clientEmail = booking.clientEmail || booking.user?.email || booking.client?.email || 'N/A';
     const clientPhone = booking.clientPhone || booking.user?.phone || booking.client?.phone || booking.phone || 'Not provided';
     
+    // Support multi-package bookings
     const packageInfo = booking.package || {};
-    const packageName = packageInfo.title || packageInfo.name || 'N/A';
-    const packagePrice = packageInfo.price || 0;
-    const packageDuration = packageInfo.duration || 'N/A';
+    const packagesArr = booking.packages || [];
+    const packageName = packagesArr && packagesArr.length > 0
+      ? packagesArr.map(p => p.title).join(', ')
+      : (packageInfo.title || packageInfo.name || 'N/A');
+    const packagePrice = packagesArr && packagesArr.length > 0
+      ? packagesArr.reduce((a,p) => a + (p.price || 0), 0)
+      : (packageInfo.price || 0);
+    const packageDuration = booking.totalDays || (packagesArr && packagesArr.length > 0 ? packagesArr.reduce((a,p) => a + (p.duration||0), 0) : packageInfo.duration || 'N/A');
     
     const bookingDate = booking.bookingDate || booking.preferredDate || booking.createdAt;
     const totalAmount = booking.totalPrice || booking.totalAmount || 0;
@@ -77,8 +87,36 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
     }
   };
 
-  const handleSaveNotes = () => {
-    console.log('Saving admin notes:', adminNotes);
+  const handleSaveNotes = async () => {
+    try {
+      setSavingNotes(true);
+      const res = await bookingService.saveAdminNotes(booking._id, adminNotes);
+      // bookingService returns axios response; extract updated booking
+      const updated = res?.data?.data || res?.data || res || {};
+      // Update context so lists/modals reflect new notes
+      if (updated && updated._id) {
+        updateBookingLocal(updated);
+      } else {
+        // If server returned minimal data, merge locally
+        updateBookingLocal({ ...booking, adminNotes });
+      }
+      showToast('Admin notes saved', 'success');
+    } catch (err) {
+      console.error('Failed to save admin notes', err);
+      showToast(err?.message || 'Failed to save notes', 'error');
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    try {
+      const res = await bookingService.resendConfirmation(booking._id);
+      showToast(res?.message || 'Confirmation email resent', 'success');
+    } catch (err) {
+      console.error('Failed to resend confirmation', err);
+      showToast(err?.message || 'Failed to resend confirmation', 'error');
+    }
   };
 
   // ============================================================================
@@ -130,6 +168,11 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
             <div className="flex items-center space-x-3 mb-2">
               <h2 className="text-2xl font-bold text-gray-900">Booking Details</h2>
               <BookingStatusBadge status={booking.status} />
+              {booking.archived && (
+                <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600 border border-gray-200">
+                  📦 Archived
+                </span>
+              )}
             </div>
             <p className="text-gray-600">
               Booking ID: <span className="font-mono text-gray-800">{booking._id}</span>
@@ -282,16 +325,27 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
                 </div>
               </div>
               
-              {(booking.package?.transport !== undefined || booking.package?.meals !== undefined || booking.package?.stay !== undefined) && (
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Inclusions</label>
-                  <div className="flex space-x-4 text-sm">
-                    {booking.package?.transport && <span className="text-gray-700">🚗 Transport</span>}
-                    {booking.package?.meals && <span className="text-gray-700">🍽️ Meals</span>}
-                    {booking.package?.stay && <span className="text-gray-700">🏨 Stay</span>}
+              {/* Aggregate inclusions from packages when available */}
+              {(() => {
+                const packagesArr = booking.packages || [];
+                const hasPackages = packagesArr.length > 0;
+                const transport = hasPackages ? packagesArr.some(p => p.transport) : !!booking.package?.transport;
+                const meals = hasPackages ? packagesArr.some(p => p.meals) : !!booking.package?.meals;
+                const stay = hasPackages ? packagesArr.some(p => p.stay) : !!booking.package?.stay;
+
+                if (!transport && !meals && !stay) return null;
+
+                return (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Inclusions</label>
+                    <div className="flex space-x-4 text-sm">
+                      {transport && <span className="text-gray-700">🚗 Transport</span>}
+                      {meals && <span className="text-gray-700">🍽️ Meals</span>}
+                      {stay && <span className="text-gray-700">🏨 Stay</span>}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
           )}
 
@@ -305,18 +359,21 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 rows="6"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Add internal notes, comments, or special instructions for this booking..."
+                disabled={booking.archived}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100 disabled:text-gray-500"
+                placeholder={booking.archived ? "Notes cannot be edited for archived bookings." : "Add internal notes, comments, or special instructions for this booking..."}
               />
-              <div className="flex justify-end mt-2">
-                <Button
-                  onClick={handleSaveNotes}
-                  variant="primary"
-                  size="sm"
-                >
-                  Save Notes
-                </Button>
-              </div>
+              {!booking.archived && (
+                <div className="flex justify-end mt-2">
+                  <Button
+                    onClick={handleSaveNotes}
+                    variant="primary"
+                    size="sm"
+                  >
+                    Save Notes
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -326,30 +383,39 @@ const BookingDetailsModal = ({ booking, onClose, onStatusUpdate, isOpen }) => {
           <div className="text-sm text-gray-500">
             Last updated: {new Date(booking.updatedAt || booking.createdAt).toLocaleString()}
           </div>
-          <div className="flex space-x-3">
-            {booking.status !== "confirmed" && booking.status !== "cancelled" && (
-              <Button
-                onClick={() => handleStatusChange("confirmed")}
-                variant="primary"
-              >
-                ✅ Confirm Booking
-              </Button>
-            )}
-            {booking.status !== "cancelled" && (
-              <Button
-                onClick={() => handleStatusChange("cancelled")}
-                variant="danger"
-              >
-                ❌ Cancel Booking
-              </Button>
-            )}
-            {booking.status === "cancelled" && (
-              <Button
-                onClick={() => handleStatusChange("pending")}
-                variant="secondary"
-              >
-                🔄 Reopen Booking
-              </Button>
+            <div className="flex space-x-3">
+            {!booking.archived && (
+              <>
+                {booking.status !== "confirmed" && booking.status !== "cancelled" && (
+                  <Button
+                    onClick={() => handleStatusChange("confirmed")}
+                    variant="primary"
+                  >
+                    ✅ Confirm Booking
+                  </Button>
+                )}
+                {booking.status !== "cancelled" && (
+                  <Button
+                    onClick={() => handleStatusChange("cancelled")}
+                    variant="danger"
+                  >
+                    ❌ Cancel Booking
+                  </Button>
+                )}
+                {booking.status === "cancelled" && (
+                  <Button
+                    onClick={() => handleStatusChange("pending")}
+                    variant="secondary"
+                  >
+                    🔄 Reopen Booking
+                  </Button>
+                )}
+                {booking.status === 'confirmed' && (
+                  <Button onClick={handleResendConfirmation} variant="outline">
+                    🔁 Resend Confirmation
+                  </Button>
+                )}
+              </>
             )}
             <Button
               onClick={onClose}

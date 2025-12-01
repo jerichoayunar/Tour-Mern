@@ -1,0 +1,37 @@
+@'
+# Node
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+
+# Env & secrets
+.env
+.env.*
+credentials.json
+*.pem
+*.key
+*.crt
+
+# Logs and temp
+logs/
+*.log
+tmp/
+temp/
+
+# Frontend build / Vite
+/.vite
+/.cache
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Misc
+coverage/
+'@ | Out-File -Encoding UTF8 .gitignore

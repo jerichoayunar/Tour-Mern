@@ -51,7 +51,7 @@ const DestinationCard = ({ destination, onClick, viewMode = 'grid' }) => {
           {/* Badges - Only show if destination is new */}
           {isNew && (
             <div className="absolute top-2 left-2">
-              <span className="bg-blue-500 text-white px-2 py-1 rounded-full text-xs font-bold backdrop-blur-sm flex items-center gap-1">
+              <span className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-2 py-1 rounded-full text-xs font-bold backdrop-blur-sm flex items-center gap-1 shadow-md">
                 <Clock className="w-3 h-3" />
                 NEW
               </span>
@@ -80,7 +80,7 @@ const DestinationCard = ({ destination, onClick, viewMode = 'grid' }) => {
             </h3>
             {/* Status Badge */}
             {destination.status === 'inactive' && (
-              <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs font-semibold">
+              <span className="bg-blue-50 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold">
                 Coming Soon
               </span>
             )}
@@ -147,7 +147,7 @@ const DestinationCard = ({ destination, onClick, viewMode = 'grid' }) => {
         <div className="absolute top-3 left-3 right-3 flex justify-between items-start">
           {/* New Badge - Only show if destination is new */}
           {isNew && (
-            <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm flex items-center gap-1">
+            <span className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm flex items-center gap-1 shadow-md">
               <Clock className="w-3 h-3" />
               NEW
             </span>
@@ -155,7 +155,7 @@ const DestinationCard = ({ destination, onClick, viewMode = 'grid' }) => {
           
           {/* Status Badge */}
           {destination.status === 'inactive' && (
-            <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm">
+            <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm">
               COMING SOON
             </span>
           )}

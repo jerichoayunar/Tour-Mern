@@ -38,12 +38,11 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Don't redirect automatically - let components handle errors
+    // Don't auto-remove token or redirect - let components handle errors
     if (error.response?.status === 401) {
       console.log('🔐 Authentication required');
-      localStorage.removeItem('token');
-      // ✅ REMOVED: window.location.href = '/login';
-      // Let the login component handle the error display
+      // ✅ REMOVED: localStorage.removeItem('token'); - Don't auto-remove token
+      // ✅ REMOVED: window.location.href = '/login'; - Let components handle redirect
     }
     return Promise.reject(error);
   }

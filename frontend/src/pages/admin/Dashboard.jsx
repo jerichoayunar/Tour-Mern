@@ -14,6 +14,28 @@ import {
   FileText,
   Settings
 } from "lucide-react";
+import BackupButton from '../../components/Backup/BackupButton';
+import Loader from '../../components/ui/Loader';
+import { useAuth } from '../../context/AuthContext';
+
+// Small admin-only action: show backup button and link to backups page
+const AdminBackupAction = () => {
+  const { isAdmin } = useAuth();
+  if (!isAdmin) return null;
+
+  return (
+    <div className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 bg-yellow-50">
+      <div className="flex-1">
+        <div className="font-medium text-gray-900">Backups</div>
+        <div className="text-xs text-gray-600">Create or manage backups</div>
+      </div>
+      <div className="flex items-center gap-2">
+        <BackupButton />
+        <a href="/admin/backups" className="text-sm text-blue-600 underline">Manage</a>
+      </div>
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({
@@ -35,9 +57,11 @@ const Dashboard = () => {
         ]);
 
         if (isMounted) {
+          const statsResp = statsResponse?.data ?? statsResponse;
+          const recentResp = recentBookingsResponse?.data ?? recentBookingsResponse;
           setDashboardData({
-            stats: statsResponse.data.data,
-            recentBookings: recentBookingsResponse.data.data,
+            stats: statsResp?.data ?? statsResp ?? null,
+            recentBookings: recentResp?.data ?? recentResp ?? null,
           });
           setLastUpdate(new Date().toLocaleTimeString());
         }
@@ -60,9 +84,11 @@ const Dashboard = () => {
         adminService.getRecentBookings(),
       ]);
 
+      const statsResp = statsResponse?.data ?? statsResponse;
+      const recentResp = recentBookingsResponse?.data ?? recentBookingsResponse;
       setDashboardData({
-        stats: statsResponse.data.data,
-        recentBookings: recentBookingsResponse.data.data,
+        stats: statsResp?.data ?? statsResp ?? null,
+        recentBookings: recentResp?.data ?? recentResp ?? null,
       });
       setLastUpdate(new Date().toLocaleTimeString());
       showToast("Dashboard updated", "success");
@@ -79,7 +105,9 @@ const Dashboard = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="relative inline-block mb-4">
-            <div className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+            <div className="flex items-center justify-center">
+              <Loader size="lg" />
+            </div>
             <TrendingUp className="absolute inset-0 m-auto text-blue-600 w-6 h-6" />
           </div>
           <h3 className="text-lg font-semibold text-gray-800">Loading Dashboard</h3>
@@ -89,7 +117,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-platinum p-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
@@ -104,123 +132,102 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-3">
             {lastUpdate && (
-              <div className="text-sm text-gray-500 hidden sm:block">
-                Updated {lastUpdate}
-              </div>
+              <div className="text-sm text-gray-500 hidden sm:block">Updated {lastUpdate}</div>
             )}
             <button
               onClick={handleRefresh}
               disabled={refreshing}
               className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+              {refreshing ? <Loader size="sm" /> : <RefreshCw className="w-4 h-4" />}
               <span className="text-sm">Refresh</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* -------------------------------------------------------------
-      | 🔹 Top Stats Cards (Revenue, Bookings, Users, Packages)    |
-      ------------------------------------------------------------- */}
-      <section className="mb-8">
-        {dashboardData.stats && <DashboardStats stats={dashboardData.stats} />}
-      </section>
+      <section className="mb-8">{dashboardData.stats && <DashboardStats stats={dashboardData.stats} />}</section>
 
-      {/* -------------------------------------------------------------
-      | 📊 Left: Analytics Charts   |  ⚡ Right: Quick Actions +   |
-      |                             |     Notifications / To-Dos  |
-      ------------------------------------------------------------- */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Left: Analytics Charts - 2/3 width */}
         <div className="lg:col-span-2">
           <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">Performance Analytics</h2>
-                <p className="text-gray-600 text-sm mt-1">Monthly trends and insights</p>
-              </div>
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                  <span className="text-gray-600">Bookings</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded"></div>
-                  <span className="text-gray-600">Revenue</span>
-                </div>
-              </div>
-            </div>
-            <DashboardCharts
-              monthlyBookings={dashboardData.stats?.monthlyBookings}
-              destinationPopularity={dashboardData.stats?.destinationPopularity}
-            />
+            
+            <DashboardCharts monthlyBookings={dashboardData.stats?.monthlyBookings} destinationPopularity={dashboardData.stats?.destinationPopularity} />
           </div>
         </div>
 
-        {/* Right: Quick Actions & Notifications - 1/3 width */}
+        {/* Right: Quick Actions & Notifications */}
         <div className="space-y-6">
-          {/* Quick Actions */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Plus className="w-4 h-4 text-blue-600" />
               Quick Actions
             </h3>
             <div className="space-y-3">
-              <button className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-200 transition-colors text-left">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Plus className="w-4 h-4 text-blue-600" />
+              <div className="bg-white rounded-lg border border-gray-200 p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-gray-900">Admin Notifications</div>
+                    <div className="text-xs text-gray-600">Quick links for inquiries and bookings</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="font-medium text-gray-900">Create Booking</div>
-                  <div className="text-xs text-gray-600">Add new reservation</div>
+
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <a href="/admin/inquiries" className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">Inquiries</div>
+                      <div className="text-xs text-gray-600">View recent inquiries</div>
+                    </div>
+                    <div className="text-sm text-gray-700">&nbsp;</div>
+                  </a>
+
+                  <a href="/admin/bookings" className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">Bookings</div>
+                      <div className="text-xs text-gray-600">Manage reservations</div>
+                    </div>
+                    <div className="text-sm font-semibold text-blue-600">
+                      {dashboardData?.recentBookings?.length ?? dashboardData?.stats?.bookingCount ?? '—'}
+                    </div>
+                  </a>
                 </div>
-              </button>
-              
-              <button className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-green-50 hover:border-green-200 transition-colors text-left">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <FileText className="w-4 h-4 text-green-600" />
+
+                <div className="mt-3">
+                  <AdminBackupAction />
                 </div>
-                <div>
-                  <div className="font-medium text-gray-900">Generate Report</div>
-                  <div className="text-xs text-gray-600">Export analytics</div>
-                </div>
-              </button>
-              
-              <button className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-purple-50 hover:border-purple-200 transition-colors text-left">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Settings className="w-4 h-4 text-purple-600" />
-                </div>
-                <div>
-                  <div className="font-medium text-gray-900">Manage Packages</div>
-                  <div className="text-xs text-gray-600">Update offerings</div>
-                </div>
-              </button>
+              </div>
             </div>
           </div>
 
-          {/* Notifications / To-Dos */}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Bell className="w-4 h-4 text-amber-600" />
               Notifications
             </h3>
             <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">New Booking</div>
-                  <div className="text-xs text-gray-600">Sarah Johnson - Bali Package</div>
-                  <div className="text-xs text-gray-500 mt-1">2 hours ago</div>
+              <div className="grid grid-cols-1 gap-2">
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <div>
+                    <div className="font-medium text-gray-900">Bookings</div>
+                    <div className="text-xs text-gray-600">New / recent bookings</div>
+                  </div>
+                  <div className="text-sm font-semibold text-blue-600">{dashboardData?.recentBookings?.length ?? dashboardData?.stats?.bookingCount ?? 0}</div>
                 </div>
-              </div>
-              
-              <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                <div className="w-2 h-2 bg-amber-600 rounded-full mt-2 flex-shrink-0"></div>
-                <div className="flex-1">
-                  <div className="font-medium text-gray-900">Action Required</div>
-                  <div className="text-xs text-gray-600">Review pending bookings</div>
-                  <div className="text-xs text-gray-500 mt-1">1 day ago</div>
+
+                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                  <div>
+                    <div className="font-medium text-gray-900">Inquiries</div>
+                    <div className="text-xs text-gray-600">New inquiries</div>
+                  </div>
+                  <div className="text-sm font-semibold text-amber-600">{dashboardData?.stats?.inquiryCount ?? dashboardData?.inquiriesCount ?? 0}</div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                  <div>
+                    <div className="font-medium text-gray-900">Users</div>
+                    <div className="text-xs text-gray-600">New users</div>
+                  </div>
+                  <div className="text-sm font-semibold text-green-600">{dashboardData?.stats?.userCount ?? dashboardData?.userCount ?? 0}</div>
                 </div>
               </div>
             </div>
@@ -228,12 +235,11 @@ const Dashboard = () => {
         </div>
       </section>
 
-
       {/* Refreshing Overlay */}
       {refreshing && (
         <div className="fixed inset-0 bg-black/10 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 flex items-center gap-3">
-            <RefreshCw className="w-5 h-5 text-blue-600 animate-spin" />
+            <Loader size="md" />
             <div>
               <p className="font-medium text-gray-900">Updating Dashboard</p>
             </div>

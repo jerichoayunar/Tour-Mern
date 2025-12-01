@@ -4,11 +4,23 @@ import ApiError from '../utils/ApiError.js';
 
 // Get all inquiries with search, filter, pagination, and sort
 export const getInquiries = async (query = {}) => {
+  // received query (debug removed)
+  
   const pageSize = 10;
   const page = Number(query.pageNumber) || 1;
   
   // Build search query
   let searchQuery = {};
+  
+  // Archive filtering
+  if (query.onlyArchived === 'true') {
+    searchQuery.archived = true;
+  } else if (query.includeArchived !== 'true') {
+    searchQuery.$or = [
+      { archived: false },
+      { archived: { $exists: false } }
+    ];
+  }
   
   // Name search
   if (query.name) {
@@ -42,9 +54,13 @@ export const getInquiries = async (query = {}) => {
 
   // Sort options
   let sortOptions = {};
+  
   switch (query.sort) {
     case 'oldest':
-      sortOptions = { createdAt: 1 };
+      sortOptions = { _id: 1 };
+      break;
+    case 'newest':
+      sortOptions = { _id: -1 };
       break;
     case 'name':
       sortOptions = { name: 1 };
@@ -53,14 +69,15 @@ export const getInquiries = async (query = {}) => {
       sortOptions = { email: 1 };
       break;
     case 'status':
-      sortOptions = { status: 1 };
+      sortOptions = { status: 1, _id: -1 };
       break;
     case 'priority':
-      sortOptions = { priority: -1 }; // High priority first
+      sortOptions = { priority: -1, _id: -1 }; // High priority first
       break;
-    default: // newest first
-      sortOptions = { createdAt: -1 };
+    default: // newest first (default)
+      sortOptions = { _id: -1 };
   }
+  // sort options applied (debug removed)
 
   const count = await Inquiry.countDocuments(searchQuery);
   const inquiries = await Inquiry.find(searchQuery)
@@ -68,6 +85,8 @@ export const getInquiries = async (query = {}) => {
     .sort(sortOptions)
     .limit(pageSize)
     .skip(pageSize * (page - 1));
+
+  // inquiries fetched (detailed logs removed)
 
   return {
     inquiries,
@@ -109,7 +128,10 @@ export const createInquiry = async (inquiryData) => {
     name: name.trim(),
     email: email.trim().toLowerCase(),
     subject: subject ? subject.trim() : '',
-    message: message.trim()
+    message: message.trim(),
+    conversation: [
+      { sender: 'user', message: message.trim() }
+    ]
   });
 
   const createdInquiry = await inquiry.save();
@@ -136,6 +158,10 @@ export const updateInquiry = async (inquiryId, updateData, userId) => {
     inquiry.status = 'replied';
     inquiry.respondedBy = userId;
     inquiry.respondedAt = new Date();
+    // push admin message into conversation
+    if (!Array.isArray(inquiry.conversation)) inquiry.conversation = [];
+    inquiry.conversation.push({ sender: 'admin', message: response.trim(), createdAt: new Date() });
+    inquiry.response = response.trim();
   }
 
   const updatedInquiry = await inquiry.save();
@@ -144,6 +170,31 @@ export const updateInquiry = async (inquiryId, updateData, userId) => {
   await updatedInquiry.populate('respondedBy', 'name email');
   
   return updatedInquiry;
+};
+
+// Allow authenticated users to add a follow-up message to their own inquiry
+export const addUserReply = async (inquiryId, userEmail, message) => {
+  if (!message || !message.trim()) {
+    throw new ApiError(400, 'Message is required');
+  }
+
+  const inquiry = await Inquiry.findById(inquiryId);
+  if (!inquiry) {
+    throw new ApiError(404, 'Inquiry not found');
+  }
+
+  // Verify ownership by email
+  if (!inquiry.email || inquiry.email.toLowerCase() !== String(userEmail).toLowerCase()) {
+    throw new ApiError(403, 'You do not have permission to modify this inquiry');
+  }
+
+  if (!Array.isArray(inquiry.conversation)) inquiry.conversation = [];
+  inquiry.conversation.push({ sender: 'user', message: message.trim(), createdAt: new Date() });
+  // Mark as new so admins can see follow-up
+  inquiry.status = 'new';
+
+  const saved = await inquiry.save();
+  return saved;
 };
 
 // Delete inquiry
@@ -229,4 +280,75 @@ export const markAsRead = async (inquiryId) => {
     // Re-throw the error with proper message
     throw new ApiError(500, `Failed to mark inquiry as read: ${error.message}`);
   }
+};
+
+// Archive inquiry (soft delete)
+export const archiveInquiry = async (inquiryId, adminId, reason = null) => {
+  const inquiry = await Inquiry.findById(inquiryId);
+
+  if (!inquiry) {
+    throw new ApiError(404, 'Inquiry not found');
+  }
+
+  if (inquiry.archived) {
+    throw new ApiError(400, 'Inquiry is already archived');
+  }
+
+  const archivedInquiry = await Inquiry.findByIdAndUpdate(
+    inquiryId,
+    {
+      $set: {
+        archived: true,
+        archivedAt: new Date(),
+        archivedBy: adminId,
+        archivedReason: reason
+      }
+    },
+    { new: true, runValidators: true }
+  ).populate('archivedBy', 'name email');
+
+  return archivedInquiry;
+};
+
+// Restore archived inquiry
+export const restoreInquiry = async (inquiryId) => {
+  const inquiry = await Inquiry.findById(inquiryId);
+
+  if (!inquiry) {
+    throw new ApiError(404, 'Inquiry not found');
+  }
+
+  if (!inquiry.archived) {
+    throw new ApiError(400, 'Inquiry is not archived');
+  }
+
+  const restoredInquiry = await Inquiry.findByIdAndUpdate(
+    inquiryId,
+    {
+      $set: {
+        archived: false,
+        archivedAt: null,
+        archivedBy: null,
+        archivedReason: null
+      }
+    },
+    { new: true, runValidators: true }
+  );
+
+  return restoredInquiry;
+};
+
+// Permanently delete inquiry (only for archived inquiries)
+export const permanentDeleteInquiry = async (inquiryId) => {
+  const inquiry = await Inquiry.findById(inquiryId);
+
+  if (!inquiry) {
+    throw new ApiError(404, 'Inquiry not found');
+  }
+
+  if (!inquiry.archived) {
+    throw new ApiError(400, 'Inquiry must be archived before permanent deletion');
+  }
+
+  await Inquiry.findByIdAndDelete(inquiryId);
 };

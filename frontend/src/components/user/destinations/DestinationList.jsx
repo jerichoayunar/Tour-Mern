@@ -10,7 +10,7 @@ const DestinationList = ({
   error,
   filters,
   onFiltersChange,
-  availableLocations,
+   _availableLocations,
   onCardClick // Optional prop for external modal control
 }) => {
   const [selectedDestination, setSelectedDestination] = useState(null);
@@ -116,7 +116,7 @@ const DestinationList = ({
           <p className="text-gray-600 mb-6">There was a problem fetching the destination data.</p>
           <button 
             onClick={() => window.location.reload()}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl transition-colors font-semibold"
+            className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg font-semibold"
           >
             Try Again
           </button>
@@ -153,7 +153,7 @@ const DestinationList = ({
           {hasActiveFilters && (
             <button 
               onClick={clearAllFilters}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl transition-colors font-semibold"
+              className="bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white px-6 py-3 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg font-semibold"
             >
               Clear All Filters
             </button>
@@ -183,7 +183,7 @@ const DestinationList = ({
           
           {/* View Mode Toggle */}
           <div className="flex items-center gap-4">
-            <div className="flex bg-gray-100 rounded-xl p-1">
+              <div className="flex bg-gray-100 rounded-xl p-1">
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-lg transition-colors ${

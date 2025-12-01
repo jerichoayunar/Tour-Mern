@@ -4,7 +4,10 @@ import {
   getPackage,
   createPackage,
   updatePackage,
-  deletePackage
+  deletePackage,
+  archivePackage,
+  restorePackage,
+  permanentDeletePackage
 } from '../controllers/packageController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 import { validateRequest } from '../middleware/validateMiddleware.js';
@@ -40,5 +43,10 @@ router.put(
 );
 
 router.delete('/:id', deletePackage);
+
+// Archive routes
+router.put('/:id/archive', archivePackage);
+router.put('/:id/restore', restorePackage);
+router.delete('/:id/permanent', permanentDeletePackage);
 
 export { router as packageRoutes };

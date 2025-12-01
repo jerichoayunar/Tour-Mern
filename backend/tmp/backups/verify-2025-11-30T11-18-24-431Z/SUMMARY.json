@@ -1,0 +1,15 @@
+{
+  "backupDate": "2025-11-30T11:18:29.084Z",
+  "purpose": "Verification - Sample Data Only",
+  "recordCounts": {
+    "users": 7,
+    "tours": 2,
+    "bookings": 3
+  },
+  "samplesShown": 20,
+  "sensitiveFieldsOmitted": [
+    "passwords",
+    "paymentInfo",
+    "addresses"
+  ]
+}

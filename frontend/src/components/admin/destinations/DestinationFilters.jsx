@@ -13,7 +13,7 @@ const DestinationFilters = ({ filters, onFiltersChange }) => {
 
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Search */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -35,21 +35,7 @@ const DestinationFilters = ({ filters, onFiltersChange }) => {
           </div>
         </div>
 
-        {/* Package Type Filter */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Package Type
-          </label>
-          <select
-            value={filters.packageType || 'All'}
-            onChange={(e) => handleFilterChange('packageType', e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            {packageTypes.map(type => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
-        </div>
+        {/* Package Type filter removed per design decision */}
 
         {/* Status Filter */}
         <div>
@@ -85,7 +71,7 @@ const DestinationFilters = ({ filters, onFiltersChange }) => {
       </div>
 
       {/* Clear Filters */}
-      {(filters.search || filters.packageType || filters.status || filters.maxPrice) && (
+      {(filters.search || filters.status || filters.maxPrice) && (
         <div className="mt-3">
           <button
             onClick={() => onFiltersChange({})}
