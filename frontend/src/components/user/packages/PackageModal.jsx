@@ -253,9 +253,7 @@ const PackageModal = ({ package: pkg, isOpen, onClose, onBook, onToggleSelect })
                         </div>
                       </header>
 
-                      <div className="text-gray-700 leading-relaxed mb-3 text-sm">
-                        {day.description ? day.description : <span className="text-gray-400">No details provided for this day.</span>}
-                      </div>
+                      {/* Description removed for a cleaner itinerary preview */}
 
                       <div>
                         <div className="flex items-center gap-2 text-sm text-gray-600 font-medium mb-2">

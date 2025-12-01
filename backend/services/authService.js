@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Settings from '../models/Settings.js';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import emailService from './emailService.js'; // ✅ Updated import
@@ -64,30 +65,23 @@ export const loginUser = async ({ email, password, recaptchaToken }) => {
   const isPasswordValid = await user.matchPassword(password);
 
   if (!isPasswordValid) {
-    // Increment failed attempts
-    user.failedLoginAttempts += 1;
-    user.loginAttempts += 1;
-    user.lastLoginAttempt = new Date();
+    // Read security config and delegate increment/lock logic to User model
+    const settings = await Settings.getSettings();
+    const security = settings && settings.security ? settings.security : {};
+    const maxAttempts = security.maxLoginAttempts || 5;
+    const lockMinutes = security.lockoutDuration || 15;
 
-    // Lock account after 5 failed attempts for 15 minutes
-    if (user.failedLoginAttempts >= 5) {
-      user.accountLockedUntil = new Date(Date.now() + (15 * 60 * 1000)); // 15 minutes
-      await user.save({ validateBeforeSave: false });
-      throw new Error('Too many failed login attempts. Account locked for 15 minutes.');
-    } else {
-      await user.save({ validateBeforeSave: false });
-      const remainingAttempts = 5 - user.failedLoginAttempts;
-      throw new Error(`Invalid credentials. ${remainingAttempts} attempt(s) remaining before account lock.`);
+    const attemptResult = await user.incrementFailedLoginAttempts(maxAttempts, lockMinutes);
+    if (attemptResult.locked) {
+      throw new Error(`Too many failed login attempts. Account locked for ${lockMinutes} minute(s).`);
     }
+
+    throw new Error(`Invalid credentials. ${attemptResult.remainingAttempts} attempt(s) remaining before account lock.`);
   }
 
   // ✅ SUCCESSFUL LOGIN - Reset all counters
-  if (user.failedLoginAttempts > 0 || user.loginAttempts > 0) {
-    user.failedLoginAttempts = 0;
-    user.loginAttempts = 0;
-    user.accountLockedUntil = null;
-    user.lockUntil = null;
-    await user.save({ validateBeforeSave: false });
+  if (user.failedLoginAttempts > 0 || user.loginAttempts > 0 || user.accountLockedUntil) {
+    await user.resetLoginAttempts();
   }
 
   return {
