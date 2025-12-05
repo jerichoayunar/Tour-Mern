@@ -37,17 +37,6 @@
 
 ---
 
-## Screenshots
-
-> Replace the placeholder paths with actual screenshots in `docs/screenshots/`.
-
-- Landing Page: `docs/screenshots/landing.png`
-- Package List: `docs/screenshots/packages.png`
-- Booking Flow: `docs/screenshots/booking.png`
-- Admin Dashboard: `docs/screenshots/admin.png`
-
----
-
 ## Project Folder Structure (high-level)
 
 ```
